@@ -1,6 +1,6 @@
 # Kiến trúc Ứng dụng UniShare Mobile
 
-> Tài liệu này mô tả chi tiết kiến trúc, công nghệ và luồng hoạt động của dự án UniShare Mobile (React Native / Expo), phản ánh chính xác source code đang có ở thời điểm hiện tại.
+> Tài liệu này mô tả chi tiết kiến trúc, công nghệ và luồng hoạt động của dự án UniShare Mobile (React Native / Expo)
 
 ## 1. Tổng quan & Tech Stack
 
