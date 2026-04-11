@@ -1,7 +1,3 @@
-/**
- * Core Design Tokens cho hệ thống UI UniShare Mobile
- * Áp dụng màu chủ đạo Indigo/Purple-Blue từ bản thiết kế
- */
 
 export const theme = {
   colors: {
