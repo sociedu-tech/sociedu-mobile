@@ -17,4 +17,5 @@ export function useAuth() {
   }));
 }
 
+import { AuthUser } from '../src/core/adapters/authAdapter';
 export type { AuthUser };

@@ -86,7 +86,7 @@ export default function LoginScreen() {
     try {
       const data = await authService.login({ email: email.trim(), password });
       storeLogin({
-        id: data.userId,
+        id: data.id,
         email: data.email,
         roles: data.roles,
         fullName: data.fullName,

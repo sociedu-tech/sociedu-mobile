@@ -1,4 +1,6 @@
 
+
+
 export const theme = {
   colors: {
     // Primary - Tông Tím Xanh (Purple-Blue/Indigo) từ thiết kế mẫu
@@ -7,12 +9,12 @@ export const theme = {
     primaryLighter: '#F5F3FF', // Nền nút Time slot nhạt hoặc background phụ
 
     // Secondary & Neutral
-    secondary: '#6B7280', // Text phụ, viền xám nhạt
-    background: '#F9FAFB', // Nền ứng dụng chính (rất nhạt, gần như trắng)
-    surface: '#FFFFFF', // Nền các Card trắng tinh
+    secondary: '#64748B', // Mềm hơn thay cho xám 6B...
+    background: '#F8FAFC', // Slate 50 siêu sáng
+    surface: '#FFFFFF',
     
     // Status
-    success: '#10B981',
+    success: '#10B981', // Xanh Emerald
     error: '#EF4444',
     warning: '#F59E0B',
     info: '#3B82F6',
@@ -44,15 +46,37 @@ export const theme = {
   borderRadius: {
     sm: 4,
     md: 8,
-    lg: 12,
-    xl: 16, // Góc bo lớn như trong thẻ "Thesis Mentorship"
-    pill: 9999, // Cho Button tròn 2 đầu
+    lg: 16,
+    xl: 24,
+    full: 9999,
+  },
+
+  shadows: {
+    soft: {
+      shadowColor: '#4F46E5', // Bóng đổ ngả tone Indigo
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.04,
+      shadowRadius: 24,
+      elevation: 2,
+    }
   },
 
   typography: {
-    h1: { fontSize: 32, lineHeight: 40, fontWeight: '700' as const },
-    h2: { fontSize: 24, lineHeight: 32, fontWeight: '700' as const },
-    h3: { fontSize: 20, lineHeight: 28, fontWeight: '600' as const },
+    h1: {
+      fontSize: 32,
+      lineHeight: 40,
+      fontWeight: '700' as const,
+    },
+    h2: {
+      fontSize: 24,
+      lineHeight: 32,
+      fontWeight: '700' as const,
+    },
+    h3: {
+      fontSize: 20,
+      lineHeight: 28,
+      fontWeight: '600' as const,
+    },
     body: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
     bodyMedium: { fontSize: 16, lineHeight: 24, fontWeight: '500' as const },
     caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },

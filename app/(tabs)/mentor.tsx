@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
-  Image,
   RefreshControl,
   Animated,
 } from 'react-native';
@@ -17,11 +16,19 @@ import { LoadingState } from '../../src/components/states/LoadingState';
 import { ErrorState } from '../../src/components/states/ErrorState';
 import { EmptyState } from '../../src/components/states/EmptyState';
 import { theme } from '../../src/theme/theme';
+import { useBreakpoint } from '../../src/theme/useBreakpoint';
 import { mentorService } from '../../src/core/services/mentorService';
 import { User } from '../../src/core/types';
+import { Card } from '../../src/components/ui/Card';
+import { Section } from '../../src/components/ui/Section';
+import { Avatar } from '../../src/components/ui/Avatar';
+import { scaleSpace, scaleFont } from '../../src/theme/responsiveUtils';
 
-// ─── Filter categories ────────────────────────────────────────
-const CATEGORIES = ['Tất cả', 'Công nghệ thông tin', 'Kinh tế', 'Toán học', 'Ngoại ngữ'];
+
+// Lấy tất cả các lĩnh vực chuyên môn từ mentors (dùng useMemo để tối ưu)
+import { useMemo } from 'react';
+
+// ...existing code...
 
 /**
  * MentorScreen – tương đương "/mentors" trên web (MentorMarketplace).
@@ -29,12 +36,20 @@ const CATEGORIES = ['Tất cả', 'Công nghệ thông tin', 'Kinh tế', 'Toán
  */
 export default function MentorScreen() {
   const router = useRouter();
+  const breakpoint = useBreakpoint();
   const [mentors, setMentors] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+
+  // Lấy tất cả các lĩnh vực chuyên môn duy nhất từ mentors
+  const expertiseTags = useMemo(() => {
+    const tags = new Set<string>();
+    mentors.forEach(m => m.mentorInfo?.expertise?.forEach((e: string) => tags.add(e)));
+    return ['Tất cả', ...Array.from(tags)];
+  }, [mentors]);
 
   // ─── Fetch ──────────────────────────────────────────────
   const fetchMentors = useCallback(async (isRefresh = false) => {
@@ -89,93 +104,103 @@ export default function MentorScreen() {
 
   // ─── Render ─────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* ═══════════════ HERO HEADER ═══════════════ */}
-      <View style={styles.heroHeader}>
-        <Typography variant="h2" style={styles.heroTitle}>
-          Kết nối với{' '}
-          <Typography variant="h2" style={styles.heroHighlight}>
-            Mentor
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['bottom']}>
+      <Section style={{ paddingBottom: 0 }}>
+        {/* HERO HEADER */}
+        <View style={{ backgroundColor: theme.colors.text.primary, paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xl, borderBottomLeftRadius: theme.borderRadius.xl, borderBottomRightRadius: theme.borderRadius.xl }}>
+          <Typography variant="h2" style={{ color: '#FFF', fontWeight: '800' }}>
+            Kết nối với{' '}
+            <Typography variant="h2" style={{ color: theme.colors.primary, fontWeight: '800' }}>Mentor</Typography>
+            {' '}hàng đầu
           </Typography>
-          {' '}hàng đầu
-        </Typography>
-        <Typography variant="body" style={styles.heroSubtitle}>
-          Nhận tư vấn 1-1 để bứt phá trong học tập và sự nghiệp.
-        </Typography>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={18} color={theme.colors.text.disabled} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Tìm theo tên, chuyên môn..."
-            placeholderTextColor={theme.colors.text.disabled}
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            autoCapitalize="none"
-            returnKeyType="search"
-          />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchTerm('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="close-circle" size={18} color={theme.colors.text.disabled} />
-            </TouchableOpacity>
-          )}
+          <Typography variant="body" style={{ color: 'rgba(255,255,255,0.6)', marginTop: theme.spacing.sm }}>
+            Nhận tư vấn 1-1 để bứt phá trong học tập và sự nghiệp.
+          </Typography>
+          {/* Search Bar */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', marginTop: theme.spacing.lg, paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm, borderRadius: theme.borderRadius.xl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' }}>
+            <Ionicons name="search" size={18} color={theme.colors.text.disabled} />
+            <TextInput
+              style={{ flex: 1, fontSize: 15, color: '#FFF', padding: 0, marginLeft: theme.spacing.sm }}
+              placeholder="Tìm theo tên, chuyên môn..."
+              placeholderTextColor={theme.colors.text.disabled}
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              autoCapitalize="none"
+              returnKeyType="search"
+            />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchTerm('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="close-circle" size={18} color={theme.colors.text.disabled} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
-
-      {/* ═══════════════ FILTER CHIPS ═══════════════ */}
-      <FlatList
-        horizontal
-        data={CATEGORIES}
-        keyExtractor={(item) => item}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipListContent}
-        style={styles.chipList}
-        renderItem={({ item }) => {
-          const isActive = selectedCategory === item;
-          return (
-            <TouchableOpacity
-              style={[styles.chip, isActive && styles.chipActive]}
-              activeOpacity={0.7}
-              onPress={() => setSelectedCategory(item)}
-            >
-              <Typography
-                variant="caption"
-                style={[styles.chipText, isActive && styles.chipTextActive]}
+        {/* FILTER CHIPS */}
+        <FlatList
+          horizontal
+          data={expertiseTags}
+          keyExtractor={(item) => item}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingVertical: theme.spacing.sm, gap: theme.spacing.sm }}
+          style={{ flexGrow: 0 }}
+          renderItem={({ item }) => {
+            const isActive = selectedCategory === item;
+            return (
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: theme.spacing.lg,
+                  paddingVertical: theme.spacing.sm,
+                  borderRadius: theme.borderRadius.full,
+                  backgroundColor: isActive ? theme.colors.primary : theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: isActive ? theme.colors.primary : theme.colors.border.default,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  marginRight: theme.spacing.sm,
+                }}
+                activeOpacity={0.7}
+                onPress={() => setSelectedCategory(item)}
               >
-                {item}
-              </Typography>
-            </TouchableOpacity>
-          );
-        }}
-      />
-
-      {/* ═══════════════ MENTOR LIST ═══════════════ */}
-      <FlatList
-        data={filteredMentors}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          <EmptyState
-            title="Không tìm thấy Mentor"
-            description="Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc."
-            icon="person-outline"
-            fullScreen={false}
-          />
-        }
-        renderItem={({ item, index }) => (
-          <MentorCard mentor={item} index={index} onPress={() => router.push(`/profile/${item.id}` as any)} />
-        )}
-      />
+                <Typography
+                  variant="bodyMedium"
+                  style={{ fontWeight: '600', color: isActive ? '#FFF' : theme.colors.text.secondary, textAlign: 'center' }}
+                >
+                  {item}
+                </Typography>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </Section>
+      {/* MENTOR LIST */}
+      <Section style={{ flex: 1, paddingTop: 0 }}>
+        <FlatList
+          data={filteredMentors}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.xl }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            <EmptyState
+              title="Không tìm thấy Mentor"
+              description="Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc."
+              icon="person-outline"
+              fullScreen={false}
+            />
+          }
+          renderItem={({ item, index }) => (
+            <MentorCard mentor={item} index={index} onPress={() => router.push(`/profile/${item.id}` as any)} />
+          )}
+        />
+      </Section>
     </SafeAreaView>
   );
 }
@@ -214,202 +239,86 @@ function MentorCard({ mentor, index, onPress }: MentorCardProps) {
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={onPress}>
-        {/* ── Header: Avatar + Info ── */}
-        <View style={styles.cardHeader}>
-          <Image
-            source={mentor.avatar ? { uri: mentor.avatar } : require('../../assets/images/icon.png')}
-            style={styles.avatar}
-          />
-          <View style={styles.cardInfo}>
-            <View style={styles.nameRow}>
-              <Typography variant="bodyMedium" style={styles.mentorName} numberOfLines={1}>
-                {mentor.name}
+      <Card style={{ marginBottom: theme.spacing.md }}>
+        <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={{ flex: 1 }}>
+          {/* Header: Avatar + Info */}
+          <View style={{ flexDirection: 'row', gap: scaleSpace(12), marginBottom: scaleSpace(14) }}>
+            <Avatar uri={mentor.avatar || undefined} size={56} />
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(6) }}>
+                <Typography variant="bodyMedium" style={{ color: theme.colors.text.primary, fontWeight: '700', flexShrink: 1 }} numberOfLines={1}>
+                  {mentor.name}
+                </Typography>
+                {info?.verificationStatus === 'verified' && (
+                  <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
+                )}
+              </View>
+              <Typography variant="caption" color="secondary" numberOfLines={1} style={{ marginTop: scaleSpace(2) }}>
+                {info?.headline || 'Mentor'}
               </Typography>
-              {info?.verificationStatus === 'verified' && (
-                <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(8), marginTop: scaleSpace(6) }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(3) }}>
+                  <Ionicons name="star" size={12} color={theme.colors.warning} />
+                  <Typography variant="caption" style={{ color: theme.colors.text.primary, fontWeight: '700', fontSize: scaleFont(12) }}>
+                    {info?.rating?.toFixed(1) || '0.0'}
+                  </Typography>
+                </View>
+                <View style={{ width: scaleSpace(4), height: scaleSpace(4), borderRadius: scaleSpace(2), backgroundColor: theme.colors.border.default }} />
+                <Typography variant="caption" color="secondary" style={{ fontSize: scaleFont(11), textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                  {info?.sessionsCompleted || 0} buổi học
+                </Typography>
+              </View>
+            </View>
+          </View>
+          {/* Expertise Tags */}
+          {info?.expertise && info.expertise.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: scaleSpace(6), marginBottom: scaleSpace(14) }}>
+              {info.expertise.slice(0, 3).map((exp) => (
+                <View key={exp} style={{ backgroundColor: theme.colors.background, paddingHorizontal: scaleSpace(12), paddingVertical: scaleSpace(6), borderRadius: scaleSpace(8), borderWidth: 1, borderColor: theme.colors.border.default, justifyContent: 'center', alignItems: 'center' }}>
+                  <Typography variant="caption" style={{ fontSize: scaleFont(13), fontWeight: '600', color: theme.colors.text.secondary, transform: [{ translateY: -1 }] }}>{exp}</Typography>
+                </View>
+              ))}
+              {info.expertise.length > 3 && (
+                <View style={{ backgroundColor: theme.colors.primaryLight, borderColor: theme.colors.primaryLight, paddingHorizontal: scaleSpace(12), paddingVertical: scaleSpace(6), borderRadius: scaleSpace(8), borderWidth: 1, marginLeft: scaleSpace(2), justifyContent: 'center', alignItems: 'center' }}>
+                  <Typography variant="caption" style={{ fontSize: scaleFont(13), fontWeight: '600', color: theme.colors.text.secondary, transform: [{ translateY: -1 }] }}>+{info.expertise.length - 3}</Typography>
+                </View>
               )}
             </View>
-            <Typography variant="caption" color="secondary" numberOfLines={1} style={styles.headline}>
-              {info?.headline || 'Mentor'}
-            </Typography>
-            <View style={styles.statsRow}>
-              <View style={styles.ratingBadge}>
-                <Ionicons name="star" size={12} color="#FBBF24" />
-                <Typography variant="caption" style={styles.ratingText}>
-                  {info?.rating?.toFixed(1) || '0.0'}
-                </Typography>
-              </View>
-              <View style={styles.dotSeparator} />
-              <Typography variant="caption" color="secondary" style={styles.sessionText}>
-                {info?.sessionsCompleted || 0} buổi học
+          )}
+          {/* Footer: Price + CTA */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: theme.colors.border.default, paddingTop: scaleSpace(14) }}>
+            <View>
+              <Typography variant="caption" style={{ fontSize: scaleFont(10), fontWeight: '700', color: theme.colors.text.secondary, letterSpacing: 1, marginBottom: scaleSpace(2) }}>
+                GIÁ TỪ
               </Typography>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: scaleSpace(2) }}>
+                <Typography variant="h3" style={{ color: theme.colors.text.primary, fontWeight: '800' }}>
+                  ${info?.price || 0}
+                </Typography>
+                <Typography variant="caption" color="secondary">/giờ</Typography>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(6), backgroundColor: theme.colors.primary, paddingHorizontal: scaleSpace(18), paddingVertical: scaleSpace(10), borderRadius: theme.borderRadius.lg, shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 }}>
+              <Typography variant="label" style={{ color: '#FFFFFF', fontWeight: '700', fontSize: scaleFont(13) }}>Xem hồ sơ</Typography>
+              <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
             </View>
           </View>
-        </View>
-
-        {/* ── Expertise Tags ── */}
-        {info?.expertise && info.expertise.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {info.expertise.slice(0, 3).map((exp) => (
-              <View key={exp} style={styles.tag}>
-                <Typography variant="caption" style={styles.tagText}>
-                  {exp}
-                </Typography>
-              </View>
-            ))}
-            {info.expertise.length > 3 && (
-              <View style={[styles.tag, styles.tagMore]}>
-                <Typography variant="caption" style={styles.tagText}>
-                  +{info.expertise.length - 3}
-                </Typography>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* ── Footer: Price + CTA ── */}
-        <View style={styles.cardFooter}>
-          <View>
-            <Typography variant="caption" style={styles.priceLabel}>
-              GIÁ TỪ
-            </Typography>
-            <View style={styles.priceRow}>
-              <Typography variant="h3" style={styles.priceValue}>
-                ${info?.price || 0}
-              </Typography>
-              <Typography variant="caption" color="secondary">
-                /giờ
-              </Typography>
-            </View>
-          </View>
-          <View style={styles.viewButton}>
-            <Typography variant="label" style={styles.viewButtonText}>
-              Xem hồ sơ
-            </Typography>
-            <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </Card>
     </Animated.View>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  STYLES
-// ═══════════════════════════════════════════════════════════════
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-
-  // ── Hero Header ──
-  heroHeader: {
-    backgroundColor: theme.colors.text.primary,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-  },
-  heroTitle: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 22,
-    lineHeight: 30,
-  },
-  heroHighlight: {
-    color: theme.colors.primary,
-    fontWeight: '800',
-    fontSize: 22,
-  },
-  heroSubtitle: {
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 6,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    marginTop: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: theme.borderRadius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: '#FFFFFF',
-    padding: 0,
-  },
-
-  // ── Filter Chips ──
-  chipList: {
-    maxHeight: 52,
-    flexGrow: 0,
-  },
-  chipListContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-  },
-  chipActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  chipText: {
-    fontWeight: '600',
-    color: theme.colors.text.secondary,
-    fontSize: 12,
-  },
-  chipTextActive: {
-    color: '#FFFFFF',
-  },
-
-  // ── List ──
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-
-  // ── Card ──
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    // shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
   cardHeader: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
+    gap: scaleSpace(12),
+    marginBottom: scaleSpace(14),
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: scaleSpace(56),
+    height: scaleSpace(56),
+    borderRadius: scaleSpace(18),
     backgroundColor: theme.colors.primaryLight,
   },
   cardInfo: {
@@ -419,41 +328,41 @@ const styles = StyleSheet.create({
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scaleSpace(6),
   },
   mentorName: {
     color: theme.colors.text.primary,
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: scaleFont(16),
     flexShrink: 1,
   },
   headline: {
-    marginTop: 2,
+    marginTop: scaleSpace(2),
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 6,
+    gap: scaleSpace(8),
+    marginTop: scaleSpace(6),
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: scaleSpace(3),
   },
   ratingText: {
     color: theme.colors.text.primary,
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: scaleFont(12),
   },
   dotSeparator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: scaleSpace(4),
+    height: scaleSpace(4),
+    borderRadius: scaleSpace(2),
     backgroundColor: theme.colors.border.default,
   },
   sessionText: {
-    fontSize: 11,
+    fontSize: scaleFont(11),
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -462,14 +371,14 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 14,
+    gap: scaleSpace(6),
+    marginBottom: scaleSpace(14),
   },
   tag: {
     backgroundColor: theme.colors.background,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: scaleSpace(10),
+    paddingVertical: scaleSpace(5),
+    borderRadius: scaleSpace(8),
     borderWidth: 1,
     borderColor: theme.colors.border.default,
   },
@@ -478,7 +387,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primaryLight,
   },
   tagText: {
-    fontSize: 11,
+    fontSize: scaleFont(13),
     fontWeight: '600',
     color: theme.colors.text.secondary,
   },
@@ -490,19 +399,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
-    paddingTop: 14,
+    paddingTop: scaleSpace(14),
   },
   priceLabel: {
-    fontSize: 10,
+    fontSize: scaleFont(10),
     fontWeight: '700',
     color: theme.colors.text.secondary,
     letterSpacing: 1,
-    marginBottom: 2,
+    marginBottom: scaleSpace(2),
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 2,
+    gap: scaleSpace(2),
   },
   priceValue: {
     color: theme.colors.text.primary,
@@ -511,10 +420,10 @@ const styles = StyleSheet.create({
   viewButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: scaleSpace(6),
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: scaleSpace(18),
+    paddingVertical: scaleSpace(10),
     borderRadius: theme.borderRadius.lg,
     // shadow
     shadowColor: theme.colors.primary,
@@ -526,6 +435,6 @@ const styles = StyleSheet.create({
   viewButtonText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: scaleFont(13),
   },
 });

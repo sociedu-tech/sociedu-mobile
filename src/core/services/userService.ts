@@ -1,108 +1,183 @@
-import { api } from '../api';
-import { User } from '../types';
+/**
+ * userService.ts – User profile domain
+ *
+ * Endpoints:
+ *   GET  /api/v1/users/me/profile    → UserFullProfileResponse
+ *   PUT  /api/v1/users/me/profile    → cập nhật profile
+ *   GET/POST/PUT/DELETE /educations
+ *   GET/POST/PUT/DELETE /experiences
+ *   GET/POST/PUT/DELETE /languages
+ *   GET/POST/PUT/DELETE /certificates
+ */
+import { api, unwrap } from '../api';
+import {
+  UserFullProfileResponseDTO,
+  UserEducationResponseDTO,
+  UserExperienceResponseDTO,
+  UserLanguageResponseDTO,
+  UserCertificateResponseDTO,
+  User,
+} from '../types';
+import { toUserFull } from '../adapters/userAdapter';
+import { USE_MOCK } from '../config';
+import { mockUserApi } from '../mocks/api/mockUserMentorApi';
 
-const BASE_URL = '/api/v1/users';
-
-// ─── MOCK DATA (Dùng khi chưa có server) ─────────────────────
-const MOCK_CURRENT_USER: User = {
-  id: 'u1',
-  name: 'Nguyễn Văn A',
-  email: 'name@university.edu.vn',
-  avatar: 'https://i.pravatar.cc/300?img=11',
-  role: 'buyer',
-  bio: 'Sinh viên năm 3 chuyên ngành Khoa học Máy tính. Đam mê lập trình web và mobile.',
-  university: 'Đại học Bách Khoa Hà Nội',
-  major: 'Khoa học Máy tính',
-  year: 3,
-  gpa: 3.8,
-  joinedDate: '2023-09-01T00:00:00Z',
-  socialLinks: {
-    github: 'github.com/nguyenvana',
-    linkedin: 'linkedin.com/in/nguyenvana',
-  },
-};
-
-const MOCK_MENTOR_USER: User = {
-  id: 'm1',
-  name: 'Trần Thị B',
-  email: 'tran.b@company.com',
-  avatar: 'https://i.pravatar.cc/300?img=5',
-  role: 'mentor',
-  bio: 'Senior Software Engineer tại Google. Hơn 5 năm kinh nghiệm về React và Node.js.',
-  rating: 4.9,
-  joinedDate: '2021-08-15T00:00:00Z',
-  mentorInfo: {
-    headline: 'Senior Software Engineer tại Google',
-    expertise: ['React', 'Node.js', 'System Design'],
-    price: 500000,
-    rating: 4.9,
-    sessionsCompleted: 120,
-    verificationStatus: 'verified'
-  }
-};
+const BASE = '/api/v1/users';
 
 export const userService = {
   /**
-   * Lấy profile của người dùng hiện tại
+   * Profile đầy đủ của user hiện tại (bao gồm education, experience...)
    */
   getMe: async (): Promise<User> => {
-    try {
-      const res = await api.get(`${BASE_URL}/me/profile`);
-      return res.data;
-    } catch (error) {
-      console.warn('⚠️ Server không phản hồi, dùng MOCK_CURRENT_USER');
-      // Giả lập delay mạng
-      await new Promise(r => setTimeout(r, 600));
-      return MOCK_CURRENT_USER;
-    }
+    const res = USE_MOCK
+      ? await mockUserApi.getMe()
+      : await api.get<{ data: UserFullProfileResponseDTO }>(`${BASE}/me/profile`);
+    return toUserFull(unwrap(res));
   },
 
   /**
-   * Lấy profile của bất kỳ user/mentor nào theo ID
+   * Profile công khai của user/mentor
    */
-  getProfile: async (id: string | number): Promise<User> => {
-    try {
-      const res = await api.get(`${BASE_URL}/${id}/profile`);
-      return res.data;
-    } catch (error) {
-      console.warn(`⚠️ Server không phản hồi, dùng MOCK_MENTOR_USER cho id ${id}`);
-      await new Promise(r => setTimeout(r, 600));
-      return MOCK_MENTOR_USER;
-    }
+  getPublicProfile: async (id: string | number): Promise<User> => {
+    const res = USE_MOCK
+      ? await mockUserApi.getPublicProfile(id)
+      : await api.get<{ data: UserFullProfileResponseDTO }>(`${BASE}/${id}/profile`);
+    return toUserFull(unwrap(res));
   },
 
   /**
-   * Cập nhật thông tin profile của user
+   * Cập nhật thông tin profile cơ bản
    */
-  updateProfile: async (id: string | number, profileData: Partial<User>) => {
-    try {
-      const res = await api.put(`${BASE_URL}/me/profile`, profileData);
-      return res.data;
-    } catch (error) {
-      console.warn('⚠️ API Edit lỗi, giả lập cập nhật thành công (Mock)');
-      await new Promise(r => setTimeout(r, 1000));
-      return { ...MOCK_CURRENT_USER, ...profileData };
-    }
+  updateProfile: async (data: {
+    firstName?: string;
+    lastName?: string;
+    headline?: string;
+    bio?: string;
+    location?: string;
+  }): Promise<void> => {
+    await api.put(`${BASE}/me/profile`, data);
   },
 
-  /**
-   * Upload avatar cho user
-   */
-  uploadAvatar: async (fileData: FormData) => {
-    try {
-      const res = await api.post(`${BASE_URL}/me/avatar`, fileData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return res.data;
-    } catch (error) {
-      console.warn('⚠️ API Upload lỗi, giả lập upload thành công (Mock)');
-      await new Promise(r => setTimeout(r, 1500));
-      return { avatarUrl: 'https://i.pravatar.cc/300?img=33' };
-    }
-  },    
+  // ── Education ──────────────────────────────────────────────
 
-  // ── Các hàm phụ trợ khác (Experince, Education...) có thể thêm giống trên web 
-  // khi làm chi tiết form EditProfile
+  getEducations: async (): Promise<UserEducationResponseDTO[]> => {
+    const res = await api.get<{ data: UserEducationResponseDTO[] }>(`${BASE}/educations`);
+    return unwrap(res);
+  },
+
+  addEducation: async (data: {
+    institution: string;
+    degree: string;
+    fieldOfStudy: string;
+    startYear: number;
+    endYear?: number;
+  }): Promise<UserEducationResponseDTO> => {
+    const res = await api.post<{ data: UserEducationResponseDTO }>(`${BASE}/educations`, data);
+    return unwrap(res);
+  },
+
+  updateEducation: async (id: number, data: Partial<{
+    institution: string;
+    degree: string;
+    fieldOfStudy: string;
+    startYear: number;
+    endYear: number | null;
+  }>): Promise<UserEducationResponseDTO> => {
+    const res = await api.put<{ data: UserEducationResponseDTO }>(`${BASE}/educations/${id}`, data);
+    return unwrap(res);
+  },
+
+  deleteEducation: async (id: number): Promise<void> => {
+    await api.delete(`${BASE}/educations/${id}`);
+  },
+
+  // ── Experience ─────────────────────────────────────────────
+
+  getExperiences: async (): Promise<UserExperienceResponseDTO[]> => {
+    const res = await api.get<{ data: UserExperienceResponseDTO[] }>(`${BASE}/experiences`);
+    return unwrap(res);
+  },
+
+  addExperience: async (data: {
+    company: string;
+    role: string;
+    startDate: string;
+    endDate?: string;
+    description?: string;
+  }): Promise<UserExperienceResponseDTO> => {
+    const res = await api.post<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences`, data);
+    return unwrap(res);
+  },
+
+  updateExperience: async (id: number, data: Partial<{
+    company: string;
+    role: string;
+    startDate: string;
+    endDate: string | null;
+    description: string | null;
+  }>): Promise<UserExperienceResponseDTO> => {
+    const res = await api.put<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences/${id}`, data);
+    return unwrap(res);
+  },
+
+  deleteExperience: async (id: number): Promise<void> => {
+    await api.delete(`${BASE}/experiences/${id}`);
+  },
+
+  // ── Language ───────────────────────────────────────────────
+
+  getLanguages: async (): Promise<UserLanguageResponseDTO[]> => {
+    const res = await api.get<{ data: UserLanguageResponseDTO[] }>(`${BASE}/languages`);
+    return unwrap(res);
+  },
+
+  addLanguage: async (data: {
+    language: string;
+    proficiency: string;
+  }): Promise<UserLanguageResponseDTO> => {
+    const res = await api.post<{ data: UserLanguageResponseDTO }>(`${BASE}/languages`, data);
+    return unwrap(res);
+  },
+
+  updateLanguage: async (id: number, data: { language?: string; proficiency?: string }): Promise<UserLanguageResponseDTO> => {
+    const res = await api.put<{ data: UserLanguageResponseDTO }>(`${BASE}/languages/${id}`, data);
+    return unwrap(res);
+  },
+
+  deleteLanguage: async (id: number): Promise<void> => {
+    await api.delete(`${BASE}/languages/${id}`);
+  },
+
+  // ── Certificate ────────────────────────────────────────────
+
+  getCertificates: async (): Promise<UserCertificateResponseDTO[]> => {
+    const res = await api.get<{ data: UserCertificateResponseDTO[] }>(`${BASE}/certificates`);
+    return unwrap(res);
+  },
+
+  addCertificate: async (data: {
+    name: string;
+    issuer: string;
+    issueDate: string;
+    expiryDate?: string;
+    credentialUrl?: string;
+  }): Promise<UserCertificateResponseDTO> => {
+    const res = await api.post<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates`, data);
+    return unwrap(res);
+  },
+
+  updateCertificate: async (id: number, data: Partial<{
+    name: string;
+    issuer: string;
+    issueDate: string;
+    expiryDate: string | null;
+    credentialUrl: string | null;
+  }>): Promise<UserCertificateResponseDTO> => {
+    const res = await api.put<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates/${id}`, data);
+    return unwrap(res);
+  },
+
+  deleteCertificate: async (id: number): Promise<void> => {
+    await api.delete(`${BASE}/certificates/${id}`);
+  },
 };

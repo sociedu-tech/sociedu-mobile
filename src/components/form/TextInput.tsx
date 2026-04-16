@@ -5,7 +5,9 @@ import {
   TextInputProps as RNTextInputProps, 
   StyleSheet 
 } from 'react-native';
+import { useBreakpoint } from '../../theme/useBreakpoint';
 import { Typography } from '../typography/Typography';
+import { getTextInputStyle } from './textInputResponsive';
 import { theme } from '../../theme/theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -31,6 +33,8 @@ export const TextInput: React.FC<TextInputProps> = ({
   ...rest
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const breakpoint = useBreakpoint();
+  const responsiveStyle = getTextInputStyle(breakpoint);
 
   const getBorderColor = () => {
     if (error) return theme.colors.error;
@@ -108,28 +112,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    minHeight: 48,
-  },
-  textAreaContainer: {
-    minHeight: 120,
-    alignItems: 'flex-start',
-    paddingVertical: theme.spacing.sm,
   },
   input: {
     flex: 1,
     color: theme.colors.text.primary,
+    fontFamily: 'System',
     fontSize: theme.typography.body.fontSize,
-  },
-  textAreaInput: {
-    minHeight: 100,
-  },
-  leftIcon: {
-    marginRight: theme.spacing.sm,
-  },
-  rightIcon: {
+    paddingVertical: 0,
     marginLeft: theme.spacing.sm,
   },
   messageContainer: {

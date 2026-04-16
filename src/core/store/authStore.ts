@@ -1,12 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export interface AuthUser {
-  id: string | number;
-  email: string;
-  roles: string[];
-  fullName: string;
-}
+import { AuthUser } from '../adapters/authAdapter';
+import { authService } from '../services/authService';
 
 interface AuthState {
   user: AuthUser | null;
@@ -14,13 +9,13 @@ interface AuthState {
   userRole: string;
   loading: boolean;
 
-  /** Khởi tạo – đọc user từ AsyncStorage khi app mở */
+  /** Khởi tạo – đọc user + token từ AsyncStorage khi app mở */
   hydrate: () => Promise<void>;
 
   /** Cập nhật state sau khi login thành công (authService đã lưu token + user vào AsyncStorage) */
   login: (userData?: AuthUser) => void;
 
-  /** Xoá state + AsyncStorage */
+  /** Xoá state + AsyncStorage thông qua authService*/
   logout: () => Promise<void>;
 }
 
@@ -32,13 +27,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   hydrate: async () => {
     try {
-      const [savedUser, token] = await AsyncStorage.multiGet(['user', 'token']);
-      if (savedUser[1] && token[1]) {
-        const parsed: AuthUser = JSON.parse(savedUser[1]);
+      const user = await authService.getCachedUser();
+      if (user) {
         set({
-          user: parsed,
+          user,
           isAuthenticated: true,
-          userRole: parsed.roles?.[0]?.toLowerCase() || 'guest',
+          userRole: user.userRole || 'guest',
           loading: false,
         });
       } else {
@@ -54,27 +48,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({
         user: userData,
         isAuthenticated: true,
-        userRole: userData.roles?.[0]?.toLowerCase() || 'guest',
+        userRole: userData.userRole || 'guest',
       });
     } else {
       // Nếu không truyền userData, đọc lại từ AsyncStorage (backward compat)
-      AsyncStorage.getItem('user').then((raw) => {
-        if (raw) {
-          const parsed: AuthUser = JSON.parse(raw);
+      authService.getCachedUser().then((user) => {
+        if (user) {
           set({
-            user: parsed,
+            user,
             isAuthenticated: true,
-            userRole: parsed.roles?.[0]?.toLowerCase() || 'guest',
+            userRole: user.userRole || 'guest',
           });
         } else {
-          set({ isAuthenticated: true, userRole: 'guest' });
+           set({ isAuthenticated: true, userRole: 'guest' });
         }
       });
     }
   },
 
   logout: async () => {
-    await AsyncStorage.multiRemove(['token', 'user']);
-    set({ user: null, isAuthenticated: false, userRole: 'guest' });
+     await authService.logout();
+     set({ user: null, isAuthenticated: false, userRole: 'guest' });
   },
 }));

@@ -36,7 +36,8 @@ const C = {
 };
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -76,7 +77,7 @@ export default function RegisterScreen() {
 
   // ─── Register handler (mirror web handleSubmit) ───────────
   const handleRegister = async () => {
-    if (!fullName.trim() || !email.trim() || !password.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
       setError('Vui lòng nhập đầy đủ thông tin.');
       return;
     }
@@ -88,8 +89,8 @@ export default function RegisterScreen() {
       await authService.register({
         email: email.trim(),
         password,
-        fullName: fullName.trim(),
-        role: 'BUYER',
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
       });
       setSuccess(true);
       // Chuyển về login sau 2 giây (giống web)
@@ -141,13 +142,20 @@ export default function RegisterScreen() {
               </Typography>
             </View>
 
-            {/* Full Name */}
+            {/* Name Fields */}
             <TextInput
-              label="HỌ VÀ TÊN"
-              placeholder="Nguyễn Văn A"
-              leftIcon="person-outline"
-              value={fullName}
-              onChangeText={setFullName}
+              label="HỌ"
+              placeholder="Nguyễn"
+              value={lastName}
+              onChangeText={setLastName}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
+            <TextInput
+              label="TÊN"
+              placeholder="Văn A"
+              value={firstName}
+              onChangeText={setFirstName}
               autoCapitalize="words"
               returnKeyType="next"
             />

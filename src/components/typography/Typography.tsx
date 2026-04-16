@@ -1,6 +1,8 @@
 import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
 import { theme } from '../../theme/theme';
+import { useBreakpoint } from '../../theme/useBreakpoint';
+import { getTypographyVariant } from './typographyResponsive';
 
 type Variant = 'h1' | 'h2' | 'h3' | 'body' | 'bodyMedium' | 'caption' | 'label';
 type ThemeColor = keyof typeof theme.colors.text;
@@ -21,6 +23,12 @@ export const Typography: React.FC<TypographyProps> = ({
   children,
   ...rest
 }) => {
+  // Lấy breakpoint hiện tại
+  const breakpoint = useBreakpoint();
+
+  // Lấy style responsive theo variant & breakpoint
+  const variantStyle = getTypographyVariant(variant, breakpoint);
+
   // Lấy màu từ theme hoặc trả về chính string đó
   const getTextColor = (col: string) => {
     if (theme.colors.text[col as ThemeColor]) {
@@ -28,8 +36,6 @@ export const Typography: React.FC<TypographyProps> = ({
     }
     return col;
   };
-
-  const variantStyle = theme.typography[variant];
 
   // Ghi đè weight nếu được truyền explict props
   const fontWeightProp = weight ? { fontWeight: weight } : {};
