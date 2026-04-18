@@ -50,11 +50,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const breakpoint = useBreakpoint();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xl }} showsVerticalScrollIndicator={false}>
         {/* HERO */}
         <Section>
-          <Animated.View style={{ alignItems: 'center', paddingTop: 40, paddingBottom: 28 }}>
+          <Animated.View style={{ alignItems: 'center', paddingTop: 24, paddingBottom: 28 }}>
             <View style={{
               width: 72, height: 72, borderRadius: theme.borderRadius.xl, backgroundColor: theme.colors.primaryLight,
               justifyContent: 'center', alignItems: 'center', marginBottom: 24,

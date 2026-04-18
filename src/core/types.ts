@@ -311,3 +311,35 @@ export interface Order {
   createdAt: string;
   paymentUrl: string | null;
 }
+
+// ── Chat ──────────────────────────────────────────────────────
+export type ConversationType = 'chat' | 'session' | 'follow-up';
+
+export interface ChatMessage {
+  id: string;
+  sender: 'mentee' | 'mentor';
+  text: string;
+  createdAt: number;
+}
+
+export interface ChatSession {
+  id: string;
+  status: 'pending' | 'confirmed' | 'completed';
+  mentorName: string;
+  subject: string;
+  startTime: number;
+  endTime: number;
+  price: number;
+}
+
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  lastMessageTime: number;
+  unreadCount: number;
+  type: ConversationType;
+  sessionId?: string;
+  isPinned?: boolean;
+}

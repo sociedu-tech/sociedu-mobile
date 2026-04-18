@@ -85,12 +85,7 @@ export default function LoginScreen() {
 
     try {
       const data = await authService.login({ email: email.trim(), password });
-      storeLogin({
-        id: data.id,
-        email: data.email,
-        roles: data.roles,
-        fullName: data.fullName,
-      });
+      storeLogin(data);
       // Root layout auth guard sẽ tự redirect về (tabs)
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');

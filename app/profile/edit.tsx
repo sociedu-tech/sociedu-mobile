@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { Ionicons } from '@expo/vector-icons';
 
 import { Typography } from '../../src/components/typography/Typography';
 import { TextInput } from '../../src/components/form/TextInput';
@@ -123,15 +124,16 @@ export default function EditProfileScreen() {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* ═════════ HEADER ═════════ */}
-        <View style={styles.header}>
-          <Typography variant="h2" style={styles.headerTitle}>Chỉnh sửa hồ sơ</Typography>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBackBtn}>
-             <Typography variant="bodyMedium" color="secondary">Hủy</Typography>
+        {/* ═════════ HEADER BAR ═════════ */}
+        <View style={styles.headerBar}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
+          <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chỉnh sửa hồ sơ</Typography>
+          <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
           {/* ═════════ AVATAR SECTION ═════════ */}
           <View style={styles.avatarSection}>
@@ -162,16 +164,20 @@ export default function EditProfileScreen() {
                 <TextInput
                   label="HỌ VÀ TÊN ĐỆM"
                   placeholder="VD: Nguyễn Văn"
+                  leftIcon="person-outline"
                   value={firstName}
                   onChangeText={setFirstName}
+                  helperText="Tên đệm lót"
                 />
               </View>
               <View style={{ flex: 1, paddingLeft: 8 }}>
                 <TextInput
                   label="TÊN"
                   placeholder="VD: Nam"
+                  leftIcon="person"
                   value={lastName}
                   onChangeText={setLastName}
+                  helperText="Tên chính"
                 />
               </View>
             </View>
@@ -179,17 +185,22 @@ export default function EditProfileScreen() {
             <TextInput
               label="CHỨC DANH (HEADLINE)"
               placeholder="VD: Sinh viên năm 4 / Kỹ sư phần mềm"
+              leftIcon="briefcase-outline"
               value={headline}
               onChangeText={setHeadline}
+              helperText="Công việc hoặc chuyên môn hiện tại"
             />
 
             <TextInput
               label="TIỂU SỬ"
               placeholder="Viết một vài dòng giới thiệu bản thân..."
+              leftIcon="document-text-outline"
               value={bio}
               onChangeText={setBio}
               multiline
               numberOfLines={4}
+              isTextArea
+              helperText="Kể ngắn gọn về kinh nghiệm của bạn"
             />
           </View>
 
@@ -222,34 +233,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   
-  // ── Header ──
-  header: {
+  // ── Header Bar (Synced with Booking Detail) ──
+  headerBar: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border.default,
     backgroundColor: theme.colors.surface,
   },
-  headerTitle: {
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-    fontSize: Math.min(scaleFont(22), 22),
-    textAlign: 'center',
-    marginTop: -4,
-  },
-  headerBackBtn: {
-    position: 'absolute',
-    left: 24,
-    paddingVertical: 8,
+  backBtn: { 
+    padding: 8, 
+    marginLeft: -8 
   },
 
   // ── Scroll & Content ──
   scroll: {
-    padding: 24,
-    paddingBottom: 48,
+    padding: 20,
+    paddingTop: 32, // Đẩy xuống rõ ràng hơn giống booking detail
+    paddingBottom: 60,
   },
 
   // ── Avatar ──

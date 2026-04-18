@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, ViewStyle } from 'react-native';
 import { Text as RNText } from 'react-native';
 import { theme } from '../../theme/theme';
 import { scaleSpace, scaleFont } from '../../theme/responsiveUtils';
@@ -8,10 +8,11 @@ interface AvatarProps {
   uri?: string | null;
   initials?: string;
   size?: number;
+  style?: ViewStyle | ViewStyle[];
 }
 
-export const Avatar = ({ uri, initials, size = 64 }: AvatarProps) => (
-  <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}> 
+export const Avatar = ({ uri, initials, size = 64, style }: AvatarProps) => (
+  <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }, style]}> 
     {uri ? (
       <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2 }} />
     ) : (

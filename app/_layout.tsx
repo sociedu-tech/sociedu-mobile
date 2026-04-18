@@ -63,7 +63,7 @@ export default function RootLayout() {
 
       {/* Stack screens cho detail / protected pages */}
       <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Hồ sơ' }} />
-      <Stack.Screen name="profile/edit" options={{ headerShown: true, title: 'Chỉnh sửa hồ sơ' }} />
+      <Stack.Screen name="profile/edit" options={{ headerShown: false, title: 'Chỉnh sửa hồ sơ' }} />
       <Stack.Screen name="admin/index" options={{ headerShown: true, title: 'Quản trị' }} />
       <Stack.Screen name="mentor/dashboard" options={{ headerShown: true, title: 'Mentor Dashboard' }} />
     </Stack>

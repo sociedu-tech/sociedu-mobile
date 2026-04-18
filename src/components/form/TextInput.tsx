@@ -52,11 +52,15 @@ export const TextInput: React.FC<TextInputProps> = ({
       
       <View style={[
         styles.inputContainer, 
-        { borderColor: getBorderColor() },
+        { 
+          borderColor: getBorderColor(),
+          backgroundColor: isFocused ? '#FFF' : '#F8FAFC', // Đổi màu nền khi focus
+        },
+        isFocused && theme.shadows.soft, // Thêm bóng đổ khi focus
         isTextArea && styles.textAreaContainer
       ]}>
         {leftIcon && (
-          <Ionicons name={leftIcon} size={20} color={theme.colors.secondary} style={styles.leftIcon} />
+          <Ionicons name={leftIcon} size={20} color={isFocused ? theme.colors.primary : theme.colors.secondary} style={styles.leftIcon} />
         )}
         
         <RNTextInput
@@ -111,8 +115,15 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    backgroundColor: theme.colors.surface,
+    borderWidth: 1.5, // Dày hơn chút để trông cao cấp
+    borderRadius: theme.borderRadius.lg, // Bo góc lớn chuẩn mobile hiện đại
+    backgroundColor: '#F8FAFC',
+    minHeight: 52, // Độ cao chuẩn touch-friendly
+  },
+  textAreaContainer: {
+    minHeight: 100,
+    alignItems: 'flex-start',
+    paddingVertical: theme.spacing.sm,
   },
   input: {
     flex: 1,
@@ -121,6 +132,16 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.body.fontSize,
     paddingVertical: 0,
     marginLeft: theme.spacing.sm,
+  },
+  textAreaInput: {
+    textAlignVertical: 'top',
+    height: '100%',
+  },
+  leftIcon: {
+    marginLeft: theme.spacing.sm,
+  },
+  rightIcon: {
+    marginRight: theme.spacing.sm,
   },
   messageContainer: {
     marginTop: 4,

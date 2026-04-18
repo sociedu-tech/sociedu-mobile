@@ -64,7 +64,7 @@ export default function BookingsTab() {
             Mã lịch hẹn: {item.id.slice(0, 8).toUpperCase()}
           </Typography>
         </View>
-        <View style={[styles.statusBadge, styles[`status_${item.status}` as keyof typeof styles]]}>
+        <View style={[styles.statusBadge, styles[`status_${item.status}` as keyof typeof styles] as any]}>
           <Typography variant="caption" style={styles.statusText}>
             {item.status.toUpperCase()}
           </Typography>

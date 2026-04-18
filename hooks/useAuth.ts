@@ -4,18 +4,20 @@
  * API tương đương useAuth() của web (AuthContext):
  *   { user, isAuthenticated, userRole, loading, login, logout }
  */
-import { useAuthStore, AuthUser } from '../src/core/store/authStore';
+import { useAuthStore } from '../src/core/store/authStore';
+import { AuthUser } from '../src/core/adapters/authAdapter';
+
+export type { AuthUser };
 
 export function useAuth() {
-  return useAuthStore((s) => ({
-    user: s.user,
-    isAuthenticated: s.isAuthenticated,
-    userRole: s.userRole,
-    loading: s.loading,
-    login: s.login,
-    logout: s.logout,
-  }));
+  const { user, isAuthenticated, userRole, loading, login, logout } = useAuthStore();
+  
+  return {
+    user,
+    isAuthenticated,
+    userRole,
+    loading,
+    login,
+    logout,
+  };
 }
-
-import { AuthUser } from '../src/core/adapters/authAdapter';
-export type { AuthUser };

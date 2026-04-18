@@ -10,6 +10,7 @@ import { StyleSheet, View } from 'react-native';
  * Web equivalent mapping:
  *   "/"        → index    (Home)
  *   "/mentors" → mentor   (MentorMarketplace)
+ *   "/messages"→ messages (Tin nhắn)
  *   "/bookings"→ bookings (Lịch hẹn)
  *   n/a        → profile  (Hồ sơ cá nhân – mobile only)
  *
@@ -22,7 +23,7 @@ export default function TabsLayout() {
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
-        headerShown: true,
+        headerShown: false,
         tabBarStyle: {
           position: 'absolute', // Bắt buộc cho Glassmorphism
           bottom: 0,
@@ -54,6 +55,18 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Tin nhắn',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
               {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
             </View>
           ),

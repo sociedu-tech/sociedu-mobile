@@ -104,7 +104,7 @@ export default function MentorScreen() {
 
   // ─── Render ─────────────────────────────────────────────
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
       <Section style={{ paddingBottom: 0 }}>
         {/* HERO HEADER */}
         <View style={{ backgroundColor: theme.colors.text.primary, paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xl, borderBottomLeftRadius: theme.borderRadius.xl, borderBottomRightRadius: theme.borderRadius.xl }}>

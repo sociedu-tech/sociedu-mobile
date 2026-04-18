@@ -80,7 +80,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
-      <View style={{ backgroundColor: theme.colors.surface, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.border.default, alignItems: 'center' }}>
+      <View style={{ backgroundColor: theme.colors.surface, paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: theme.colors.border.default, alignItems: 'center' }}>
          <Typography variant="h3" style={{ fontWeight: '800' }}>Hồ sơ cá nhân</Typography>
       </View>
       <ScrollView
