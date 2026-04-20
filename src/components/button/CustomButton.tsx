@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import { Typography } from '../typography/Typography';
 import { theme } from '../../theme/theme';
+import { useBreakpoint } from '../../theme/useBreakpoint';
+import { getButtonStyle } from './buttonResponsive';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -30,6 +32,8 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   style,
   ...rest
 }) => {
+  const breakpoint = useBreakpoint();
+  const responsiveStyle = getButtonStyle(breakpoint);
   const getBackgroundColor = () => {
     if (disabled) return theme.colors.border.default;
     switch (variant) {
@@ -69,13 +73,16 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
       activeOpacity={0.7}
       style={[
         styles.container,
-        styles[size],
-        { 
+        {
+          paddingVertical: responsiveStyle.paddingVertical,
+          paddingHorizontal: responsiveStyle.paddingHorizontal,
+          minHeight: responsiveStyle.minHeight,
+          borderRadius: responsiveStyle.borderRadius,
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
-          borderWidth: variant === 'outline' ? 1.5 : 0, // Viền dày một chút cho nổi bật
+          borderWidth: variant === 'outline' ? 1.5 : 0,
         },
-        style
+        style,
       ]}
       {...rest}
     >
@@ -84,10 +91,11 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
       ) : (
         <View style={styles.content}>
           {icon && <View style={styles.iconWrapper}>{icon}</View>}
-          <Typography 
-            variant={size === 'sm' ? 'label' : 'bodyMedium'} 
+          <Typography
+            variant={size === 'sm' ? 'label' : 'bodyMedium'}
             color={getTextColor()}
             weight="600"
+            style={{ fontSize: responsiveStyle.fontSize }}
           >
             {label}
           </Typography>
@@ -104,21 +112,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
-  sm: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    minHeight: 36,
-  },
-  md: {
-    paddingVertical: 14, // Pad lớn chút cho chạm trên di động dễ dàng
-    paddingHorizontal: theme.spacing.lg,
-    minHeight: 48,
-  },
-  lg: {
-    paddingVertical: 18,
-    paddingHorizontal: theme.spacing.xl,
-    minHeight: 56,
-  },
+  sm: {},
+  md: {},
+  lg: {},
   content: {
     flexDirection: 'row',
     alignItems: 'center',

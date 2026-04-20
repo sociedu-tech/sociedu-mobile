@@ -1,36 +1,116 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { theme } from '../../src/theme/theme';
+import { StyleSheet, View } from 'react-native';
 
+/**
+ * Tabs Layout
+ * ─────────────────────────────────────────────
+ * Web equivalent mapping:
+ *   "/"        → index    (Home)
+ *   "/mentors" → mentor   (MentorMarketplace)
+ *   "/messages"→ messages (Tin nhắn)
+ *   "/bookings"→ bookings (Lịch hẹn)
+ *   n/a        → profile  (Hồ sơ cá nhân – mobile only)
+ *
+ * Các tab cũ (marketplace, explore) bị ẩn bằng href: null
+ * để tránh crash nếu file vẫn tồn tại trong thư mục.
+ */
 export default function TabsLayout() {
   return (
-    <Tabs screenOptions={{
-      tabBarActiveTintColor: theme.colors.primary,
-      tabBarInactiveTintColor: theme.colors.secondary,
-      headerShown: true,
-    }}>
-      <Tabs.Screen 
-        name="marketplace" 
-        options={{ 
-          title: 'Tài liệu',
-          headerShown: false, // Để Nested Stack tự điều phối Header
-          tabBarIcon: ({ color }) => <Ionicons name="document-text-outline" size={24} color={color} />
-        }} 
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.secondary,
+        headerShown: false,
+        tabBarStyle: {
+          position: 'absolute', // Bắt buộc cho Glassmorphism
+          bottom: 0,
+          borderTopWidth: 0, // Xoá viền cực cứng
+          elevation: 0,      // Bỏ shadow mặc định của Android
+          backgroundColor: 'transparent',
+        },
+        tabBarBackground: () => (
+          <BlurView tint="light" intensity={80} style={StyleSheet.absoluteFill} />
+        ),
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Trang chủ',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+            </View>
+          ),
+        }}
       />
-      <Tabs.Screen 
-        name="mentor" 
-        options={{ 
+      <Tabs.Screen
+        name="mentor"
+        options={{
           title: 'Chuyên gia',
-          tabBarIcon: ({ color }) => <Ionicons name="people-outline" size={24} color={color} />
-        }} 
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+            </View>
+          ),
+        }}
       />
-      <Tabs.Screen 
-        name="profile" 
-        options={{ 
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Tin nhắn',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
+              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="bookings"
+        options={{
+          title: 'Lịch hẹn',
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
+              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
           title: 'Hồ sơ',
-          tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={24} color={color} />
-        }} 
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+            </View>
+          ),
+        }}
       />
+
+      {/* ── Ẩn các tab cũ nếu file vẫn tồn tại ── */}
+      <Tabs.Screen name="marketplace" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
+    position: 'absolute',
+    bottom: -6, // Cách nhẹ icon
+  }
+});

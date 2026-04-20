@@ -5,7 +5,9 @@ import {
   TextInputProps as RNTextInputProps, 
   StyleSheet 
 } from 'react-native';
+import { useBreakpoint } from '../../theme/useBreakpoint';
 import { Typography } from '../typography/Typography';
+import { getTextInputStyle } from './textInputResponsive';
 import { theme } from '../../theme/theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -31,6 +33,8 @@ export const TextInput: React.FC<TextInputProps> = ({
   ...rest
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const breakpoint = useBreakpoint();
+  const responsiveStyle = getTextInputStyle(breakpoint);
 
   const getBorderColor = () => {
     if (error) return theme.colors.error;
@@ -48,11 +52,15 @@ export const TextInput: React.FC<TextInputProps> = ({
       
       <View style={[
         styles.inputContainer, 
-        { borderColor: getBorderColor() },
+        { 
+          borderColor: getBorderColor(),
+          backgroundColor: isFocused ? '#FFF' : '#F8FAFC', // Đổi màu nền khi focus
+        },
+        isFocused && theme.shadows.soft, // Thêm bóng đổ khi focus
         isTextArea && styles.textAreaContainer
       ]}>
         {leftIcon && (
-          <Ionicons name={leftIcon} size={20} color={theme.colors.secondary} style={styles.leftIcon} />
+          <Ionicons name={leftIcon} size={20} color={isFocused ? theme.colors.primary : theme.colors.secondary} style={styles.leftIcon} />
         )}
         
         <RNTextInput
@@ -107,30 +115,33 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    minHeight: 48,
+    borderWidth: 1.5, // Dày hơn chút để trông cao cấp
+    borderRadius: theme.borderRadius.lg, // Bo góc lớn chuẩn mobile hiện đại
+    backgroundColor: '#F8FAFC',
+    minHeight: 52, // Độ cao chuẩn touch-friendly
   },
   textAreaContainer: {
-    minHeight: 120,
+    minHeight: 100,
     alignItems: 'flex-start',
     paddingVertical: theme.spacing.sm,
   },
   input: {
     flex: 1,
     color: theme.colors.text.primary,
+    fontFamily: 'System',
     fontSize: theme.typography.body.fontSize,
+    paddingVertical: 0,
+    marginLeft: theme.spacing.sm,
   },
   textAreaInput: {
-    minHeight: 100,
+    textAlignVertical: 'top',
+    height: '100%',
   },
   leftIcon: {
-    marginRight: theme.spacing.sm,
+    marginLeft: theme.spacing.sm,
   },
   rightIcon: {
-    marginLeft: theme.spacing.sm,
+    marginRight: theme.spacing.sm,
   },
   messageContainer: {
     marginTop: 4,
