@@ -1,12 +1,26 @@
 # .agent
 
-Thư mục này chứa context dành cho AI agent khi làm việc với repo.
+Thư mục này là bộ điều hành nội bộ cho agent làm việc với `sociedu-mobile`.
 
-## Nội dung
+## Tài liệu chính
 
-- `project-context.md`: kiến trúc, module chính, các điểm cần chú ý.
-- `workflows.md`: quy trình sửa code, kiểm tra, và các rủi ro thường gặp.
+- `instruction.md`: luật làm việc, quy trình lập trình, nguyên tắc kỹ thuật, quy chuẩn code.
+- `mandatory-reading.md`: checklist các file bắt buộc phải đọc trước khi viết code theo từng loại task.
+- `skill.md`: bộ kỹ năng chuẩn, cách suy nghĩ, cách debug, cách xử lý task theo chuẩn mực.
 
-## Mục đích
+## Tài liệu tham chiếu
 
-Giảm thời gian khám phá lại codebase ở mỗi phiên làm việc và giúp agent bám đúng cấu trúc hiện tại của dự án.
+- `project-context.md`: bức tranh nhanh về kiến trúc repo và module hiện tại.
+- `workflows.md`: các workflow thao tác thường gặp.
+- `../docs/ARCHITECTURE.md`: tài liệu kiến trúc gốc của dự án.
+- `../RESPONSIVE_FIX_APPLIED.md`: quy ước và bối cảnh cho responsive system đã được thêm.
+
+## Quy tắc sử dụng
+
+Agent phải đọc theo thứ tự:
+
+1. `instruction.md`
+2. `mandatory-reading.md`
+3. `skill.md`
+
+Sau đó mới quyết định chỉnh sửa code.
