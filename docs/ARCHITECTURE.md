@@ -1,122 +1,134 @@
-# Kiến trúc Ứng dụng UniShare Mobile
+# Kiến trúc Dự án UniShare Mobile (Senior Standard)
 
-## 1. Tổng quan & Tech Stack
-
-UniShare là nền tảng thương mại điện tử giáo dục và kết nối Mentor dành riêng cho sinh viên. 
-
-**Công nghệ lõi (Tech Stack):**
-- **Framework:** React Native + Expo (SDK 50+)
-- **Routing:** Expo Router (File-based routing)
-- **State Management:** Zustand (Kết hợp AsyncStorage để persist data)
-- **Networking:** Axios API Interceptor (Hỗ trợ gắn JWT tự động)
-- **UI/Styling:** StyleSheet thuần (Không dùng Tailwind, bám sát Design System tập trung tại thư mục `src/theme/`)
+Tài liệu này quy định các tiêu chuẩn kiến trúc, cấu trúc thư mục và quy tắc phát triển dành cho dự án UniShare Mobile. Toàn bộ thành viên cần tuân thủ nghiêm ngặt để đảm bảo tính nhất quán và khả năng mở rộng.
 
 ---
 
-## 2. Cấu trúc thư mục (Domain-Driven)
+## 1. Công nghệ lõi (Tech Stack)
 
-Dự án áp dụng cấu trúc phân tách rõ ràng giữa **Màn hình (Routing)** và **Lõi logic/UI (Core/Components)**:
+| Thành phần | Công nghệ |
+| :--- | :--- |
+| **Framework** | React Native + Expo (SDK 50+) |
+| **Routing** | Expo Router (File-based routing) |
+| **State Management** | Zustand |
+| **Storage** | AsyncStorage (Persist via Zustand) |
+| **Networking** | Axios + Interceptors |
+| **UI/Styling** | React Native StyleSheet + Custom Design System |
+| **Icons** | Lucide React Native / Expo Icons |
+
+---
+
+## 2. Quy tắc Đặt tên (Naming Conventions)
+
+- **Thư mục:** `kebab-case` (ví dụ: `auth-services`, `mentor-profile`).
+- **Màn hình (Routes):** `kebab-case` hoặc `[id].tsx` (theo chuẩn Expo Router).
+- **Components:** `PascalCase` (ví dụ: `CustomButton.tsx`, `MentorCard.tsx`).
+- **Hooks/Services/Utils:** `camelCase` (ví dụ: `useAuth.ts`, `authService.ts`).
+- **Constants/Types:** `camelCase` hoặc `UpperSnakeCase` cho hằng số (ví dụ: `COLORS`, `UserType`).
+
+---
+
+## 3. Cấu trúc thư mục (Folder Structure)
+
+Dự án tuân thủ cấu trúc **Modular Layered Architecture**, tập trung toàn bộ logic vào thư mục `src/`.
 
 ```text
 📦 unishare_mobile
- ┣ 📂 app                   # [Routing] Mọi file ở đây đều tương ứng với 1 URL route
- ┃ ┣ 📂 (auth)              # Routing đăng nhập/đăng ký
- ┃ ┣ 📂 (tabs)              # 3 Tabs chính: Trang chủ, Mentor, Hồ sơ
- ┃ ┣ 📂 profile             # Màn hình liên quan profile chi tiết (edit, public view)
- ┃ ┣ 📂 admin               # Admin dashboard route
- ┃ ┣ 📂 mentor              # Mentor dashboard route
- ┃ ┣ 📜 _layout.tsx         # [Guarding] Nơi chặn Luồng chạy auth app
- ┃ ┗ ...
- ┣ 📂 src                   # [Core System] Chứa tất cả nền tảng không liên quan đến Route
- ┃ ┣ 📂 components          # UI Component dùng chung (Buttons, Inputs, Typography, States)
- ┃ ┣ 📂 core                # Quản trị dữ liệu
- ┃ ┃ ┣ 📂 services          # Các class giao tiếp API (authService, userService, mentorService)
- ┃ ┃ ┣ 📂 store             # File cấu hình Zustand (authStore.ts)
- ┃ ┃ ┣ 📜 api.ts            # Cấu hình Axios chung
- ┃ ┃ ┗ 📜 types.ts          # Type Definitions dùng chung (User, MentorInfo, ...)
- ┃ ┗ 📂 theme               # Constants: bảng màu, kích thước chuẩn
+ ┣ 📂 app                   # [Routing Layer] Chỉ chứa các định nghĩa Route
+ ┃ ┣ 📂 (auth)              # Luồng đăng nhập, đăng ký
+ ┃ ┣ 📂 (tabs)              # Luồng chính (Home, Mentor, Profile)
+ ┃ ┣ 📂 [module]            # Các màn hình chi tiết (profile, booking, ...)
+ ┃ ┗ 📜 _layout.tsx         # Root Layout & Auth Guarding logic
+ ┣ 📂 src                   # [Core Layer] Trái tim của ứng dụng
+ ┃ ┣ 📂 assets              # Icons, Images, Fonts (Static files)
+ ┃ ┣ 📂 components          # UI Components phân loại theo chức năng
+ ┃ ┃ ┣ 📂 ui                # Atomic components (Button, Input, Badge)
+ ┃ ┃ ┣ 📂 form              # Form logic & Input groups
+ ┃ ┃ ┣ 📂 display           # Card, List, Complex UI elements
+ ┃ ┃ ┗ 📂 states            # Loading, Empty, Error states
+ ┃ ┣ 📂 core                # Quản trị logic nghiệp vụ
+ ┃ ┃ ┣ 📂 services          # API calls (authService, userService, ...)
+ ┃ ┃ ┣ 📂 store             # State management (Zustand stores)
+ ┃ ┃ ┣ 📂 hooks             # Custom hooks dùng chung (useAuth, useDebounce)
+ ┃ ┃ ┣ 📂 utils             # Helper functions (formatDate, validators)
+ ┃ ┃ ┣ 📜 api.ts            # Axios configuration & Interceptor
+ ┃ ┃ ┗ 📜 types.ts          # Global TypeScript interfaces
+ ┃ ┗ 📂 theme               # Design System (colors, spacing, typography)
+ ┗ 📜 ... config files
+```
+
+> [!IMPORTANT]
+> **Quy tắc vàng:** Không tạo thêm thư mục logic ở gốc dự án. Mọi thứ phải nằm trong `src/` hoặc `app/`.
+
+---
+
+## 4. Sơ đồ Kiến trúc (Architecture Layers)
+
+```mermaid
+graph TD
+    A[App Layer /app] --> B[Core Layer /src/core]
+    A --> C[UI Layer /src/components]
+    B --> D[Networking/API]
+    B --> E[State Management/Zustand]
+    C --> F[Theme System /src/theme]
+    E --> G[Storage/AsyncStorage]
 ```
 
 ---
 
-## 3. Luồng Authentication (Xác thực)
+## 5. Luồng Dữ liệu & Quản lý State
 
-Ứng dụng bắt buộc người dùng trải qua bước đăng nhập với một hệ thống guard tĩnh chặn tại Root.
+### 5.1 Xử lý Xác thực (Authentication)
+Dự án sử dụng cơ chế **Global Guard** tại `app/_layout.tsx`.
+- `authStore` quản lý trạng thái `token` và `user`.
+- Khi khởi động, app thực hiện `hydrate()` để phục hồi session từ `AsyncStorage`.
+- Nếu `isAuthenticated` là `false`, người dùng tự động bị điều hướng về `/(auth)/login`.
 
-- **Storage:** Khi mở app, `authStore` gọi hàm `hydrate()` để đọc token và user context từ `@react-native-async-storage/async-storage`.
-- **Global Guard:** File `app/_layout.tsx` lắng nghe sự thay đổi của biến `isAuthenticated` từ Zustand.
-  - *Nếu chưa đăng nhập:* Bất cứ hành động điều hướng nào (trừ nhóm route `auth`) đều bị `router.replace('/(auth)/login')` để ép về cổng đăng nhập.
-  - *Nếu đã đăng nhập:* Nếu người dùng lỡ gọi vào route màn Login, app sẽ tự `router.replace('/(tabs)')`, chặn không cho phép lùi về Login thông qua nút Back thiết bị.
-- **Mock Fallback:** Trong giai đoạn phát triển khi chưa có Backend thực, `authService` được cấu hình bắt lỗi Network (Catch). Nếu hỏng mạng, nó tự delay 600ms và cấp phát MOCK TOKEN cho user "Nguyễn Văn A" (Buyer) hoặc "Trần Thị B" (Mentor) để luồng điều hướng của dev không bị tắc.
-
----
-
-## 4. Phân Quyền (Role-based Access Control)
-
-Người dùng mang 1 trong 3 tệp role chính: `buyer`, `mentor`, `admin`.
-
-1. **Hiển thị Điều hướng:** Tab Profile (của app) sẽ kiểm tra biến `userRole` lưu trên `authStore`. Nếu role là `mentor` thì sẽ render ra menu "Mentor Dashboard". Tương tự như vậy với `admin`.
-2. **Component mức độ Routing:** App sở hữu `ProtectedRoute.tsx`. Component này sẽ quấn quanh các view yêu cầu quyền hẹp. Nó tiến hành check mảng `allowedRoles`. Nếu không hợp lệ sẽ hiển thị trang báo lỗi _"Bạn không có quyền truy cập"_ hoặc ErrorState.
+### 5.2 Networking (Axios Interceptors)
+- **Request Interceptor:** Tự động đính kèm `Authorization: Bearer <token>` vào mọi yêu cầu.
+- **Response Interceptor:** 
+    - Xử lý lỗi 401 tự động (Logout người dùng nếu token hết hạn).
+    - Map dữ liệu từ API về chuẩn của App.
+- **Mocking:** Hỗ trợ dữ liệu giả (Mock Data) khi Backend chưa sẵn sàng.
 
 ---
 
-## 5. Quản lý State (Zustand)
+## 6. Tiêu chuẩn UI/UX (Design System)
 
-Sự phức tạp của Context API truyền thống bên bản Web bị bãi bỏ do sự cồng kềnh. Mobile sử dụng `Zustand`.
-- **Ưu điểm:** Selector siêu nhẹ, tránh re-render cục bộ mỗi khi React node bị thay đổi.
-- **Triển khai tại `authStore.ts`:** Nắm giữ `user`, `isAuthenticated`, `loading`, và các hành vi (Action) đồng bộ với AsyncStorage như `login`, `logout` và `hydrate`. 
-- *(Các hooks nội bộ cũng được tạo thêm, ví dụ `hooks/useAuth.ts` để gọi nhanh state auth.)*
+Tất cả màn hình **KHÔNG** được sử dụng mã màu inline. Phải tham chiếu từ `theme.ts`:
 
----
-
-## 6. Giao tiếp API & Networking
-
-Tất cả API đi qua cổng duy nhất `src/core/api.ts` bằng cấu hình của Axios.
-
-- **Interceptor (Bộ đánh chặn):** Tự động chặn các Request gửi đi, kiểm tra `AsyncStorage` lấy Bearer Token và tiêm vào HTTP Header một cách tự động.
-- **Service Layer Pattern:** Mỗi một mảng business đều có file tách rời trong `src/core/services/` (ví dụ: `userService`, `mentorService`). Chức năng gọi API được trừu tượng hoá.
-- **Thiết kế Resilience (Chống gián đoạn):** Các khối try-catch được bổ sung, khi API timeout hoặc status 500, các UI Service tự động trả về `MOCK_DATA` phù hợp cho phép dev xem được UI màn hình mà không cần Backend bật.
+- **Spacing:** Sử dụng hệ số 4 (4, 8, 12, 16, 24, 32).
+- **Typography:** Chỉ sử dụng các variant `h1`, `h2`, `body`, `caption` định nghĩa sẵn.
+- **Components:** Ưu tiên sử dụng `CustomButton`, `Typography` thay cho các thẻ mặc định của React Native.
 
 ---
 
-## 7. Trạng thái Màn hình hiện tại
+## 7. Quy tắc Import (Path Aliases)
 
-| Màn hình | Group/Route | Trạng thái | Ghi chú |
-| :--- | :--- | :--- | :--- |
-| **Splash / Auth Guard** | `app/_layout` | 🟢 Hoàn thành | Tự động phân luồng |
-| **Đăng nhập** | `/(auth)/login` | 🟢 Hoàn thành | Dùng Design System |
-| **Đăng ký** | `/(auth)/register` | 🟢 Hoàn thành | Dùng Design System |
-| **Trang chủ** | `/(tabs)/index` | 🟢 Hoàn thành | Thêm thống kê (Stats) |
-| **DS Chuyên gia** | `/(tabs)/mentor` | 🟢 Hoàn thành | Có Modal filter danh mục |
-| **Tab Hồ sơ / Menu**| `/(tabs)/profile` | 🟢 Hoàn thành | Phân chia cài đặt theo Role |
-| **Chi tiết C.Gia** | `/profile/[id]` | 🔴 Skeleton | Chờ thi công Giai đoạn 2 |
-| **Chỉnh sửa User** | `/profile/edit` | 🔴 Skeleton | Chờ thi công Giai đoạn 2 |
-| **Mentor Panel** | `/mentor/dashboard` | 🔴 Skeleton | Chờ thi công Giai đoạn 3 |
-| **Admin Panel** | `/admin/index` | 🔴 Skeleton | Chờ thi công Giai đoạn 3 |
+Khuyến khích sử dụng Absolute Path để tránh các đường dẫn `../../../`:
+- `@/app/*`
+- `@/components/*`
+- `@/core/*`
+- `@/theme/*`
 
 ---
 
-## 8. Theme & Design System
+## 8. Hiệu năng & Bảo mật
 
-Không định nghĩa bừa code màu Inline trong các View. Toàn bộ thông số thẩm mỹ được gói trong `src/theme/theme.ts`.
-- **Colors:** Quản lý quy luật màu Xanh tím `primary: '#4F46E5'`, thẻ Input nhạt `primaryLight`, hoặc cảnh báo `error: '#EF4444'`.
-- **Typography:** Text mặc định của hệ thống đã bị che khuất và sử dụng thay bằng bộ token: `h1`, `h2`, `body`, `caption`,...
-- **Spacing / BorderRadius:** Đảm bảo viền bo và khoảng cách Margin/Padding trên toàn giao diện có nhịp điệu đồng bộ tuyệt đối (VD: Đều nhân số của 4, 8, 16).
-
----
-
-## 9. Block Components Dùng Chung
-
-Thư mục `src/components/` đóng vai trò là "Kho lắp ráp" độc lập:
-- `Typography.tsx`: Quản lý 100% chữ nghĩa trong app, nhận các biến `variant` và `color`. Vắng mặt thẻ `<Text>` nguyên bản ở các màn.
-- `CustomButton.tsx`: Nút ấn có sẵn Effect ripple, thuộc tính `loading`, cho phép gắn `icon`.
-- `TextInput.tsx`: Form Input tự động bắt Focus, viền xanh tím nổi khối, gắn kèm Error alert text và tích hợp nút dạng con mắt (passwords).
-- State Handler (`EmptyState.tsx`, `LoadingState.tsx`, `ErrorState.tsx`): 3 màn hình cảnh báo tập trung, dùng nhúng trực tiếp vào các ScrollView khi mảng API Data đang bị Delay, Lỗi, hoặc rỗng (bảng dữ liệu null).
+1. **Performance:** 
+    - Sử dụng `FlashList` thay cho `FlatList` cho các danh sách dài.
+    - Memoize các component nặng bằng `React.memo`.
+2. **Security:**
+    - Không lưu thông tin nhạy cảm vào `AsyncStorage` dưới dạng plain text (nếu có thể hãy dùng SecureStore).
+    - Validate dữ liệu đầu vào tại tầng Service.
 
 ---
 
-## 10. Tiếp nối: Việc cần làm (Next Steps)
+## 9. Danh sách Màn hình (Roadmap)
 
-1. Thiết kế và thi công màn hình `/profile/[id].tsx` với chuẩn React Native Segmented Tab để thay thế cho Navbar nằm ngang cồng kềnh trên Desktop.
-2. Hoàn thiện `/profile/edit.tsx` (Form Edit).
-3. Đẩy mạnh tích hợp với Backend API thật, sau đó tiến quân sang Giai đoạn thi công các trang quản trị (Admin Dashboard, Mentor Dashboard) để khép kín App.
+| Route | Chức năng | Trạng thái |
+| :--- | :--- | :--- |
+| `/(auth)/login` | Đăng nhập |  Done |
+| `/(tabs)/index` | Trang chủ |  Done |
+| `/profile/[id]` | Chi tiết Mentor |  In progress |
+| `/mentor/dashboard` | Quản trị Mentor |  Planned |
