@@ -131,4 +131,4 @@ Khuyến khích sử dụng Absolute Path để tránh các đường dẫn `../
 | `/(auth)/login` | Đăng nhập |  Done |
 | `/(tabs)/index` | Trang chủ |  Done |
 | `/profile/[id]` | Chi tiết Mentor |  In progress |
-| `/mentor/dashboard` | Quản trị Mentor |  Planned |
+| `/messege` | Quản trị Mentor |  In progress |
