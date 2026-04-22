@@ -18,21 +18,27 @@ import { theme } from '../../src/theme/theme';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { authService } from '../../src/core/services/authService';
 
-// ─── Design Tokens (matching web LoginPage palette) ────────────
-const C = {
-  dark: '#222222',
-  gray: '#717171',
-  blue: theme.colors.primary,
-  blueBg: '#EFF6FF',
-  bg: '#F3F2EF',
-  surface: '#FFFFFF',
-  inputBg: '#F5F5F4',
-  errorBg: '#FEF2F2',
-  errorBorder: '#FECACA',
-  error: '#DC2626',
-  divider: '#E5E7EB',
-  socialBorder: '#E5E7EB',
-  google: '#EA4335',
+/**
+ * 🛠️ PRODUCTION DESIGN SYSTEM
+ */
+const DESIGN = {
+  spacing: {
+    container: 24,
+    gap: 16,
+    xl: 40,
+  },
+  colors: {
+    background: '#F8FAFC',
+    surface: '#FFFFFF',
+    primary: theme.colors.primary,
+    secondary: '#64748B',
+    error: '#EF4444',
+    border: '#E2E8F0',
+  },
+  radius: {
+    card: 32,
+    button: 16,
+  }
 };
 
 export default function LoginScreen() {
@@ -41,356 +47,282 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   const router = useRouter();
   const storeLogin = useAuthStore((s) => s.login);
 
-  // ─── Animations ──────────────────────────────────────────
-  const logoScale = useRef(new Animated.Value(0)).current;
-  const formOpacity = useRef(new Animated.Value(0)).current;
-  const formSlide = useRef(new Animated.Value(30)).current;
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(logoScale, {
-        toValue: 1,
-        tension: 60,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(formOpacity, {
-        toValue: 1,
-        duration: 600,
-        delay: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(formSlide, {
-        toValue: 0,
-        duration: 600,
-        delay: 200,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
     ]).start();
   }, []);
 
-  // ─── Login handler (mirror web handleSubmit) ──────────────
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError('Vui lòng nhập đầy đủ email và mật khẩu.');
+    // 1. Reset & Validate
+    setError(null);
+    const errs: { email?: string; password?: string } = {};
+    if (!email.trim()) errs.email = 'Vui lòng nhập email.';
+    if (!password) errs.password = 'Vui lòng nhập mật khẩu.';
+    
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
       return;
     }
 
+    // 2. API Call
     setLoading(true);
-    setError(null);
-
     try {
       const data = await authService.login({ email: email.trim(), password });
       storeLogin(data);
-      // Root layout auth guard sẽ tự redirect về (tabs)
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      setError(err.message || 'Đăng nhập thất bại.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ═══════════════ BRANDING ═══════════════ */}
-          <Animated.View style={[styles.branding, { transform: [{ scale: logoScale }] }]}>
+          {/* BRANDING */}
+          <View style={styles.branding}>
             <View style={styles.logoBox}>
-              <Ionicons name="code-slash-outline" size={28} color={C.dark} />
+              <Ionicons name="code-slash" size={32} color={DESIGN.colors.primary} />
             </View>
-            <Typography variant="h1" style={styles.brandName}>UniShare</Typography>
-            <Typography variant="caption" style={styles.brandTagline}>
-              Sàn tri thức dành cho sinh viên
-            </Typography>
-          </Animated.View>
+            <Typography variant="h1" style={styles.appName}>UniShare</Typography>
+            <Typography variant="body" color="secondary">Học tập & Kết nối tri thức</Typography>
+          </View>
 
-          {/* ═══════════════ FORM CARD ═══════════════ */}
-          <Animated.View
-            style={[
-              styles.formCard,
-              { opacity: formOpacity, transform: [{ translateY: formSlide }] },
-            ]}
-          >
-            {/* Heading */}
-            <View style={styles.heading}>
-              <Typography variant="h2" style={styles.welcomeTitle}>
-                Chào mừng trở lại!
-              </Typography>
-              <Typography variant="body" color="secondary">
-                Vui lòng đăng nhập để tiếp tục.
-              </Typography>
+          {/* LOGIN CARD */}
+          <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            <View style={styles.cardHeader}>
+              <Typography variant="h2" style={styles.welcomeText}>Chào mừng trở lại</Typography>
+              <Typography variant="caption" color="secondary">Đăng nhập bằng tài khoản sinh viên</Typography>
             </View>
 
-            {/* Email */}
-            <TextInput
-              label="EMAIL SINH VIÊN"
-              placeholder="name@university.edu.vn"
-              leftIcon="mail-outline"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              returnKeyType="next"
-            />
+            <View style={styles.form}>
+              <TextInput
+                label="EMAIL"
+                leftIcon="mail-outline"
+                value={email}
+                onChangeText={(v) => { setEmail(v); setFieldErrors(p => ({ ...p, email: undefined })); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                error={fieldErrors.email}
+              />
 
-            {/* Password */}
-            <TextInput
-              label="MẬT KHẨU"
-              placeholder="••••••••"
-              leftIcon="lock-closed-outline"
-              rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              onRightIconPress={() => setShowPassword(!showPassword)}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              returnKeyType="done"
-              onSubmitEditing={handleLogin}
-            />
+              <TextInput
+                label="MẬT KHẨU"
+                leftIcon="lock-closed-outline"
+                rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+                value={password}
+                onChangeText={(v) => { setPassword(v); setFieldErrors(p => ({ ...p, password: undefined })); }}
+                secureTextEntry={!showPassword}
+                error={fieldErrors.password}
+              />
 
-            {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
-              <Typography variant="label" style={styles.forgotText}>
-                Quên mật khẩu?
-              </Typography>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push('/(auth)/otp')}>
+                <Typography variant="label" weight="700" color="primary">Quên mật khẩu?</Typography>
+              </TouchableOpacity>
+            </View>
 
-            {/* Error */}
             {error && (
               <View style={styles.errorBox}>
-                <Ionicons name="alert-circle" size={18} color={C.error} />
-                <Typography variant="label" style={styles.errorText}>
-                  {error}
-                </Typography>
+                <Ionicons name="alert-circle" size={16} color={DESIGN.colors.error} />
+                <Typography variant="caption" style={styles.errorText}>{error}</Typography>
               </View>
             )}
 
-            {/* Login Button */}
             <CustomButton
               label="Đăng nhập"
               variant="primary"
               size="lg"
               loading={loading}
               disabled={loading}
-              icon={!loading ? <Ionicons name="arrow-forward" size={18} color="#FFF" /> : undefined}
               onPress={handleLogin}
               style={styles.loginBtn}
             />
 
-            {/* ═══════ DIVIDER ═══════ */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Typography variant="caption" style={styles.dividerText}>
-                HOẶC TIẾP TỤC VỚI
-              </Typography>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* ═══════ SOCIAL ═══════ */}
-            <View style={styles.socialRow}>
-              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
-                <Ionicons name="logo-google" size={20} color={C.google} />
-                <Typography variant="label" style={styles.socialBtnText}>Google</Typography>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
-                <Ionicons name="logo-github" size={20} color={C.dark} />
-                <Typography variant="label" style={styles.socialBtnText}>GitHub</Typography>
-              </TouchableOpacity>
-            </View>
-
-            {/* ═══════ REGISTER ═══════ */}
             <View style={styles.registerRow}>
-              <Typography variant="body" color="secondary">
-                Chưa có tài khoản?
-              </Typography>
+              <Typography variant="body" color="secondary">Chưa có tài khoản?</Typography>
               <Link href="/(auth)/register" asChild>
-                <TouchableOpacity activeOpacity={0.7}>
-                  <Typography variant="bodyMedium" weight="700" style={styles.registerLink}>
-                    {' '}Đăng ký miễn phí
-                  </Typography>
+                <TouchableOpacity style={styles.touchTarget}>
+                  <Typography variant="body" weight="700" color="primary"> Đăng ký ngay</Typography>
                 </TouchableOpacity>
               </Link>
             </View>
           </Animated.View>
+
+          {/* SOCIAL SECTION */}
+          <View style={styles.socialSection}>
+            <View style={styles.dividerRow}>
+              <View style={styles.line} />
+              <Typography variant="caption" color="secondary" style={styles.dividerText}>HOẶC</Typography>
+              <View style={styles.line} />
+            </View>
+
+            <View style={styles.socialRow}>
+              <SocialButton icon="logo-google" label="Google" color="#EA4335" />
+              <SocialButton icon="logo-github" label="GitHub" color="#181717" />
+            </View>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────
+/**
+ * 🧩 REUSABLE SUB-COMPONENTS (Clean Code Pattern)
+ */
+const SocialButton = ({ icon, label, color }: { icon: any, label: string, color: string }) => (
+  <TouchableOpacity style={styles.socialBtn}>
+    <Ionicons name={icon} size={20} color={color} />
+    <Typography variant="label" weight="600">{label}</Typography>
+  </TouchableOpacity>
+);
+
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: DESIGN.colors.background,
   },
   flex: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: DESIGN.spacing.container,
     paddingBottom: 40,
-    justifyContent: 'center',
+    paddingTop: 40,
   },
-
-  // ── Branding ──
   branding: {
     alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 12,
+    marginBottom: DESIGN.spacing.xl,
   },
   logoBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: C.surface,
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: DESIGN.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  brandName: {
+  appName: {
     fontSize: 32,
     fontWeight: '900',
-    color: C.dark,
-    letterSpacing: -1.5,
+    color: '#1E293B',
+    letterSpacing: -1,
   },
-  brandTagline: {
-    color: C.gray,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-
-  // ── Form Card ──
-  formCard: {
-    backgroundColor: C.surface,
-    borderRadius: 24,
-    padding: 24,
+  card: {
+    backgroundColor: DESIGN.colors.surface,
+    borderRadius: DESIGN.radius.card,
+    padding: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
+    elevation: 5,
   },
-
-  // ── Heading ──
-  heading: {
-    marginBottom: 24,
+  cardHeader: {
+    marginBottom: 32,
   },
-  welcomeTitle: {
-    color: C.dark,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-
-  // ── Forgot ──
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginTop: -12,
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 4,
   },
-  forgotText: {
-    color: C.blue,
-    fontWeight: '700',
+  form: {
+    gap: DESIGN.spacing.gap,
   },
-
-  // ── Error ──
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginTop: -8,
+    paddingVertical: 8,
+  },
+  loginBtn: {
+    marginTop: 24,
+    height: 56,
+    borderRadius: DESIGN.radius.button,
+  },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: C.errorBg,
-    borderWidth: 1,
-    borderColor: C.errorBorder,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
+    backgroundColor: '#FEF2F2',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 16,
+    gap: 8,
   },
   errorText: {
-    color: C.error,
-    fontWeight: '700',
-    flex: 1,
+    color: DESIGN.colors.error,
+    fontWeight: '600',
   },
-
-  // ── Login Button ──
-  loginBtn: {
-    borderRadius: 16,
-    marginBottom: 24,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+    alignItems: 'center',
   },
-
-  // ── Divider ──
-  divider: {
+  touchTarget: {
+    padding: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  socialSection: {
+    marginTop: 32,
+  },
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    gap: 12,
   },
-  dividerLine: {
+  line: {
     flex: 1,
     height: 1,
-    backgroundColor: C.divider,
+    backgroundColor: DESIGN.colors.border,
   },
   dividerText: {
-    color: C.gray,
     fontWeight: '700',
-    marginHorizontal: 12,
     letterSpacing: 1,
   },
-
-  // ── Social ──
   socialRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
   },
   socialBtn: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    height: 52,
+    borderRadius: DESIGN.radius.button,
+    borderWidth: 1,
+    borderColor: DESIGN.colors.border,
+    backgroundColor: DESIGN.colors.surface,
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 10,
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: C.socialBorder,
-    backgroundColor: C.surface,
-  },
-  socialBtnText: {
-    color: C.dark,
-    fontWeight: '700',
-  },
-
-  // ── Register ──
-  registerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  registerLink: {
-    color: C.blue,
   },
 });

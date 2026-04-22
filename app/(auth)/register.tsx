@@ -6,6 +6,8 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +37,14 @@ const C = {
   google: '#EA4335',
 };
 
+// ─── Field-level errors ─────────────────────────────────────
+interface FieldErrors {
+  lastName?: string;
+  firstName?: string;
+  email?: string;
+  password?: string;
+}
+
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -43,6 +53,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [success, setSuccess] = useState(false);
 
   const router = useRouter();
@@ -75,12 +86,28 @@ export default function RegisterScreen() {
     ]).start();
   }, []);
 
+  // ─── Validate từng field ────────────────────────────────────
+  const validateFields = (): boolean => {
+    const errs: FieldErrors = {};
+    if (!lastName.trim()) errs.lastName = 'Họ không được để trống.';
+    if (!firstName.trim()) errs.firstName = 'Tên không được để trống.';
+    if (!email.trim()) {
+      errs.email = 'Email không được để trống.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = 'Email không đúng định dạng.';
+    }
+    if (!password) {
+      errs.password = 'Mật khẩu không được để trống.';
+    } else if (password.length < 6) {
+      errs.password = 'Mật khẩu phải có ít nhất 6 ký tự.';
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   // ─── Register handler (mirror web handleSubmit) ───────────
   const handleRegister = async () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      setError('Vui lòng nhập đầy đủ thông tin.');
-      return;
-    }
+    if (!validateFields()) return;
 
     setLoading(true);
     setError(null);
@@ -104,16 +131,11 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
           {/* ═══════════════ BRANDING ═══════════════ */}
           <Animated.View style={[styles.branding, { transform: [{ scale: logoScale }] }]}>
             <View style={styles.logoBox}>
@@ -147,45 +169,47 @@ export default function RegisterScreen() {
               label="HỌ"
               placeholder="Nguyễn"
               value={lastName}
-              onChangeText={setLastName}
+              onChangeText={(v) => { setLastName(v); setFieldErrors((p) => ({ ...p, lastName: undefined })); }}
               autoCapitalize="words"
               returnKeyType="next"
+              error={fieldErrors.lastName}
             />
             <TextInput
               label="TÊN"
               placeholder="Văn A"
               value={firstName}
-              onChangeText={setFirstName}
+              onChangeText={(v) => { setFirstName(v); setFieldErrors((p) => ({ ...p, firstName: undefined })); }}
               autoCapitalize="words"
               returnKeyType="next"
+              error={fieldErrors.firstName}
             />
 
             {/* Email */}
             <TextInput
               label="EMAIL SINH VIÊN"
-              placeholder="name@university.edu.vn"
               leftIcon="mail-outline"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(v) => { setEmail(v); setFieldErrors((p) => ({ ...p, email: undefined })); }}
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
               returnKeyType="next"
+              error={fieldErrors.email}
             />
 
             {/* Password */}
             <TextInput
               label="MẬT KHẨU"
-              placeholder="••••••••"
               leftIcon="lock-closed-outline"
               rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
               onRightIconPress={() => setShowPassword(!showPassword)}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(v) => { setPassword(v); setFieldErrors((p) => ({ ...p, password: undefined })); }}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
               returnKeyType="done"
               onSubmitEditing={handleRegister}
+              error={fieldErrors.password}
             />
 
             {/* Error */}
@@ -256,7 +280,6 @@ export default function RegisterScreen() {
             </View>
           </Animated.View>
         </ScrollView>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -274,7 +297,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingBottom: 40,
-    justifyContent: 'center',
+    paddingTop: 40,
   },
 
   // ── Branding ──

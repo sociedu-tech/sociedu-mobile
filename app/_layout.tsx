@@ -35,16 +35,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (!hydrated || loading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const rootSegment = segments[0];
+    const inAuthGroup = rootSegment === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
-      // Chưa đăng nhập mà cố vào các route khác → chặn lại
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
-      // Đã đăng nhập → không cho ở lại auth screens
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, segments, hydrated, loading]);
+  }, [isAuthenticated, hydrated, loading, segments[0]]); // Chỉ phụ thuộc vào segment đầu tiên thay vì toàn bộ mảng
 
   // ── Splash / loading ────────────────────────────────────
   if (!hydrated || loading) {

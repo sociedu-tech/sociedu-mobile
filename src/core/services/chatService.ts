@@ -47,6 +47,7 @@ class ChatService {
     return new Promise((resolve) => {
       const newMessage: ChatMessage = {
         id: Date.now().toString(),
+        conversationId,
         sender,
         text,
         createdAt: Date.now(),

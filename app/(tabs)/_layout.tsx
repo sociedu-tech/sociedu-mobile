@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { theme } from '../../src/theme/theme';
 import { StyleSheet, View } from 'react-native';
+import { useAuthStore } from '../../src/core/store/authStore';
 
 /**
  * Tabs Layout
@@ -18,6 +19,14 @@ import { StyleSheet, View } from 'react-native';
  * để tránh crash nếu file vẫn tồn tại trong thư mục.
  */
 export default function TabsLayout() {
+  const userRole = useAuthStore((s) => s.userRole);
+
+  // ── Quy tắc hiển thị tab theo role ─────────────────────────
+  // - Mentor: không cần tìm Mentor khác → ẩn tab "Chuyên gia"
+  // - Guest : chưa đăng nhập → ẩn "Tin nhắn" và "Lịch hẹn"
+  const isMentor = userRole === 'mentor';
+  const isGuest = userRole === 'guest';
+
   return (
     <Tabs
       screenOptions={{
@@ -52,6 +61,7 @@ export default function TabsLayout() {
         name="mentor"
         options={{
           title: 'Chuyên gia',
+          href: isMentor ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
@@ -64,6 +74,7 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: 'Tin nhắn',
+          href: isGuest ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
@@ -76,6 +87,7 @@ export default function TabsLayout() {
         name="bookings"
         options={{
           title: 'Lịch hẹn',
+          href: isGuest ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />

@@ -7,6 +7,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -140,9 +141,11 @@ export default function EditProfileScreen() {
              {/* Text-based Avatar Box thay vì Icon */}
              <View style={styles.avatarBox}>
                {avatarUri ? (
-                 <View style={styles.avatarBoxInner} />
-                 // Tích hợp Image thật: <Image source={{uri: avatarUri}} style={styles.avatarBoxInner} />
-                 // Do policy KHÔNG sử dụng ICON (kể cả back button), form tập trung thuần text.
+                 <Image
+                   source={{ uri: avatarUri }}
+                   style={styles.avatarBoxInner}
+                   resizeMode="cover"
+                 />
                ) : (
                  <Typography variant="h1" style={styles.avatarInitials}>{getInitials()}</Typography>
                )}

@@ -16,8 +16,9 @@ import { api, unwrap } from '../api';
 import {
   MentorProfileResponseDTO,
   ServicePackageResponseDTO,
+  MentorPackage,
 } from '../types';
-import { toMentorList, toMentorUser } from '../adapters/mentorAdapter';
+import { toMentorList, toMentorUser, toPackage } from '../adapters/mentorAdapter';
 import { User } from '../types';
 import { userService } from './userService';
 import { USE_MOCK } from '../config';
@@ -110,9 +111,6 @@ export const mentorService = {
     await api.delete(`${BASE}/me/packages/${pkgId}`);
   },
 
-  /**
-   * Lấy danh sách curriculum của 1 package version (ROLE_MENTOR)
-   */
   getCurriculum: async (pkgId: string | number, verId: string | number) => {
     const res = await api.get(`${BASE}/me/packages/${pkgId}/versions/${verId}/curriculums`);
     return unwrap(res);
@@ -132,4 +130,29 @@ export const mentorService = {
     );
     return unwrap(res);
   },
+
+  // ─── NEW MOCK METHODS FOR PRODUCTION UI ─────────────────────────
+
+  getMyServices: async (): Promise<MentorPackage[]> => {
+    const res = USE_MOCK 
+      ? await mockMentorApi.getMyServices()
+      : await api.get<{ data: ServicePackageResponseDTO[] }>(`${BASE}/me/packages`); // Thực tế API GET /me/packages
+    return (unwrap(res) ?? []).map(toPackage);
+  },
+
+  toggleServiceStatus: async (pkgId: string, isActive: boolean): Promise<void> => {
+    if (USE_MOCK) {
+      await mockMentorApi.toggleServiceStatus(pkgId, isActive);
+    } else {
+      await api.patch(`${BASE}/me/packages/${pkgId}/status`, { isActive });
+    }
+  },
+
+  saveService: async (data: any): Promise<void> => {
+    if (USE_MOCK) {
+      await mockMentorApi.saveService(data);
+    } else {
+      await api.post(`${BASE}/me/packages`, data);
+    }
+  }
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   View, 
   TextInput as RNTextInput, 
@@ -21,7 +21,7 @@ export interface TextInputProps extends RNTextInputProps {
   isTextArea?: boolean;
 }
 
-export const TextInput: React.FC<TextInputProps> = ({
+export const TextInput: React.FC<TextInputProps> = React.memo(({
   label,
   error,
   helperText,
@@ -32,35 +32,24 @@ export const TextInput: React.FC<TextInputProps> = ({
   style,
   ...rest
 }) => {
-  const [isFocused, setIsFocused] = useState(false);
   const breakpoint = useBreakpoint();
   const responsiveStyle = getTextInputStyle(breakpoint);
-
-  const getBorderColor = () => {
-    if (error) return theme.colors.error;
-    if (isFocused) return theme.colors.primary;
-    return theme.colors.border.default;
-  };
 
   return (
     <View style={styles.container}>
       {label && (
-        <Typography variant="label" color={error ? 'error' : 'primary'} style={styles.label}>
+        <Typography variant="label" style={styles.label}>
           {label}
         </Typography>
       )}
       
       <View style={[
-        styles.inputContainer, 
-        { 
-          borderColor: getBorderColor(),
-          backgroundColor: isFocused ? '#FFF' : '#F8FAFC', // Đổi màu nền khi focus
-        },
-        isFocused && theme.shadows.soft, // Thêm bóng đổ khi focus
+        styles.inputContainer,
+        responsiveStyle,
         isTextArea && styles.textAreaContainer
       ]}>
         {leftIcon && (
-          <Ionicons name={leftIcon} size={20} color={isFocused ? theme.colors.primary : theme.colors.secondary} style={styles.leftIcon} />
+          <Ionicons name={leftIcon} size={20} color={theme.colors.secondary} style={styles.leftIcon} />
         )}
         
         <RNTextInput
@@ -69,14 +58,6 @@ export const TextInput: React.FC<TextInputProps> = ({
             isTextArea && styles.textAreaInput,
             style
           ]}
-          onFocus={(e) => {
-            setIsFocused(true);
-            rest.onFocus?.(e);
-          }}
-          onBlur={(e) => {
-            setIsFocused(false);
-            rest.onBlur?.(e);
-          }}
           placeholderTextColor={theme.colors.text.disabled}
           multiline={isTextArea}
           textAlignVertical={isTextArea ? 'top' : 'center'}
@@ -103,7 +84,7 @@ export const TextInput: React.FC<TextInputProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
