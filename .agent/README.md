@@ -1,26 +1,33 @@
 # .agent
 
-Thư mục này là bộ điều hành nội bộ cho agent làm việc với `sociedu-mobile`.
+Thu muc nay la bo dieu hanh noi bo cho agent lam viec voi `sociedu-mobile`.
 
-## Tài liệu chính
+## Tai lieu chinh
 
-- `instruction.md`: luật làm việc, quy trình lập trình, nguyên tắc kỹ thuật, quy chuẩn code.
-- `mandatory-reading.md`: checklist các file bắt buộc phải đọc trước khi viết code theo từng loại task.
-- `skill.md`: bộ kỹ năng chuẩn, cách suy nghĩ, cách debug, cách xử lý task theo chuẩn mực.
+- `instruction.md`: luat lam viec, quy trinh lap trinh, nguyen tac ky thuat, quy chuan code.
+- `mandatory-reading.md`: checklist cac file bat buoc phai doc truoc khi viet code theo tung loai task.
+- `skill.md`: bo ky nang chuan, cach suy nghi, cach debug, cach xu ly task theo chuan muc.
 
-## Tài liệu tham chiếu
+## Tai lieu tham chieu
 
-- `project-context.md`: bức tranh nhanh về kiến trúc repo và module hiện tại.
-- `workflows.md`: các workflow thao tác thường gặp.
-- `../docs/ARCHITECTURE.md`: tài liệu kiến trúc gốc của dự án.
-- `../docs/ARCHITECTURE.md`: quy chuẩn responsive va kien truc bo sung cua du an.
+- `project-context.md`: buc tranh nhanh ve kien truc repo va module hien tai.
+- `workflows.md`: cac workflow thao tac thuong gap.
+- `external-skills.md`: danh gia cac skill ben ngoai co the bo sung cho repo nay.
+- `../docs/ARCHITECTURE.md`: tai lieu kien truc goc va quy chuan responsive cua du an.
 
-## Quy tắc sử dụng
+## External skills da cai
 
-Agent phải đọc theo thứ tự:
+- `vercel-react-native-skills`
+- `vercel-composition-patterns`
+
+Day la lop bo sung. Tai lieu trong `.agent/` van la nguon uu tien cao hon.
+
+## Quy tac su dung
+
+Agent phai doc theo thu tu:
 
 1. `instruction.md`
 2. `mandatory-reading.md`
 3. `skill.md`
 
-Sau đó mới quyết định chỉnh sửa code.
+Sau do moi quyet dinh chinh sua code.

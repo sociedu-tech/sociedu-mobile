@@ -1,43 +1,53 @@
 # AGENTS.md
 
-Tài liệu entrypoint cho mọi coding agent làm việc trong repo `sociedu-mobile`.
+Tai lieu entrypoint cho moi coding agent lam viec trong repo `sociedu-mobile`.
 
-## Bắt buộc đọc theo thứ tự
+## Bat buoc doc theo thu tu
 
 1. `.agent/instruction.md`
 2. `.agent/mandatory-reading.md`
 3. `.agent/skill.md`
 
-Không bắt đầu sửa code nếu chưa đọc đủ 3 file trên.
+Khong bat dau sua code neu chua doc du 3 file tren.
 
-## Mục tiêu repo
+## Skill ngoai da cai
 
-- Ứng dụng mobile dùng Expo + React Native + Expo Router.
-- Kiến trúc ưu tiên tách route, UI, service, store và adapter.
-- Mục tiêu hiện tại là giữ codebase dễ mở rộng, dễ review và không phá flow auth hoặc responsive UI đã có.
+Repo da cai cac skill commit-duoc trong `.agents/skills/`:
 
-## Lệnh cơ bản
+- `vercel-react-native-skills`
+- `vercel-composition-patterns`
 
-- Cài dependency: `npm install`
-- Chạy dev server: `npm run start`
-- Chạy Android: `npm run android`
-- Chạy iOS: `npm run ios`
-- Chạy web: `npm run web`
+Chi dung chung khi task thuc su can. Tai lieu noi bo trong `.agent/` van la nguon uu tien cao hon.
+
+## Muc tieu repo
+
+- Ung dung mobile dung Expo + React Native + Expo Router.
+- Kien truc uu tien tach route, UI, service, store va adapter.
+- Muc tieu hien tai la giu codebase de mo rong, de review va khong pha flow auth hoac responsive UI da co.
+
+## Lenh co ban
+
+- Cai dependency: `npm install`
+- Chay dev server: `npm run start`
+- Chay Android: `npm run android`
+- Chay iOS: `npm run ios`
+- Chay web: `npm run web`
 - Lint: `npm run lint`
 
-## Nguyên tắc ngắn
+## Nguyen tac ngan
 
-- Ưu tiên đọc tài liệu trong `.agent/` trước khi sửa.
-- Ưu tiên sửa trong `app/`, `src/`, `docs/`; tránh đụng vào `components/` starter nếu không thật sự cần.
-- Không hard-code thêm API URL, auth rule hoặc style token mới trong screen.
-- Mọi thay đổi phải giữ nhất quán với Expo Router, auth flow và responsive system hiện có.
+- Uu tien doc tai lieu trong `.agent/` truoc khi sua.
+- Uu tien sua trong `app/`, `src/`, `docs/`; tranh dung vao `components/` starter neu khong that su can.
+- Khong hard-code them API URL, auth rule hoac style token moi trong screen.
+- Moi thay doi phai giu nhat quan voi Expo Router, auth flow va responsive system hien co.
 
-## Tài liệu hỗ trợ
+## Tai lieu ho tro
 
-- Quy trình và nguyên tắc: `.agent/instruction.md`
-- Checklist bắt buộc đọc trước khi code: `.agent/mandatory-reading.md`
-- Kỹ năng và cách giải quyết vấn đề chuẩn: `.agent/skill.md`
-- Context dự án: `.agent/project-context.md`
-- Workflow thao tác: `.agent/workflows.md`
-- Kiến trúc dự án hiện tại: `docs/ARCHITECTURE.md`
-- Quy chuẩn responsive: `docs/ARCHITECTURE.md`
+- Quy trinh va nguyen tac: `.agent/instruction.md`
+- Checklist bat buoc doc truoc khi code: `.agent/mandatory-reading.md`
+- Ky nang va cach giai quyet van de chuan: `.agent/skill.md`
+- Danh gia skill ben ngoai phu hop: `.agent/external-skills.md`
+- Context du an: `.agent/project-context.md`
+- Workflow thao tac: `.agent/workflows.md`
+- Kien truc du an hien tai: `docs/ARCHITECTURE.md`
+- Quy chuan responsive: `docs/ARCHITECTURE.md`
