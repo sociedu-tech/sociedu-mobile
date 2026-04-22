@@ -40,4 +40,4 @@ Không bắt đầu sửa code nếu chưa đọc đủ 3 file trên.
 - Context dự án: `.agent/project-context.md`
 - Workflow thao tác: `.agent/workflows.md`
 - Kiến trúc dự án hiện tại: `docs/ARCHITECTURE.md`
-- Ghi chú responsive đã áp dụng: `RESPONSIVE_FIX_APPLIED.md`
+- Quy chuẩn responsive: `docs/ARCHITECTURE.md`

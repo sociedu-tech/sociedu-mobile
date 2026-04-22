@@ -94,7 +94,7 @@ Agent phải:
 Chuẩn mực:
 
 - Không hard-code kích thước mới một cách tùy tiện.
-- Không bỏ qua `RESPONSIVE_FIX_APPLIED.md` khi sửa UI quan trọng.
+- Khong bo qua quy chuan responsive trong `docs/ARCHITECTURE.md` khi sua UI quan trong.
 
 ## 8. Kỹ năng thêm feature mới
 

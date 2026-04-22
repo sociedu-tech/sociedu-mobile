@@ -1,134 +1,167 @@
-# Kiến trúc Dự án UniShare Mobile (Senior Standard)
+# Kien Truc Du An UniShare Mobile
 
-Tài liệu này quy định các tiêu chuẩn kiến trúc, cấu trúc thư mục và quy tắc phát triển dành cho dự án UniShare Mobile. Toàn bộ thành viên cần tuân thủ nghiêm ngặt để đảm bảo tính nhất quán và khả năng mở rộng.
+Tai lieu nay quy dinh cac tieu chuan kien truc, cau truc thu muc va quy tac phat trien cho du an `sociedu-mobile`.
 
 ---
 
-## 1. Công nghệ lõi (Tech Stack)
+## 1. Cong Nghe Loi
 
-| Thành phần | Công nghệ |
+| Thanh phan | Cong nghe |
 | :--- | :--- |
-| **Framework** | React Native + Expo (SDK 50+) |
-| **Routing** | Expo Router (File-based routing) |
-| **State Management** | Zustand |
-| **Storage** | AsyncStorage (Persist via Zustand) |
-| **Networking** | Axios + Interceptors |
-| **UI/Styling** | React Native StyleSheet + Custom Design System |
-| **Icons** | Lucide React Native / Expo Icons |
+| Framework | React Native + Expo |
+| Routing | Expo Router |
+| State Management | Zustand |
+| Storage | AsyncStorage |
+| Networking | Axios + Interceptors |
+| UI/Styling | React Native StyleSheet + custom design system |
+| Icons | Expo vector icons |
 
 ---
 
-## 2. Quy tắc Đặt tên (Naming Conventions)
+## 2. Quy Tac Dat Ten
 
-- **Thư mục:** `kebab-case` (ví dụ: `auth-services`, `mentor-profile`).
-- **Màn hình (Routes):** `kebab-case` hoặc `[id].tsx` (theo chuẩn Expo Router).
-- **Components:** `PascalCase` (ví dụ: `CustomButton.tsx`, `MentorCard.tsx`).
-- **Hooks/Services/Utils:** `camelCase` (ví dụ: `useAuth.ts`, `authService.ts`).
-- **Constants/Types:** `camelCase` hoặc `UpperSnakeCase` cho hằng số (ví dụ: `COLORS`, `UserType`).
-
----
-
-## 3. Cấu trúc thư mục (Folder Structure)
-
-Dự án tuân thủ cấu trúc **Modular Layered Architecture**, tập trung toàn bộ logic vào thư mục `src/`.
-
-```text
-📦 unishare_mobile
- ┣ 📂 app                   # [Routing Layer] Chỉ chứa các định nghĩa Route
- ┃ ┣ 📂 (auth)              # Luồng đăng nhập, đăng ký
- ┃ ┣ 📂 (tabs)              # Luồng chính (Home, Mentor, Profile)
- ┃ ┣ 📂 [module]            # Các màn hình chi tiết (profile, booking, ...)
- ┃ ┗ 📜 _layout.tsx         # Root Layout & Auth Guarding logic
- ┣ 📂 src                   # [Core Layer] Trái tim của ứng dụng
- ┃ ┣ 📂 assets              # Icons, Images, Fonts (Static files)
- ┃ ┣ 📂 components          # UI Components phân loại theo chức năng
- ┃ ┃ ┣ 📂 ui                # Atomic components (Button, Input, Badge)
- ┃ ┃ ┣ 📂 form              # Form logic & Input groups
- ┃ ┃ ┣ 📂 display           # Card, List, Complex UI elements
- ┃ ┃ ┗ 📂 states            # Loading, Empty, Error states
- ┃ ┣ 📂 core                # Quản trị logic nghiệp vụ
- ┃ ┃ ┣ 📂 services          # API calls (authService, userService, ...)
- ┃ ┃ ┣ 📂 store             # State management (Zustand stores)
- ┃ ┃ ┣ 📂 hooks             # Custom hooks dùng chung (useAuth, useDebounce)
- ┃ ┃ ┣ 📂 utils             # Helper functions (formatDate, validators)
- ┃ ┃ ┣ 📜 api.ts            # Axios configuration & Interceptor
- ┃ ┃ ┗ 📜 types.ts          # Global TypeScript interfaces
- ┃ ┗ 📂 theme               # Design System (colors, spacing, typography)
- ┗ 📜 ... config files
-```
-
-> [!IMPORTANT]
-> **Quy tắc vàng:** Không tạo thêm thư mục logic ở gốc dự án. Mọi thứ phải nằm trong `src/` hoặc `app/`.
+- Thu muc: `kebab-case`
+- Route file: `kebab-case`, `index.tsx`, `[id].tsx` theo chuan Expo Router
+- Component: `PascalCase`
+- Hook, service, util: `camelCase`
+- Hang so bat bien: `UPPER_SNAKE_CASE`
 
 ---
 
-## 4. Sơ đồ Kiến trúc (Architecture Layers)
+## 3. Cau Truc Thu Muc
+
+Du an ap dung huong modular layered architecture, trong do:
+
+- `app/`: route, layout, screen
+- `src/components/`: UI component dung lai
+- `src/core/`: service, store, adapter, API, type, mock
+- `src/theme/`: theme token, breakpoint, responsive utilities
+- `docs/`: tai lieu kien truc va quy uoc bo sung
+
+Quy tac vang:
+
+- Khong tao them lop logic moi o root neu no thuoc `src/` hoac `app/`.
+- Khong xem thu muc `components/` o root la noi mo rong component chinh cua du an.
+
+---
+
+## 4. Architecture Layers
 
 ```mermaid
 graph TD
-    A[App Layer /app] --> B[Core Layer /src/core]
-    A --> C[UI Layer /src/components]
-    B --> D[Networking/API]
-    B --> E[State Management/Zustand]
-    C --> F[Theme System /src/theme]
-    E --> G[Storage/AsyncStorage]
+    A["App Layer /app"] --> B["Core Layer /src/core"]
+    A --> C["UI Layer /src/components"]
+    B --> D["Networking/API"]
+    B --> E["State Management/Zustand"]
+    C --> F["Theme System /src/theme"]
+    E --> G["Storage/AsyncStorage"]
 ```
 
 ---
 
-## 5. Luồng Dữ liệu & Quản lý State
+## 5. Luong Du Lieu Va State
 
-### 5.1 Xử lý Xác thực (Authentication)
-Dự án sử dụng cơ chế **Global Guard** tại `app/_layout.tsx`.
-- `authStore` quản lý trạng thái `token` và `user`.
-- Khi khởi động, app thực hiện `hydrate()` để phục hồi session từ `AsyncStorage`.
-- Nếu `isAuthenticated` là `false`, người dùng tự động bị điều hướng về `/(auth)/login`.
+### 5.1 Authentication
 
-### 5.2 Networking (Axios Interceptors)
-- **Request Interceptor:** Tự động đính kèm `Authorization: Bearer <token>` vào mọi yêu cầu.
-- **Response Interceptor:** 
-    - Xử lý lỗi 401 tự động (Logout người dùng nếu token hết hạn).
-    - Map dữ liệu từ API về chuẩn của App.
-- **Mocking:** Hỗ trợ dữ liệu giả (Mock Data) khi Backend chưa sẵn sàng.
+- Root guard nam o `app/_layout.tsx`
+- `authStore` quan ly user, role, trang thai xac thuc va hydrate
+- Khi khoi dong app, session duoc phuc hoi tu AsyncStorage
+- Neu chua xac thuc, nguoi dung bi dieu huong ve `/(auth)/login`
 
----
+### 5.2 Networking
 
-## 6. Tiêu chuẩn UI/UX (Design System)
-
-Tất cả màn hình **KHÔNG** được sử dụng mã màu inline. Phải tham chiếu từ `theme.ts`:
-
-- **Spacing:** Sử dụng hệ số 4 (4, 8, 12, 16, 24, 32).
-- **Typography:** Chỉ sử dụng các variant `h1`, `h2`, `body`, `caption` định nghĩa sẵn.
-- **Components:** Ưu tiên sử dụng `CustomButton`, `Typography` thay cho các thẻ mặc định của React Native.
+- Request interceptor tu dong gan bearer token
+- Response interceptor xu ly `401`, refresh token va clear session khi can
+- Data backend duoc map qua adapter neu shape chua phu hop voi app model
+- Mock data duoc ho tro qua `src/core/config.ts` va `src/core/mocks/`
 
 ---
 
-## 7. Quy tắc Import (Path Aliases)
+## 6. UI Va Design System
 
-Khuyến khích sử dụng Absolute Path để tránh các đường dẫn `../../../`:
-- `@/app/*`
-- `@/components/*`
-- `@/core/*`
-- `@/theme/*`
+- Khong hard-code mau sac tuy tien trong screen neu da co token trong `src/theme/theme.ts`
+- Spacing va typography phai bam design token
+- Uu tien dung component noi bo nhu `Typography`, `CustomButton` va cac component tai `src/components/`
+
+### 6.1 Responsive Design
+
+Responsive la quy chuan bat buoc.
+
+- Nguon su that cho responsive nam o `src/theme/responsiveUtils.ts`, `src/theme/theme.ts` va cac responsive helper theo component.
+- Typography, spacing, avatar, card, button height va cac kich thuoc UI quan trong phai scale theo utility hien co.
+- Khong hard-code kich thuoc co dinh trong screen neu da co scale function hoac token phu hop.
+- Khi tao component moi, uu tien dung token va utility responsive thay vi so raw.
+
+### 6.2 Responsive Sources Of Truth
+
+- `src/theme/responsiveUtils.ts`
+- `src/theme/theme.ts`
+- `src/theme/breakpoints.ts`
+- `src/components/button/buttonResponsive.ts`
+- `src/components/form/textInputResponsive.ts`
+- `src/components/ui/cardResponsive.ts`
+- `src/components/ui/sectionResponsive.ts`
+- `src/components/typography/typographyResponsive.ts`
+
+### 6.3 Quy Tac Khi Sua UI
+
+- Doc file component va responsive helper lien quan truoc khi sua.
+- Kiem tra spacing, font size, avatar size, hero size da bam theme hoac scale utility chua.
+- Khong copy raw number tu man nay sang man khac neu chua xac minh voi responsive system.
+- Neu can pha quy chuan scale, phai co ly do ro rang.
+
+### 6.4 Checklist Kiem Tra Responsive
+
+- Kiem tra it nhat mot man hinh hep va mot man hinh rong.
+- Xac minh typography khong qua to o thiet bi nho va khong qua nho o thiet bi lon.
+- Xac minh spacing, card, avatar, button khong bi phong, chat hoac mat can doi.
+- Khi sua home, mentor, profile hoac component dung lai, coi responsive impact la bat buoc phai check.
 
 ---
 
-## 8. Hiệu năng & Bảo mật
+## 7. Quy Tac Import
 
-1. **Performance:** 
-    - Sử dụng `FlashList` thay cho `FlatList` cho các danh sách dài.
-    - Memoize các component nặng bằng `React.memo`.
-2. **Security:**
-    - Không lưu thông tin nhạy cảm vào `AsyncStorage` dưới dạng plain text (nếu có thể hãy dùng SecureStore).
-    - Validate dữ liệu đầu vào tại tầng Service.
+- Uu tien alias `@/` neu file dang sua da theo huong nay
+- Tranh duong dan tuong doi dai kho doc nhu `../../../`
+- Giu nhat quan trong tung file va tung module
 
 ---
 
-## 9. Danh sách Màn hình (Roadmap)
+## 8. Hieu Nang Va Bao Mat
 
-| Route | Chức năng | Trạng thái |
-| :--- | :--- | :--- |
-| `/(auth)/login` | Đăng nhập |  Done |
-| `/(tabs)/index` | Trang chủ |  Done |
-| `/profile/[id]` | Chi tiết Mentor |  In progress |
-| `/messege` | Quản trị Mentor |  In progress |
+### Performance
+
+- Uu tien component gon, ro trach nhiem
+- Can nhac toi list performance khi du lieu lon
+- Khong them abstraction nang neu chua co nhu cau that
+
+### Security
+
+- Khong luu thong tin nhay cam dang plain text neu co lua chon an toan hon
+- Validate du lieu dau vao o tang service khi can
+- Khong de auth logic rai rac o nhieu screen
+
+---
+
+## 9. Nguyen Tac Mo Rong
+
+- Feature moi phai di dung lop: route, service, adapter, store, UI
+- Khong de screen tro thanh noi chua business logic chinh
+- Store chi danh cho shared state, khong danh cho local UI state thuan man hinh
+- Adapter la noi map DTO backend sang model app khi can
+
+---
+
+## 10. File Can Doc Khi Canh Chinh Kien Truc
+
+- `app/_layout.tsx`
+- `app/(auth)/_layout.tsx`
+- `app/(tabs)/_layout.tsx`
+- `src/core/api.ts`
+- `src/core/config.ts`
+- `src/core/store/authStore.ts`
+- `src/theme/theme.ts`
+- `src/theme/responsiveUtils.ts`
+- `.agent/instruction.md`
+- `.agent/mandatory-reading.md`
+- `.agent/skill.md`

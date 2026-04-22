@@ -1,181 +1,181 @@
 # Instruction
 
-Tài liệu này định nghĩa quy trình làm việc chuẩn cho agent khi lập trình trong repo `sociedu-mobile`.
+Tai lieu nay dinh nghia quy trinh lam viec chuan cho agent khi lap trinh trong repo `sociedu-mobile`.
 
-## 1. Mục tiêu làm việc
+## 1. Muc tieu lam viec
 
-- Giữ codebase dễ mở rộng, dễ review và dễ debug.
-- Tôn trọng kiến trúc Expo Router + `src/core` hiện có.
-- Ưu tiên tính nhất quán hơn là thêm pattern mới.
-- Mọi thay đổi phải giải quyết đúng bài toán, không chỉ làm code chạy tạm.
+- Giu codebase de mo rong, de review va de debug.
+- Ton trong kien truc Expo Router + `src/core` hien co.
+- Uu tien tinh nhat quan hon la them pattern moi.
+- Moi thay doi phai giai quyet dung bai toan, khong chi lam code chay tam.
 
-## 2. Quy trình bắt buộc trước khi viết code
+## 2. Quy trinh bat buoc truoc khi viet code
 
-### Bước 1: Đọc tài liệu lõi
+### Buoc 1: Doc tai lieu loi
 
-Phải đọc:
+Phai doc:
 
 1. `AGENTS.md`
 2. `.agent/instruction.md`
 3. `.agent/mandatory-reading.md`
 4. `.agent/skill.md`
 
-### Bước 2: Đọc tài liệu theo loại task
+### Buoc 2: Doc tai lieu theo loai task
 
-Xem bảng trong `.agent/mandatory-reading.md` rồi mở đúng file liên quan trước khi sửa.
+Xem bang trong `.agent/mandatory-reading.md` roi mo dung file lien quan truoc khi sua.
 
-### Bước 3: Xác định phạm vi thay đổi
+### Buoc 3: Xac dinh pham vi thay doi
 
-- Screen hay route: nằm trong `app/`
-- Service, API, adapter, store: nằm trong `src/core/`
-- UI tái sử dụng: nằm trong `src/components/`
-- Theme hoặc responsive: nằm trong `src/theme/`
-- Tài liệu: nằm trong `.agent/` hoặc `docs/`
+- Screen hay route: nam trong `app/`
+- Service, API, adapter, store: nam trong `src/core/`
+- UI tai su dung: nam trong `src/components/`
+- Theme hoac responsive: nam trong `src/theme/`
+- Tai lieu: nam trong `.agent/` hoac `docs/`
 
-### Bước 4: Kiểm tra ràng buộc hiện tại
+### Buoc 4: Kiem tra rang buoc hien tai
 
-- Auth flow đang đi qua `app/_layout.tsx` và `src/core/store/authStore.ts`
-- Mock API đang bật trong `src/core/config.ts`
-- API base URL đang hard-code trong `src/core/api.ts`
-- Responsive system đã được thiết lập và có lịch sử trong `RESPONSIVE_FIX_APPLIED.md`
+- Auth flow dang di qua `app/_layout.tsx` va `src/core/store/authStore.ts`
+- Mock API dang bat trong `src/core/config.ts`
+- API base URL dang hard-code trong `src/core/api.ts`
+- Responsive system da duoc chuan hoa trong `docs/ARCHITECTURE.md`, `src/theme/responsiveUtils.ts` va cac responsive helper lien quan
 
-### Bước 5: Chỉ viết code sau khi trả lời được 4 câu hỏi
+### Buoc 5: Chi viet code sau khi tra loi duoc 4 cau hoi
 
-1. File nào là nguồn sự thật cho thay đổi này
-2. Thay đổi này ảnh hưởng route nào, store nào, service nào
-3. Có cần giữ tương thích với mock data hay không
-4. Cách kiểm tra thay đổi sau khi sửa là gì
+1. File nao la nguon su that cho thay doi nay
+2. Thay doi nay anh huong route nao, store nao, service nao
+3. Co can giu tuong thich voi mock data hay khong
+4. Cach kiem tra thay doi sau khi sua la gi
 
-## 3. Kiến trúc chuẩn cần tuân thủ
+## 3. Kien truc chuan can tuan thu
 
-## 3.1 Routing
+### 3.1 Routing
 
-- `app/` chỉ nên chứa route, layout và logic màn hình.
-- Không dồn business logic nặng trực tiếp vào file route nếu có thể đưa xuống `src/core/`.
-- Khi thêm màn hình mới, giữ đúng quy ước Expo Router.
+- `app/` chi nen chua route, layout va logic man hinh.
+- Khong don business logic nang truc tiep vao file route neu co the dua xuong `src/core/`.
+- Khi them man hinh moi, giu dung quy uoc Expo Router.
 
-## 3.2 Core logic
+### 3.2 Core logic
 
-- `src/core/services/`: gọi API, orchestration nghiệp vụ theo domain
-- `src/core/adapters/`: map DTO từ backend sang model app
-- `src/core/store/`: state chia sẻ giữa nhiều màn hình
+- `src/core/services/`: goi API, orchestration nghiep vu theo domain
+- `src/core/adapters/`: map DTO tu backend sang model app
+- `src/core/store/`: state chia se giua nhieu man hinh
 - `src/core/api.ts`: axios instance, token handling, error handling
-- `src/core/config.ts`: cờ cấu hình dùng chung
+- `src/core/config.ts`: co cau hinh dung chung
 
-## 3.3 UI layer
+### 3.3 UI layer
 
-- `src/components/` là nguồn component nội bộ chính.
-- Không tạo component dùng lại trong screen nếu có khả năng tái sử dụng rõ ràng.
-- Thư mục `components/` ở root là dấu vết starter; không mở rộng thêm nếu không có lý do rất rõ.
+- `src/components/` la nguon component noi bo chinh.
+- Khong tao component dung lai trong screen neu co kha nang tai su dung ro rang.
+- Thu muc `components/` o root la dau vet starter; khong mo rong them neu khong co ly do rat ro.
 
-## 3.4 Theme và responsive
+### 3.4 Theme va responsive
 
-- Màu, spacing, typography phải bám `src/theme/theme.ts`.
-- Responsive phải dùng utility trong `src/theme/responsiveUtils.ts` hoặc hệ hiện có.
-- Không hard-code kích thước lớn trong screen nếu đã có scale function.
+- Mau, spacing, typography phai bam `src/theme/theme.ts`.
+- Responsive phai dung utility trong `src/theme/responsiveUtils.ts` hoac he hien co.
+- Khong hard-code kich thuoc lon trong screen neu da co scale function.
 
-## 4. Nguyên tắc code
+## 4. Nguyen tac code
 
-## 4.1 Nguyên tắc tổ chức
+### 4.1 Nguyen tac to chuc
 
-- Một file chỉ nên có một trách nhiệm chính.
-- Tên file phản ánh đúng trách nhiệm.
-- Tránh tạo utility chung chung kiểu `helpers.ts` nếu chức năng không rõ ràng.
-- Không thêm abstraction mới nếu chưa có ít nhất hai nơi cần dùng.
+- Mot file chi nen co mot trach nhiem chinh.
+- Ten file phan anh dung trach nhiem.
+- Tranh tao utility chung chung kieu `helpers.ts` neu chuc nang khong ro rang.
+- Khong them abstraction moi neu chua co it nhat hai noi can dung.
 
-## 4.2 Nguyên tắc TypeScript
+### 4.2 Nguyen tac TypeScript
 
-- Giữ `strict` an toàn; không mở rộng `any` trừ trường hợp bị chặn bởi dữ liệu ngoài và đã cô lập biên.
-- Ưu tiên type/domain model rõ ràng hơn object inline dài.
-- DTO backend và model dùng trong app cần tách bằng adapter nếu khác shape.
+- Giu `strict` an toan; khong mo rong `any` tru truong hop bi chan boi du lieu ngoai va da co lap bien.
+- Uu tien type/domain model ro rang hon object inline dai.
+- DTO backend va model dung trong app can tach bang adapter neu khac shape.
 
-## 4.3 Nguyên tắc state
+### 4.3 Nguyen tac state
 
-- Local UI state để trong screen/component.
-- Shared state mới đưa vào Zustand.
-- Không tạo store mới chỉ để chứa state của một màn hình đơn lẻ nếu không có nhu cầu chia sẻ thật.
-- Không duplicating source of truth giữa store và component state trừ khi là derived UI state.
+- Local UI state de trong screen/component.
+- Shared state moi dua vao Zustand.
+- Khong tao store moi chi de chua state cua mot man hinh don le neu khong co nhu cau chia se that.
+- Khong nhan doi source of truth giua store va component state tru khi la derived UI state.
 
-## 4.4 Nguyên tắc API và service
+### 4.4 Nguyen tac API va service
 
-- Không gọi `axios` trực tiếp trong screen.
-- Mọi lời gọi network đi qua service.
-- Mọi biến đổi dữ liệu backend có ý nghĩa domain đi qua adapter.
-- Error message trả về UI phải có ngữ nghĩa, tránh đẩy raw response lên screen.
+- Khong goi `axios` truc tiep trong screen.
+- Moi loi goi network di qua service.
+- Moi bien doi du lieu backend co y nghia domain di qua adapter.
+- Error message tra ve UI phai co ngu nghia, tranh day raw response len screen.
 
-## 4.5 Nguyên tắc UI
+### 4.5 Nguyen tac UI
 
-- Ưu tiên dùng `Typography`, `CustomButton` và component dùng lại sẵn có.
-- Giữ style rõ ràng, tránh inline style lớn trong JSX.
-- Không tự ý đổi visual language của app khi task không yêu cầu.
+- Uu tien dung `Typography`, `CustomButton` va component dung lai san co.
+- Giu style ro rang, tranh inline style lon trong JSX.
+- Khong tu y doi visual language cua app khi task khong yeu cau.
 
-## 4.6 Nguyên tắc comment và tài liệu
+### 4.6 Nguyen tac comment va tai lieu
 
-- Chỉ comment khi logic khó đọc hoặc có ràng buộc nghiệp vụ không hiển nhiên.
-- Nếu thay đổi làm lệch tài liệu `.agent/`, `docs/` hoặc note responsive thì phải cập nhật lại.
+- Chi comment khi logic kho doc hoac co rang buoc nghiep vu khong hien nhien.
+- Neu thay doi lam lech tai lieu `.agent/` hoac `docs/` thi phai cap nhat lai.
 
-## 5. Quy chuẩn code
+## 5. Quy chuan code
 
-### Đặt tên
+### Dat ten
 
-- Route file: theo chuẩn Expo Router, ví dụ `index.tsx`, `[id].tsx`, `edit.tsx`
+- Route file: theo chuan Expo Router, vi du `index.tsx`, `[id].tsx`, `edit.tsx`
 - Component: `PascalCase`
 - Hook, service, util: `camelCase`
-- Hằng số: `UPPER_SNAKE_CASE` khi thật sự là constant bất biến
+- Hang so: `UPPER_SNAKE_CASE` khi that su la constant bat bien
 
 ### Import
 
-- Ưu tiên alias `@/` khi repo đã hỗ trợ, nhưng phải giữ nhất quán trong file đang sửa.
-- Không tạo chuỗi import tương đối dài khó đọc nếu có alias phù hợp.
+- Uu tien alias `@/` khi repo da ho tro, nhung phai giu nhat quan trong file dang sua.
+- Khong tao chuoi import tuong doi dai kho doc neu co alias phu hop.
 
-### Cấu trúc file screen
+### Cau truc file screen
 
-Thứ tự ưu tiên:
+Thu tu uu tien:
 
 1. imports
-2. constants/types cục bộ
-3. component chính
-4. helper function nhỏ nếu thật sự gắn chặt với screen
+2. constants/types cuc bo
+3. component chinh
+4. helper function nho neu that su gan chat voi screen
 5. styles
 
-### Cấu trúc file service
+### Cau truc file service
 
 1. imports
 2. base constant
 3. service object
-4. các method theo nhóm chức năng
+4. cac method theo nhom chuc nang
 
-## 6. Checklist trước khi sửa code
+## 6. Checklist truoc khi sua code
 
-- Đã đọc file bắt buộc trong `.agent/mandatory-reading.md`
-- Đã xác định source of truth
-- Đã xác định file nào không nên sửa
-- Đã xác định cần test bằng gì: lint, flow auth, flow route, flow responsive
+- Da doc file bat buoc trong `.agent/mandatory-reading.md`
+- Da xac dinh source of truth
+- Da xac dinh file nao khong nen sua
+- Da xac dinh can test bang gi: lint, flow auth, flow route, flow responsive
 
-## 7. Checklist trước khi kết thúc task
+## 7. Checklist truoc khi ket thuc task
 
-- Code chạy hợp lý về mặt logic
-- Không phá route hiện có
-- Không phá auth redirect
-- Không thêm hard-code mới trái quy chuẩn
-- Không tạo duplication rõ ràng
-- Đã cập nhật tài liệu nếu thay đổi kiến trúc/quy trình
+- Code chay hop ly ve mat logic
+- Khong pha route hien co
+- Khong pha auth redirect
+- Khong them hard-code moi trai quy chuan
+- Khong tao duplication ro rang
+- Da cap nhat tai lieu neu thay doi kien truc/quy trinh
 
-## 8. Những điều cấm
+## 8. Nhung dieu cam
 
-- Không gọi API trực tiếp trong screen.
-- Không hard-code thêm `API_BASE_URL` hoặc env logic rải rác.
-- Không mở rộng thư mục `components/` ở root như nơi chứa component chính mới.
-- Không bỏ qua responsive system khi sửa UI.
-- Không thêm state toàn cục cho vấn đề cục bộ.
-- Không sửa file lớn theo kiểu rewrite toàn bộ khi chỉ cần thay đổi nhỏ.
+- Khong goi API truc tiep trong screen.
+- Khong hard-code them `API_BASE_URL` hoac env logic rai rac.
+- Khong mo rong thu muc `components/` o root nhu noi chua component chinh moi.
+- Khong bo qua responsive system khi sua UI.
+- Khong them state toan cuc cho van de cuc bo.
+- Khong sua file lon theo kieu rewrite toan bo khi chi can thay doi nho.
 
-## 9. Tiêu chuẩn hoàn thành
+## 9. Tieu chuan hoan thanh
 
-Một thay đổi chỉ được xem là hoàn thành khi:
+Mot thay doi chi duoc xem la hoan thanh khi:
 
-- đúng mục tiêu nghiệp vụ
-- khớp kiến trúc hiện tại
-- không tạo nợ kỹ thuật rõ ràng
-- có cách kiểm tra hợp lý
-- có thể được người khác đọc và tiếp tục mà không phải đoán ý định
+- dung muc tieu nghiep vu
+- khop kien truc hien tai
+- khong tao no ky thuat ro rang
+- co cach kiem tra hop ly
+- co the duoc nguoi khac doc va tiep tuc ma khong phai doan y dinh

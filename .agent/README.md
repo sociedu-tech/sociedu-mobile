@@ -13,7 +13,7 @@ Thư mục này là bộ điều hành nội bộ cho agent làm việc với `s
 - `project-context.md`: bức tranh nhanh về kiến trúc repo và module hiện tại.
 - `workflows.md`: các workflow thao tác thường gặp.
 - `../docs/ARCHITECTURE.md`: tài liệu kiến trúc gốc của dự án.
-- `../RESPONSIVE_FIX_APPLIED.md`: quy ước và bối cảnh cho responsive system đã được thêm.
+- `../docs/ARCHITECTURE.md`: quy chuẩn responsive va kien truc bo sung cua du an.
 
 ## Quy tắc sử dụng
 
