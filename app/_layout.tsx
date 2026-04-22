@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useAuthStore } from '../src/core/store/authStore';
-import { theme } from '../src/theme/theme';
+
+import { useAuthStore } from '@/src/features/auth/store/authStore';
+import { theme } from '@/src/theme/theme';
 
 /**
  * Root Layout
@@ -26,7 +27,7 @@ export default function RootLayout() {
   // ── Step 1: Hydrate từ AsyncStorage ──────────────────────
   useEffect(() => {
     hydrate().finally(() => setHydrated(true));
-  }, []);
+  }, [hydrate]);
 
   // ── Step 2: Auth guard ───────────────────────────────────
   // Yêu cầu:
@@ -44,7 +45,7 @@ export default function RootLayout() {
       // Đã đăng nhập → không cho ở lại auth screens
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, segments, hydrated, loading]);
+  }, [hydrated, isAuthenticated, loading, router, segments]);
 
   // ── Splash / loading ────────────────────────────────────
   if (!hydrated || loading) {

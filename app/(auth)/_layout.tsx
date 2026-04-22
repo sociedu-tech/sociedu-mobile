@@ -1,5 +1,6 @@
 import { Redirect, Stack } from 'expo-router';
-import { useAuthStore } from '../../src/core/store/authStore';
+
+import { useAuthStore } from '@/src/features/auth/store/authStore';
 
 /**
  * Auth Layout

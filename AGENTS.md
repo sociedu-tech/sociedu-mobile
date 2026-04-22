@@ -22,8 +22,17 @@ Chi dung chung khi task thuc su can. Tai lieu noi bo trong `.agent/` van la nguo
 ## Muc tieu repo
 
 - Ung dung mobile dung Expo + React Native + Expo Router.
-- Kien truc uu tien tach route, UI, service, store va adapter.
-- Muc tieu hien tai la giu codebase de mo rong, de review va khong pha flow auth hoac responsive UI da co.
+- Kien truc hien tai uu tien feature-based trong `src/features/`.
+- Muc tieu la de nhieu nguoi co the code song song theo feature ma it xung dot.
+- Moi thay doi phai giu on dinh auth flow, router va responsive UI.
+
+## Kien truc hien tai
+
+- `app/`: route entry mong cua Expo Router, uu tien chi `export { default } ...` sang feature screen.
+- `src/features/`: source of truth theo domain.
+- `src/components/`: UI dung chung toan app.
+- `src/core/`: ha tang dung chung va compatibility wrapper.
+- `src/theme/`: theme token, breakpoint, responsive utilities.
 
 ## Lenh co ban
 
@@ -36,8 +45,10 @@ Chi dung chung khi task thuc su can. Tai lieu noi bo trong `.agent/` van la nguo
 
 ## Nguyen tac ngan
 
-- Uu tien doc tai lieu trong `.agent/` truoc khi sua.
-- Uu tien sua trong `app/`, `src/`, `docs/`; tranh dung vao `components/` starter neu khong that su can.
+- Uu tien sua trong `src/features/` neu task thuoc mot domain da duoc tach.
+- Chi sua `app/` khi can them route moi hoac doi route wiring.
+- Khong coi file wrapper trong `src/core/services`, `src/core/store`, `src/core/adapters` la noi uu tien de viet logic moi.
+- Khong goi API truc tiep trong screen.
 - Khong hard-code them API URL, auth rule hoac style token moi trong screen.
 - Moi thay doi phai giu nhat quan voi Expo Router, auth flow va responsive system hien co.
 

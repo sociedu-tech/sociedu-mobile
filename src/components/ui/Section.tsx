@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, ViewProps } from 'react-native';
-import { theme } from '../../theme/theme';
 import { useBreakpoint } from '../../theme/useBreakpoint';
 import { getSectionStyle } from './sectionResponsive';
 

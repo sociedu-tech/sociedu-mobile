@@ -1,5 +1,4 @@
 // src/components/typography/typographyResponsive.ts
-import { theme } from '../../theme/theme';
 import { Breakpoint } from '../../theme/breakpoints';
 
 // Responsive typography tokens by breakpoint

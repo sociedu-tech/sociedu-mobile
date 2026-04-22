@@ -34,7 +34,7 @@ export const TextInput: React.FC<TextInputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const breakpoint = useBreakpoint();
-  const responsiveStyle = getTextInputStyle(breakpoint);
+  getTextInputStyle(breakpoint);
 
   const getBorderColor = () => {
     if (error) return theme.colors.error;

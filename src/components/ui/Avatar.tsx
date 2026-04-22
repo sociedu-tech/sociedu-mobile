@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Image, StyleSheet, ViewStyle } from 'react-native';
-import { Text as RNText } from 'react-native';
+import { Image, StyleSheet, Text as RNText, View, ViewStyle } from 'react-native';
 import { theme } from '../../theme/theme';
-import { scaleSpace, scaleFont } from '../../theme/responsiveUtils';
+import { scaleFont } from '../../theme/responsiveUtils';
 
 interface AvatarProps {
   uri?: string | null;

@@ -1,0 +1,270 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Alert,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+
+import { Typography } from '@/src/components/typography/Typography';
+import { Avatar } from '@/src/components/ui/Avatar';
+import { Card } from '@/src/components/ui/Card';
+import { ListItem } from '@/src/components/ui/ListItem';
+import { Section } from '@/src/components/ui/Section';
+import { useAuthStore } from '@/src/features/auth/store/authStore';
+import { User } from '@/src/core/types';
+import { theme } from '@/src/theme/theme';
+
+import { userService } from '../services/userService';
+
+export default function MyProfileScreen() {
+  const router = useRouter();
+  const authUser = useAuthStore((s) => s.user);
+  const userRole = useAuthStore((s) => s.userRole);
+  const logout = useAuthStore((s) => s.logout);
+
+  const [fullUser, setFullUser] = useState<User | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const data = await userService.getMe();
+      setFullUser(data);
+    } catch (error) {
+      console.log('Failed to fetch full profile', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProfile();
+    setRefreshing(false);
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Dang xuat', 'Ban co chac chan muon dang thoat phien dang nhap?', [
+      { text: 'Huy', style: 'cancel' },
+      {
+        text: 'Dang xuat',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+        },
+      },
+    ]);
+  };
+
+  const displayName = fullUser?.name || authUser?.fullName || 'Nguoi Dung';
+  const displayEmail = fullUser?.email || authUser?.email || '';
+  const avatarUri = fullUser?.avatar || null;
+
+  const getInitials = () => {
+    const parts = displayName.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+    }
+    return displayName.charAt(0).toUpperCase() || 'U';
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+      <View
+        style={{
+          backgroundColor: theme.colors.surface,
+          paddingVertical: 18,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border.default,
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="h3" style={{ fontWeight: '800' }}>Ho so ca nhan</Typography>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: theme.spacing.lg,
+          paddingTop: theme.spacing.xl,
+          paddingBottom: theme.spacing.xxl,
+        }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{ alignItems: 'center', marginBottom: theme.spacing.xxl }}>
+          <Avatar uri={avatarUri || undefined} initials={getInitials()} size={96} />
+          <View style={{ marginTop: -14, zIndex: 10 }}>
+            <View
+              style={{
+                backgroundColor: theme.colors.surface,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: theme.colors.border.default,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
+            >
+              <Typography
+                variant="caption"
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: '800',
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                  textAlign: 'center',
+                }}
+              >
+                {userRole.toUpperCase()}
+              </Typography>
+            </View>
+          </View>
+          <Typography
+            variant="h2"
+            style={{
+              fontWeight: '800',
+              color: theme.colors.text.primary,
+              marginTop: 12,
+              marginBottom: 4,
+              textAlign: 'center',
+            }}
+          >
+            {displayName}
+          </Typography>
+          <Typography variant="body" color="secondary" style={{ textAlign: 'center', marginBottom: 20 }}>
+            {displayEmail}
+          </Typography>
+
+          <TouchableOpacity
+            style={{
+              paddingHorizontal: 24,
+              paddingVertical: 10,
+              borderRadius: theme.borderRadius.full,
+              backgroundColor: theme.colors.primaryLight,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}
+            onPress={() => router.push('/profile/edit')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="pencil" size={14} color={theme.colors.primary} />
+            <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.primary, fontSize: 14 }}>
+              Chinh sua ho so
+            </Typography>
+          </TouchableOpacity>
+        </View>
+
+        {(userRole === 'mentor' || userRole === 'admin') && (
+          <Section style={{ marginBottom: theme.spacing.xl }}>
+            <Typography
+              variant="label"
+              style={{
+                fontWeight: '700',
+                color: theme.colors.text.secondary,
+                marginBottom: theme.spacing.sm,
+                marginLeft: theme.spacing.xs,
+                textTransform: 'uppercase',
+                fontSize: 13,
+                letterSpacing: 0.5,
+              }}
+            >
+              Bang dieu khien
+            </Typography>
+            <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
+              {userRole === 'mentor' && (
+                <ListItem
+                  title="Mentor Dashboard"
+                  subtitle="Quan ly lich hen, goi dich vu"
+                  iconName="briefcase-outline"
+                  onPress={() => router.push('/mentor/dashboard' as any)}
+                />
+              )}
+              {userRole === 'admin' && (
+                <ListItem
+                  title="Admin Panel"
+                  subtitle="Kiem duyet user va he thong"
+                  iconName="shield-checkmark-outline"
+                  onPress={() => router.push('/admin/index' as any)}
+                />
+              )}
+            </Card>
+          </Section>
+        )}
+
+        <Section style={{ marginBottom: theme.spacing.xl }}>
+          <Typography
+            variant="label"
+            style={{
+              fontWeight: '700',
+              color: theme.colors.text.secondary,
+              marginBottom: theme.spacing.sm,
+              marginLeft: theme.spacing.xs,
+              textTransform: 'uppercase',
+              fontSize: 13,
+              letterSpacing: 0.5,
+            }}
+          >
+            Chung
+          </Typography>
+          <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
+            <ListItem
+              title="Chung chi va Kinh nghiem"
+              subtitle="Cap nhat lich su lam viec"
+              iconName="document-text-outline"
+              onPress={() => {}}
+            />
+            <ListItem
+              title="Cai dat tai khoan"
+              iconName="settings-outline"
+              onPress={() => {}}
+            />
+            <ListItem
+              title="Trung tam tro giup"
+              iconName="help-circle-outline"
+              onPress={() => {}}
+            />
+          </Card>
+        </Section>
+
+        <Section style={{ marginTop: theme.spacing.sm }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 16,
+              width: '100%',
+              backgroundColor: theme.colors.surface,
+              borderRadius: theme.borderRadius.xl,
+              borderWidth: 1,
+              borderColor: '#FECACA',
+            }}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
+            <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.error }}>
+              Dang xuat
+            </Typography>
+          </TouchableOpacity>
+        </Section>
+
+        <Typography variant="caption" color="secondary" align="center" style={{ opacity: 0.5, marginTop: theme.spacing.xl }}>
+          Phien ban 1.0.0
+        </Typography>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

@@ -30,17 +30,21 @@ Tai lieu nay quy dinh cac tieu chuan kien truc, cau truc thu muc va quy tac phat
 
 ## 3. Cau Truc Thu Muc
 
-Du an ap dung huong modular layered architecture, trong do:
+Du an ap dung huong feature-based tren nen Expo Router, trong do:
 
-- `app/`: route, layout, screen
+- `app/`: route entry, layout, route wiring
+- `src/features/`: source of truth theo domain, chua `screens`, `services`, `adapters`, `store`, `components` theo nhu cau
 - `src/components/`: UI component dung lai
 - `src/core/`: service, store, adapter, API, type, mock
 - `src/theme/`: theme token, breakpoint, responsive utilities
 - `docs/`: tai lieu kien truc va quy uoc bo sung
 
+Nhung feature da duoc tach theo huong nay hien gom `auth`, `booking`, `home`, `marketplace`, `mentor`, `message`, `profile`, `admin`.
+
 Quy tac vang:
 
 - Khong tao them lop logic moi o root neu no thuoc `src/` hoac `app/`.
+- Khong dat business logic nang trong `app/` neu co the dua vao `src/features/`.
 - Khong xem thu muc `components/` o root la noi mo rong component chinh cua du an.
 
 ---

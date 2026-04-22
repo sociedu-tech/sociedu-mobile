@@ -17,8 +17,8 @@ Phai doc:
 
 - `app/_layout.tsx`
 - `app/(auth)/_layout.tsx`
-- `src/core/store/authStore.ts`
-- `src/core/services/authService.ts`
+- `src/features/auth/store/authStore.ts`
+- `src/features/auth/services/authService.ts`
 - `src/core/api.ts`
 - `src/components/ProtectedRoute.tsx`
 
@@ -26,40 +26,77 @@ Doc them neu sua trang auth:
 
 - `app/(auth)/login.tsx`
 - `app/(auth)/register.tsx`
-- `src/core/adapters/authAdapter.ts`
+- `src/features/auth/screens/LoginScreen.tsx`
+- `src/features/auth/screens/RegisterScreen.tsx`
+- `src/features/auth/adapters/authAdapter.ts`
 - `src/core/types.ts`
 
-## 3. Neu sua tab, man hinh nguoi dung hoac dieu huong chinh
+## 3. Neu sua home, tab, man hinh nguoi dung hoac dieu huong chinh
 
 Phai doc:
 
 - `app/(tabs)/_layout.tsx`
-- screen dang sua trong `app/(tabs)/...`
+- route entry dang sua trong `app/(tabs)/...`
+- feature screen tuong ung trong `src/features/.../screens/`
 - `src/theme/theme.ts`
 - `src/theme/responsiveUtils.ts`
 - `docs/ARCHITECTURE.md`
 
-## 4. Neu sua booking flow
+## 4. Neu sua mentor flow
+
+Phai doc:
+
+- `app/(tabs)/mentor.tsx`
+- `app/mentor/[id].tsx`
+- `app/mentor/dashboard.tsx`
+- `src/features/mentor/screens/MentorListScreen.tsx`
+- `src/features/mentor/screens/MentorDetailScreen.tsx`
+- `src/features/mentor/screens/MentorDashboardScreen.tsx`
+- `src/features/mentor/services/mentorService.ts`
+- `src/features/mentor/adapters/mentorAdapter.ts`
+- `src/core/types.ts`
+
+## 5. Neu sua booking flow hoac payment
 
 Phai doc:
 
 - `app/(tabs)/bookings.tsx`
 - `app/booking/[id].tsx`
-- `src/core/store/bookingStore.ts`
-- `src/core/services/bookingService.ts`
-- `src/core/adapters/bookingAdapter.ts`
+- `src/features/booking/screens/BookingListScreen.tsx`
+- `src/features/booking/screens/BookingDetailScreen.tsx`
+- `src/features/booking/store/bookingStore.ts`
+- `src/features/booking/services/bookingService.ts`
+- `src/features/booking/services/orderService.ts`
+- `src/features/booking/adapters/bookingAdapter.ts`
 - `src/core/types.ts`
 
-## 5. Neu sua mentor, profile, user data
+## 6. Neu sua profile hoac user data
 
 Phai doc:
 
-- screen dang sua
-- `src/core/services/mentorService.ts` hoac `src/core/services/userService.ts`
-- adapter tuong ung trong `src/core/adapters/`
+- `app/(tabs)/profile.tsx`
+- `app/profile/[id].tsx`
+- `app/profile/edit.tsx`
+- `src/features/profile/screens/MyProfileScreen.tsx`
+- `src/features/profile/screens/PublicProfileScreen.tsx`
+- `src/features/profile/screens/EditProfileScreen.tsx`
+- `src/features/profile/services/userService.ts`
+- `src/features/profile/adapters/userAdapter.ts`
 - `src/core/types.ts`
 
-## 6. Neu sua UI component hoac design system
+## 7. Neu sua message/chat flow
+
+Phai doc:
+
+- `app/(tabs)/messages.tsx`
+- `app/messages/[id].tsx`
+- `src/features/message/screens/MessageListScreen.tsx`
+- `src/features/message/screens/MessageDetailScreen.tsx`
+- `src/features/message/services/chatService.ts`
+- `src/core/mocks/chatMocks.ts`
+- `src/core/types.ts`
+
+## 8. Neu sua UI component hoac design system
 
 Phai doc:
 
@@ -77,22 +114,22 @@ Neu component co file responsive di kem thi doc ca file do, vi du:
 - `src/components/form/textInputResponsive.ts`
 - `src/components/typography/typographyResponsive.ts`
 
-## 7. Neu sua service, adapter hoac API layer
+## 9. Neu sua service, adapter, store hoac API layer
 
 Phai doc:
 
 - `src/core/api.ts`
 - `src/core/config.ts`
-- service dang sua
-- adapter lien quan
+- feature service/store/adapter dang sua trong `src/features/...`
+- wrapper lien quan trong `src/core/...` neu task duoc noi theo wrapper
 - `src/core/types.ts`
 
 Neu repo dang chay mock cho domain do thi doc them:
 
 - file trong `src/core/mocks/api/`
-- file du lieu lien quan trong `src/core/mocks/data/`
+- file du lieu lien quan trong `src/core/mocks/`
 
-## 8. Neu sua kien truc, quy chuan hoac cach lam viec
+## 10. Neu sua kien truc, quy chuan hoac cach lam viec
 
 Phai doc:
 
@@ -102,16 +139,16 @@ Phai doc:
 - `.agent/instruction.md`
 - `.agent/skill.md`
 
-## 9. Neu them file moi
+## 11. Neu them file moi
 
 Truoc khi them file moi, phai tu kiem tra:
 
 - Co file hien co nao du gan de mo rong khong
-- File moi thuoc `app/`, `src/core/`, `src/components/`, `src/theme/` hay `docs/`
+- File moi thuoc `app/`, `src/features/`, `src/components/`, `src/core/`, `src/theme/` hay `docs/`
 - Ten file da dung convention chua
 - File moi co lam trung trach nhiem voi file khac khong
 
-## 10. Dieu kien duoc phep bat dau code
+## 12. Dieu kien duoc phep bat dau code
 
 Chi bat dau viet code khi:
 

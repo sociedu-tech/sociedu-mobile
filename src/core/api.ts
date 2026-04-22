@@ -49,10 +49,10 @@ export const tokenStorage = {
 
 // ─── Flag tránh loop refresh ──────────────────────────────────
 let isRefreshing = false;
-let failedQueue: Array<{
+let failedQueue: {
   resolve: (token: string) => void;
   reject: (err: unknown) => void;
-}> = [];
+}[] = [];
 
 function processQueue(error: unknown, token: string | null = null) {
   failedQueue.forEach((prom) => {

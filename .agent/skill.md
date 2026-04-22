@@ -1,194 +1,182 @@
 # Skill
 
-Tài liệu này mô tả bộ kỹ năng chuẩn mà một coding agent phải vận dụng khi xử lý task trong `sociedu-mobile`.
+Tai lieu nay mo ta bo ky nang chuan ma mot coding agent phai van dung khi xu ly task trong `sociedu-mobile`.
 
-## 1. Kỹ năng đọc hiểu codebase
+## 1. Ky nang doc hieu codebase
 
-Agent phải:
+Agent phai:
 
-- Xác định lớp của vấn đề trước: route, UI, service, adapter, store, theme hay config.
-- Tìm source of truth thay vì sửa theo cảm tính tại nơi lỗi biểu hiện.
-- Đọc tối thiểu nhưng đúng file, dựa trên `.agent/mandatory-reading.md`.
-- Phân biệt component nội bộ chính ở `src/components/` với starter component ở `components/`.
+- Xac dinh lop cua van de truoc: route, feature screen, feature service, feature adapter, feature store, UI chung, theme hay config.
+- Tim source of truth thay vi sua theo cam tinh tai noi loi bieu hien.
+- Doc toi thieu nhung dung file, dua tren `.agent/mandatory-reading.md`.
+- Phan biet component dung chung o `src/components/` voi component noi bo cua feature trong `src/features/<feature>/components/`.
+- Phan biet wrapper trong `app/` va `src/core/` voi file source of truth trong `src/features/`.
 
-Chuẩn mực:
+Chuan muc:
 
-- Không kết luận kiến trúc chỉ từ một file.
-- Không sửa khi chưa hiểu luồng dữ liệu vào và ra.
+- Khong ket luan kien truc chi tu mot file.
+- Khong sua khi chua hieu luong du lieu vao va ra.
 
-## 2. Kỹ năng phân rã vấn đề
+## 2. Ky nang phan ra van de
 
-Khi nhận task, agent phải tách thành các câu hỏi:
+Khi nhan task, agent phai tach thanh cac cau hoi:
 
-1. Đây là vấn đề về hiển thị, điều hướng, dữ liệu hay trạng thái
-2. Lỗi xuất hiện ở đâu và nguồn gốc nằm ở đâu
-3. Cần sửa tối thiểu ở mấy lớp để giải quyết tận gốc
-4. Tiêu chí hoàn thành là gì
+1. Day la van de ve hien thi, dieu huong, du lieu, trang thai hay kien truc
+2. Loi xuat hien o dau va nguon goc nam o dau
+3. Can sua toi thieu o may lop de giai quyet tan goc
+4. Tieu chi hoan thanh la gi
 
-Chuẩn mực:
+Chuan muc:
 
-- Ưu tiên root cause hơn patch bề mặt.
-- Nếu một bug xuất phát từ data shape, sửa ở adapter hoặc service trước khi vá UI.
+- Uu tien root cause hon patch be mat.
+- Neu mot bug xuat phat tu data shape, sua o adapter hoac service truoc khi va UI.
 
-## 3. Kỹ năng làm việc với routing
+## 3. Ky nang lam viec voi routing
 
-Agent phải:
+Agent phai:
 
-- Hiểu Expo Router dùng file-based routing.
-- Kiểm tra ảnh hưởng của `_layout.tsx` trước khi thêm hoặc đổi route.
-- Bảo vệ auth flow và role guard khi thêm màn hình protected.
+- Hieu Expo Router dung file-based routing.
+- Kiem tra anh huong cua `_layout.tsx` truoc khi them hoac doi route.
+- Bao ve auth flow va role guard khi them man hinh protected.
+- Uu tien de route file trong `app/` chi lam route entry, con logic man hinh nam trong `src/features/.../screens/`.
 
-Chuẩn mực:
+Chuan muc:
 
-- Không chỉ thêm screen rồi để auth tự xử lý ngầm.
-- Nếu màn hình cần role đặc biệt, phải quyết định rõ dùng `ProtectedRoute` hay root guard.
+- Khong chi them screen roi de auth tu xu ly ngam.
+- Neu man hinh can role dac biet, phai quyet dinh ro dung `ProtectedRoute` hay root guard.
 
-## 4. Kỹ năng làm việc với auth
+## 4. Ky nang lam viec voi auth
 
-Agent phải:
+Agent phai:
 
-- Đọc `authStore`, `authService`, `api.ts`, các auth layout trước khi chỉnh.
-- Giữ thống nhất giữa cache user, access token, refresh token và redirect logic.
-- Tôn trọng flow hydrate khi app khởi động.
+- Doc `app/_layout.tsx`, `src/features/auth/store/authStore.ts`, `src/features/auth/services/authService.ts`, `src/core/api.ts` truoc khi chinh.
+- Giu thong nhat giua cache user, access token, refresh token va redirect logic.
+- Ton trong flow hydrate khi app khoi dong.
 
-Chuẩn mực:
+Chuan muc:
 
-- Không tạo auth state cục bộ trong screen thay cho store.
-- Không bypass flow refresh token bằng cách chèn logic ad hoc vào UI.
+- Khong tao auth state cuc bo trong screen thay cho store.
+- Khong bypass flow refresh token bang logic ad hoc trong UI.
 
-## 5. Kỹ năng làm việc với API và data mapping
+## 5. Ky nang lam viec voi API va data mapping
 
-Agent phải:
+Agent phai:
 
-- Xem backend trả DTO gì, app cần model gì.
-- Dùng adapter để map thay vì nhồi logic transform ở screen.
-- Kiểm tra mock path nếu `USE_MOCK = true`.
+- Xem backend tra DTO gi, app can model gi.
+- Dung adapter de map thay vi nhoi logic transform o screen.
+- Kiem tra mock path neu `USE_MOCK = true`.
+- Dat service va adapter moi vao feature tuong ung neu domain da duoc tach.
 
-Chuẩn mực:
+Chuan muc:
 
-- Screen không gọi API trực tiếp.
-- Service không nên trả shape khó dùng nếu adapter có thể chuẩn hóa.
-- Error handling phải đủ cho UI nhưng không làm mất ngữ nghĩa.
+- Screen khong goi API truc tiep.
+- Service khong nen tra shape kho dung neu adapter co the chuan hoa.
+- Error handling phai du cho UI nhung khong lam mat ngu nghia.
 
-## 6. Kỹ năng quản lý state
+## 6. Ky nang quan ly state
 
-Agent phải:
+Agent phai:
 
-- Giữ local UI state trong component nếu chỉ dùng tại chỗ.
-- Chỉ đưa vào Zustand khi state cần chia sẻ, lưu giữ hoặc phối hợp giữa nhiều màn.
-- Tránh source of truth kép.
+- Giu local UI state trong component neu chi dung tai cho.
+- Chi dua vao Zustand khi state can chia se, luu giu hoac phoi hop giua nhieu man.
+- Dat store cua domain da tach vao `src/features/<feature>/store/`.
+- Tranh source of truth kep.
 
-Chuẩn mực:
+Chuan muc:
 
-- Không tạo store chỉ để lưu state form tạm thời nếu không cần.
-- Không đồng thời lưu một entity ở cả store và nhiều local state mà không có lý do.
+- Khong tao store chi de luu state form tam thoi neu khong can.
+- Khong dong thoi luu mot entity o ca store va nhieu local state ma khong co ly do.
 
-## 7. Kỹ năng xây UI và responsive
+## 7. Ky nang xay UI va responsive
 
-Agent phải:
+Agent phai:
 
-- Bám `theme.ts`, `responsiveUtils.ts` và các responsive helper có sẵn.
-- Giữ visual language hiện có nếu task không yêu cầu redesign.
-- Kiểm tra màn nhỏ và màn lớn khi sửa spacing, typography, kích thước card hoặc avatar.
+- Bam `theme.ts`, `responsiveUtils.ts` va cac responsive helper co san.
+- Giu visual language hien co neu task khong yeu cau redesign.
+- Kiem tra man nho va man lon khi sua spacing, typography, kich thuoc card hoac avatar.
 
-Chuẩn mực:
+Chuan muc:
 
-- Không hard-code kích thước mới một cách tùy tiện.
+- Khong hard-code kich thuoc moi mot cach tuy tien.
 - Khong bo qua quy chuan responsive trong `docs/ARCHITECTURE.md` khi sua UI quan trong.
 
-## 8. Kỹ năng thêm feature mới
+## 8. Ky nang them feature moi
 
-Quy trình chuẩn:
+Quy trinh chuan:
 
-1. Xác định route mới hay chỉ là thành phần của route cũ
-2. Xác định domain liên quan
-3. Thêm service trước nếu feature cần dữ liệu
-4. Thêm adapter nếu response shape không trực tiếp phù hợp
-5. Thêm store chỉ khi cần chia sẻ state
-6. Dựng UI bằng component hiện có trước, chỉ tạo component mới khi thật sự cần
+1. Xac dinh route moi hay chi la thanh phan cua route cu
+2. Xac dinh domain lien quan
+3. Tao screen trong `src/features/<feature>/screens/`
+4. Tao service truoc neu feature can du lieu
+5. Tao adapter neu response shape khong truc tiep phu hop
+6. Tao store chi khi can chia se state
+7. Wiring route trong `app/` bang file entry mong
 
-Chuẩn mực:
+Chuan muc:
 
-- Feature mới phải đi đúng lớp.
-- Không lấy screen làm trung tâm chứa hết mọi logic.
+- Feature moi phai di dung lop.
+- Khong lay screen lam trung tam chua het moi logic.
 
-## 9. Kỹ năng debug chuẩn mực
+## 9. Ky nang debug chuan muc
 
-Khi gặp lỗi, agent phải đi theo thứ tự:
+Khi gap loi, agent phai di theo thu tu:
 
-1. Xác định nơi lỗi biểu hiện
-2. Lần ngược source of truth
-3. Kiểm tra luồng dữ liệu vào
-4. Kiểm tra điều kiện biên
-5. Chỉ sửa sau khi có giả thuyết rõ ràng
-6. Verify lại ở đúng luồng gây lỗi
+1. Xac dinh noi loi bieu hien
+2. Lan nguoc source of truth
+3. Kiem tra luong du lieu vao
+4. Kiem tra dieu kien bien
+5. Chi sua sau khi co gia thuyet ro rang
+6. Verify lai o dung luong gay loi
 
-Khuôn mẫu debug:
+Khuon mau debug:
 
-- Lỗi route: kiểm tra file route, `_layout`, redirect logic, params
-- Lỗi auth: kiểm tra hydrate, token storage, interceptor, `isAuthenticated`, `userRole`
-- Lỗi UI: kiểm tra theme, responsive helper, props truyền vào, dữ liệu adapter
-- Lỗi API: kiểm tra `USE_MOCK`, endpoint, unwrap, adapter, error mapping
-- Lỗi state: kiểm tra nơi ghi state, nơi đọc state, timing fetch, loading/error state
+- Loi route: kiem tra file route entry, feature screen, `_layout`, redirect logic, params
+- Loi auth: kiem tra hydrate, token storage, interceptor, `isAuthenticated`, `userRole`
+- Loi UI: kiem tra theme, responsive helper, props truyen vao, du lieu adapter
+- Loi API: kiem tra `USE_MOCK`, endpoint, unwrap, adapter, error mapping
+- Loi state: kiem tra noi ghi state, noi doc state, timing fetch, loading/error state
 
-Chuẩn mực:
+Chuan muc:
 
-- Không fix bằng cách thêm condition chồng condition nếu chưa rõ nguyên nhân.
-- Không xóa logic cũ chỉ vì chưa hiểu nó.
+- Khong fix bang cach them condition chong condition neu chua ro nguyen nhan.
+- Khong xoa logic cu chi vi chua hieu no.
 
-## 10. Kỹ năng refactor
+## 10. Ky nang refactor
 
-Refactor chỉ được xem là chuẩn khi:
+Refactor chi duoc xem la chuan khi:
 
-- giảm duplication
-- tăng độ rõ trách nhiệm
-- không đổi hành vi ngoài ý muốn
-- không làm route hoặc flow auth khó hiểu hơn
+- giam duplication
+- tang do ro trach nhiem
+- khong doi hanh vi ngoai y muon
+- khong lam route hoac flow auth kho hieu hon
+- dua logic ve dung feature hoac dung lop ha tang
 
-Chuẩn mực:
+Chuan muc:
 
-- Refactor nhỏ, có mục tiêu rõ.
-- Không gom quá nhiều thay đổi không liên quan trong một lần sửa.
+- Refactor nho, co muc tieu ro.
+- Khong gom qua nhieu thay doi khong lien quan trong mot lan sua.
 
-## 11. Kỹ năng review trước khi kết thúc
+## 11. Ky nang review truoc khi ket thuc
 
-Trước khi chốt task, agent phải tự hỏi:
+Truoc khi chot task, agent phai tu hoi:
 
-1. Thay đổi này có đúng source of truth không
-2. Có phá mock flow không
-3. Có phá responsive không
-4. Có làm route hoặc auth khó đoán hơn không
-5. Có tạo file mới không cần thiết không
-6. Có chỗ nào nên cập nhật tài liệu không
+1. Thay doi nay co dung source of truth khong
+2. Co pha mock flow khong
+3. Co pha responsive khong
+4. Co lam route hoac auth kho doan hon khong
+5. Co tao file moi khong can thiet khong
+6. Co cho nao nen cap nhat tai lieu khong
 
-## 12. Kỹ năng giao tiếp kỹ thuật
+## 12. Ky nang giao tiep ky thuat
 
-Agent phải:
+Agent phai:
 
-- Nói rõ đang sửa lớp nào và vì sao.
-- Nêu được giả định khi chưa đủ dữ liệu.
-- Báo rủi ro thật, không nói chung chung.
-- Kết luận bằng thay đổi thực tế, kiểm tra đã làm, và phần chưa kiểm tra được.
+- Noi ro dang sua lop nao va vi sao.
+- Neu duoc gia dinh khi chua du du lieu.
+- Bao rui ro that, khong noi chung chung.
+- Ket luan bang thay doi thuc te, kiem tra da lam, va phan chua kiem tra duoc.
 
-Chuẩn mực:
+Chuan muc:
 
-- Ngắn gọn nhưng cụ thể.
-- Không dùng ngôn ngữ mơ hồ như "có thể ổn", "chắc là được" nếu chưa verify.
-
-## 13. Quy tắc giải quyết vấn đề chuẩn
-
-Mọi task nên đi theo khung này:
-
-1. Hiểu yêu cầu
-2. Xác định lớp bị ảnh hưởng
-3. Đọc file bắt buộc
-4. Chốt source of truth
-5. Sửa ở đúng lớp
-6. Kiểm tra lại luồng liên quan
-7. Cập nhật tài liệu nếu quy tắc hoặc kiến trúc thay đổi
-
-Nếu không chắc nên sửa ở đâu:
-
-- ưu tiên đọc thêm
-- không ưu tiên đoán
-- không vá ở UI khi lỗi đến từ domain/data/config
+- Ngan gon nhung cu the.
+- Khong dung ngon ngu mo ho nhu "co the on", "chac la duoc" neu chua verify.

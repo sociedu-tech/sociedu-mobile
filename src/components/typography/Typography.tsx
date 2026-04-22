@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextProps, StyleSheet } from 'react-native';
+import { Text, TextProps } from 'react-native';
 import { theme } from '../../theme/theme';
 import { useBreakpoint } from '../../theme/useBreakpoint';
 import { getTypographyVariant } from './typographyResponsive';
