@@ -1,193 +1,398 @@
 # Instruction
 
-Tai lieu nay dinh nghia quy trinh lam viec chuan cho agent khi lap trinh trong repo `sociedu-mobile`.
+Quy trinh lam viec chuan cho moi thanh vien (hoac agent) phat trien giao dien trong `sociedu-mobile`.
+Muc tieu: nhieu nguoi code song song tren cung repo ma it xung dot, de review va de tiep noi.
 
-## 1. Muc tieu lam viec
+---
 
-- Giu codebase de mo rong, de review va de debug.
-- Ton trong kien truc Expo Router + feature-based da duoc tach trong `src/features/`.
-- Uu tien tinh nhat quan hon la them pattern moi.
-- Moi thay doi phai giai quyet dung bai toan, khong chi lam code chay tam.
+## 1. Nguyen tac nen tang
 
-## 2. Quy trinh bat buoc truoc khi viet code
+### 1.1 Feature Ownership – moi nguoi lam trong "nha" cua minh
 
-### Buoc 1: Doc tai lieu loi
+Repo chia code theo domain. Moi thanh vien duoc phan cong 1 hoac vai feature. Khi lam task, uu tien sua trong thu muc feature cua minh:
 
-Phai doc:
+| Nguoi | Lam o dau | Khong nen dung vao |
+| --- | --- | --- |
+| Dev A (mentor) | `src/features/mentor/...` | `src/features/booking/...` |
+| Dev B (booking) | `src/features/booking/...` | `src/features/mentor/...` |
+| Dev C (profile) | `src/features/profile/...` | `src/features/auth/...` |
 
-1. `AGENTS.md`
-2. `.agent/instruction.md`
-3. `.agent/mandatory-reading.md`
-4. `.agent/skill.md`
+Neu can chia se logic giua cac feature, trao doi truoc khi sua vao file chung.
 
-### Buoc 2: Doc tai lieu theo loai task
+### 1.2 Bon lop kien truc bat bien
 
-Xem bang trong `.agent/mandatory-reading.md` roi mo dung file lien quan truoc khi sua.
+```
+app/              → route layer mong, chi wiring
+src/features/     → source of truth theo domain
+src/components/   → shared UI, khong chua logic man hinh
+src/core/         → ha tang chung, khong phai noi viet logic domain
+```
 
-### Buoc 3: Xac dinh pham vi thay doi
+Moi thay doi phai nam dung lop. Neu khong chac, dung lai va doc lai muc nay.
 
-- Route entry, layout: `app/`
-- Source of truth theo domain: `src/features/<feature>/`
-- UI dung chung toan app: `src/components/`
-- Ha tang chung va compatibility wrapper: `src/core/`
-- Theme va responsive: `src/theme/`
-- Tai lieu: `.agent/` hoac `docs/`
+### 1.3 Vung cam toan cuc
 
-### Buoc 4: Kiem tra rang buoc hien tai
+Nhung vung sau anh huong toan bo app. **Khong duoc sua ma khong thong bao team:**
 
-- Auth flow di qua `app/_layout.tsx` va `src/features/auth/store/authStore.ts`
-- Mock API bat qua `src/core/config.ts`
-- API base URL dang nam trong `src/core/api.ts`
-- Responsive system nam o `src/theme/` va helper responsive theo component
-- `app/` da duoc lam mong cho nhieu route. Neu can sua logic man hinh, uu tien sua trong `src/features/`
+- `app/_layout.tsx` – auth guard, root stack
+- `app/(auth)/_layout.tsx` – auth redirect
+- `app/(tabs)/_layout.tsx` – tab bar, tab order
+- `src/features/auth/store/authStore.ts` – session state
+- `src/core/api.ts` – Axios instance, token flow, refresh
+- `src/core/types.ts` – DTO va mobile model chia se
+- `src/components/ProtectedRoute.tsx` – role guard
+- `src/theme/theme.ts` – color, spacing, typography tokens
 
-### Buoc 5: Chi viet code sau khi tra loi duoc 4 cau hoi
+---
 
-1. Source of truth cua thay doi nay nam o dau
-2. Thay doi nay anh huong route nao, feature nao, service nao, store nao
-3. Co can giu tuong thich voi mock data hoac compatibility wrapper hay khong
-4. Cach kiem tra thay doi sau khi sua la gi
+## 2. Thu tu lam viec cho moi task (bat buoc)
 
-## 3. Kien truc chuan can tuan thu
+### Buoc 1: Xac dinh loai task
 
-### 3.1 Routing
+| Loai | Sua o dau chinh | Anh huong pham vi |
+| --- | --- | --- |
+| Them/sua man hinh | `src/features/<feature>/screens/` | Hep – trong feature |
+| Them route moi | `app/` + feature screen | Hep – route wiring |
+| Sua shared UI | `src/components/` | Rong – toan app |
+| Sua auth/role | `src/features/auth/` + layout | Rong – moi flow |
+| Sua theme/responsive | `src/theme/` | Rong – moi component |
+| Sua service/adapter | `src/features/<feature>/services/` | Hep – trong feature |
 
-- `app/` chi nen chua route, layout va route wiring.
-- Uu tien de file route chi `export { default }` sang feature screen.
-- Khong don business logic nang vao file route neu co the dua xuong `src/features/`.
-- Khi them man hinh moi, giu dung quy uoc Expo Router.
+### Buoc 2: Doc file bat buoc theo loai task
 
-### 3.2 Feature logic
+Tra `.agent/mandatory-reading.md` de biet nhom file can doc. Khong can doc luot ca repo.
 
-- Moi domain nen uu tien nam trong `src/features/<feature>/`.
-- Thu muc feature co the gom `screens`, `services`, `store`, `adapters`, `components`.
-- Logic moi phai dua vao feature thay vi viet them vao `src/core/` neu no khong phai ha tang chung.
+### Buoc 3: Tra loi 4 cau hoi truoc khi code
 
-### 3.3 Core layer
+1. **Source of truth** cua thay doi nay nam o dau? (file nao la chinh)
+2. **Pham vi anh huong**: route nao, feature nao, store nao bi tac dong?
+3. **Tuong thich**: co wrapper hoac mock data nao can giu khong?
+4. **Cach verify**: sau khi sua, lam sao kiem tra dung?
 
-- `src/core/api.ts`: axios instance, token handling, error handling
-- `src/core/config.ts`: config dung chung
-- `src/core/mocks/`: mock API va mock data
-- `src/core/services/*`, `src/core/store/*`, `src/core/adapters/*`: co the la compatibility wrapper cho feature da tach
-- Khong xem `src/core/services/*` la noi uu tien de them logic moi neu domain da co `src/features/<feature>/services/`
+Neu chua tra loi duoc, doc them code truoc khi bat dau.
 
-### 3.4 UI layer
+---
 
-- `src/components/` la noi cho component dung chung toan app.
-- Component chi dung trong 1 feature nen uu tien dat trong `src/features/<feature>/components/`.
-- Thu muc `components/` o root la dau vet starter; khong mo rong them neu khong co ly do rat ro.
+## 3. Quy trinh chuan khi phat trien giao dien
 
-### 3.5 Theme va responsive
+### 3.1 Tao man hinh moi
 
-- Mau, spacing, typography phai bam `src/theme/theme.ts`.
-- Responsive phai dung utility trong `src/theme/responsiveUtils.ts` hoac helper hien co.
-- Khong hard-code kich thuoc lon trong screen neu da co scale function.
+Thu tu bat buoc:
 
-## 4. Nguyen tac code
+```
+1. Xac dinh man hinh thuoc feature nao
+2. Tao screen trong   src/features/<feature>/screens/ScreenName.tsx
+3. Neu can data:      tao/sua service trong src/features/<feature>/services/
+4. Neu shape khac:    tao/sua adapter trong src/features/<feature>/adapters/
+5. Neu state chia se: tao store trong src/features/<feature>/store/
+6. Cuoi cung:         them route entry mong trong app/
+```
 
-### 4.1 Nguyen tac to chuc
+**Man hinh mau chuan** (pattern thuc te trong repo):
 
-- Mot file chi nen co mot trach nhiem chinh.
-- Ten file phan anh dung trach nhiem.
-- Tranh tao utility chung chung kieu `helpers.ts` neu chuc nang khong ro rang.
-- Khong them abstraction moi neu chua co it nhat hai noi can dung.
+```tsx
+// src/features/<feature>/screens/ExampleScreen.tsx
+import React from 'react';
+import { ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-### 4.2 Nguyen tac TypeScript
+import { Typography } from '@/src/components/typography/Typography';
+import { CustomButton } from '@/src/components/button/CustomButton';
+import { Card } from '@/src/components/ui/Card';
+import { Section } from '@/src/components/ui/Section';
+import { theme } from '@/src/theme/theme';
 
-- Giu `strict` an toan; khong mo rong `any` tru truong hop bi chan boi du lieu ngoai va da co lap bien.
-- Uu tien type/domain model ro rang hon object inline dai.
-- DTO backend va model dung trong app can tach bang adapter neu khac shape.
+export default function ExampleScreen() {
+  // 1. Local UI state de o day
+  // 2. Goi service qua useEffect, KHONG goi axios truc tiep
+  // 3. Dung shared component co san, bam theme tokens
 
-### 4.3 Nguyen tac state
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView>
+        <Section>
+          <Typography variant="h2">Title</Typography>
+          <Card>
+            {/* Noi dung man hinh */}
+          </Card>
+        </Section>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+```
 
-- Local UI state de trong screen/component.
-- Shared state moi dua vao Zustand.
-- Shared state cua feature nen nam trong `src/features/<feature>/store/` neu co feature tuong ung.
-- Khong nhan doi source of truth giua store va component state tru khi la derived UI state.
+**Route entry mau chuan:**
 
-### 4.4 Nguyen tac API va service
+```tsx
+// app/(tabs)/example.tsx hoac app/example/index.tsx
+export { default } from '@/src/features/<feature>/screens/ExampleScreen';
+```
 
-- Khong goi `axios` truc tiep trong screen.
-- Moi loi goi network di qua service.
-- Service moi cua feature nen nam trong `src/features/<feature>/services/`.
-- Moi bien doi du lieu backend co y nghia domain di qua adapter.
-- Error message tra ve UI phai co ngu nghia, tranh day raw response len screen.
+### 3.2 Sua man hinh hien co
 
-### 4.5 Nguyen tac UI
+Thu tu doc truoc khi sua:
 
-- Uu tien dung `Typography`, `CustomButton` va component dung lai san co.
-- Giu style ro rang, tranh inline style lon trong JSX.
-- Khong tu y doi visual language cua app khi task khong yeu cau.
+```
+1. Route entry trong app/ → biet screen duoc map tu dau
+2. Feature screen trong src/features/ → doc logic hien tai
+3. Component con dung trong screen
+4. theme.ts + responsiveUtils.ts → biet token dang dung
+5. Service/adapter/store lien quan → biet data den tu dau
+```
 
-### 4.6 Nguyen tac comment va tai lieu
+Chi sua o lop thap nhat giai quyet dung van de:
+- Loi hien thi → sua screen hoac component
+- Loi du lieu → sua service hoac adapter
+- Loi route → sua app/ layout
 
-- Chi comment khi logic kho doc hoac co rang buoc nghiep vu khong hien nhien.
-- Neu thay doi lam lech tai lieu `.agent/` hoac `docs/` thi phai cap nhat lai.
+### 3.3 Tao component UI moi
 
-## 5. Quy chuan code
+Truoc khi tao, tu kiem tra:
 
-### Dat ten
+1. Da co shared component nao gan giong chua? (xem danh sach muc 4.1)
+2. Component nay chi dung trong 1 feature hay nhieu feature?
+   - **1 feature** → dat trong `src/features/<feature>/components/`
+   - **Nhieu feature** → dat trong `src/components/<nhom>/`
+3. Component phai bam theme tokens, khong hard-code mau/spacing/font
 
-- Route file: theo chuan Expo Router, vi du `index.tsx`, `[id].tsx`, `edit.tsx`
-- Screen va component: `PascalCase`
-- Hook, service, util: `camelCase`
-- Hang so: `UPPER_SNAKE_CASE` khi that su la constant bat bien
+---
+
+## 4. Shared resources – cai gi dung chung, dung the nao
+
+### 4.1 Shared UI components co san
+
+| Component | Duong dan | Dung khi |
+| --- | --- | --- |
+| `Typography` | `src/components/typography/` | Moi text tren app |
+| `CustomButton` | `src/components/button/` | Button voi variant va responsive |
+| `Card` | `src/components/ui/Card.tsx` | Card container co shadow |
+| `Section` | `src/components/ui/Section.tsx` | Section voi padding chuan |
+| `Avatar` | `src/components/ui/Avatar.tsx` | Hinh dai dien |
+| `ListItem` | `src/components/ui/ListItem.tsx` | Dong trong danh sach |
+| `TextInput` | `src/components/form/TextInput.tsx` | Input form |
+| `Checkbox` | `src/components/form/Checkbox.tsx` | Checkbox form |
+| `LoadingState` | `src/components/states/` | Spinner toan man hinh |
+| `EmptyState` | `src/components/states/` | Trang thai rong |
+| `ErrorState` | `src/components/states/` | Trang thai loi |
+| `DataTable` | `src/components/display/` | Bang du lieu |
+| `ProtectedRoute` | `src/components/` | Bao ve route theo role |
+
+**Luat:** Uu tien dung component co san truoc khi tao moi. Neu can mo rong, sua component co san qua props moi (khong break API cu).
+
+### 4.2 Theme tokens
+
+Moi gia tri kich thuoc, mau sac, spacing, border radius, typography phai lay tu `src/theme/theme.ts`:
+
+```tsx
+// DUNG
+style={{ padding: theme.spacing.md, backgroundColor: theme.colors.surface }}
+
+// SAI – hard-code
+style={{ padding: 16, backgroundColor: '#FFFFFF' }}
+```
+
+Danh sach token chinh:
+- **Colors:** `primary`, `primaryLight`, `primaryLighter`, `secondary`, `background`, `surface`, `success`, `error`, `warning`, `info`
+- **Text colors:** `theme.colors.text.primary/secondary/disabled/inverse`
+- **Spacing:** `xs=4`, `sm=8`, `md=16`, `lg=24`, `xl=32`, `xxl=48`
+- **Border radius:** `sm=4`, `md=8`, `lg=16`, `xl=24`, `full=9999`
+- **Typography:** `h1`, `h2`, `h3`, `body`, `bodyMedium`, `caption`, `label`
+
+### 4.3 Responsive system
+
+Repo dung 3 tang responsive:
+
+1. **Breakpoints** (`src/theme/breakpoints.ts`): `xs(<360)`, `sm(360-480)`, `md(480-768)`, `lg(768-1024)`, `xl(>1024)`
+2. **Scale utilities** (`src/theme/responsiveUtils.ts`): `scaleFont()`, `scaleSpace()`, `scaleWidth()`, `scaleHeight()`, `isTablet()`, `getGridColumns()`
+3. **Component responsive helpers** (vi du: `buttonResponsive.ts`, `typographyResponsive.ts`): dung `useBreakpoint()` de lay breakpoint hien tai
+
+Khi lam UI moi, khong hard-code kich thuoc lon. Dung utility hoac token.
+
+### 4.4 Data flow chuan
+
+```
+Backend API → service (goi api) → adapter (map DTO → UI model) → screen (render)
+                                                                ↗ store (neu can chia se)
+```
+
+Cac quy tac:
+- **Screen KHONG goi `axios` truc tiep.** Goi qua service.
+- **Screen KHONG tu map raw DTO.** Adapter da lam viec nay.
+- **DTO backend** nam trong `src/core/types.ts` (phan BACKEND DTOs)
+- **UI model** nam trong `src/core/types.ts` (phan MOBILE TYPES)
+- **Feature adapter** map tu DTO sang UI model
+- **Error tra ve UI** phai co nghia, khong day raw payload len man hinh
+
+### 4.5 State management
+
+| Loai state | Dat o dau | Vi du |
+| --- | --- | --- |
+| Local UI | `useState` trong screen/component | modal open, tab index, loading local |
+| Shared feature | Zustand store trong `src/features/<feature>/store/` | booking list, auth session |
+| Toan app | `authStore` (da co) | user, isAuthenticated, userRole |
+
+**Luat:** Khong tao store Zustand neu state chi dung trong 1 screen.
+
+---
+
+## 5. Quy tac tranh xung dot khi nhieu nguoi code
+
+### 5.1 File ownership – ai lam gi
+
+```
+src/features/mentor/...    → Dev phu trach mentor
+src/features/booking/...   → Dev phu trach booking
+src/features/profile/...   → Dev phu trach profile
+src/features/message/...   → Dev phu trach message
+src/features/auth/...      → Chi lead hoac nguoi duoc chi dinh
+src/components/...         → Thong bao team truoc khi sua
+src/theme/...              → Thong bao team truoc khi sua
+app/...                    → Chi them route entry mong, khong dat logic
+```
+
+### 5.2 Nhung dieu KHONG lam de tranh xung dot
+
+1. **Khong dat business logic vao `app/`** – file route chi `export { default }` hoac layout wiring
+2. **Khong keo logic feature A sang feature B** – neu can dung chung, tao shared service hoac bao team
+3. **Khong sua `src/core/types.ts` ma khong thong bao** – file nay dung chung cho moi feature
+4. **Khong tao utility chung chung neu no chi phuc vu 1 feature** – dat trong feature do
+5. **Khong sua shared component ma khong kiem tra anh huong** – grep xem ai dang dung no
+6. **Khong them style token moi vao `theme.ts` ma khong thong bao** – token la hop dong chung
+
+### 5.3 Khi can sua file chung
+
+Neu task bat buoc phai sua file chung (`types.ts`, `theme.ts`, shared component...):
+
+1. Thong bao truoc tren kenh chung (ten file, ly do, pham vi thay doi)
+2. Sua nho nhat co the (them properties, KHONG xoa hoac rename)
+3. Kiem tra backward compatibility: import cu khong bi vo
+4. Neu la component, chi them props moi, giu default cu
+
+---
+
+## 6. Quy chuan import va dat ten
 
 ### Import
 
-- Uu tien alias `@/`
-- Khong tao chuoi import tuong doi dai kho doc neu co alias phu hop.
-- Wrapper route va wrapper core nen import tu feature bang alias.
+```tsx
+// Thu tu import chuan:
+import React from 'react';                                    // 1. React/RN core
+import { View } from 'react-native';
+import { useRouter } from 'expo-router';                     // 2. Expo/third-party
 
-### Cau truc file screen
+import { Typography } from '@/src/components/.../Typography'; // 3. Shared UI (alias @/)
+import { theme } from '@/src/theme/theme';                    // 4. Theme
 
-Thu tu uu tien:
+import { mentorService } from '../services/mentorService';    // 5. Feature-local (relative)
+import { MentorCard } from '../components/MentorCard';
+```
 
-1. imports
-2. constants/types cuc bo
-3. component chinh
-4. helper function nho neu that su gan chat voi screen
-5. styles
+- Uu tien alias `@/` cho moi thu ben ngoai feature hien tai
+- Dung relative path `../` cho file cung feature
+- Khong import truc tiep tu file trong feature cua nguoi khac (VD: khong import tu `src/features/booking/...` trong code cua feature `mentor`)
 
-### Cau truc file service
+### Dat ten
 
-1. imports
-2. base constant
-3. service object
-4. cac method theo nhom chuc nang
+| Loai | Convention | Vi du |
+| --- | --- | --- |
+| Route file | lowercase | `index.tsx`, `[id].tsx`, `dashboard.tsx` |
+| Screen | PascalCase + Screen | `MentorListScreen.tsx` |
+| Component | PascalCase | `MentorCard.tsx`, `Typography.tsx` |
+| Service | camelCase + Service | `mentorService.ts` |
+| Adapter | camelCase + Adapter | `mentorAdapter.ts` |
+| Store | camelCase + Store | `bookingStore.ts` |
+| Hook | camelCase + use prefix | `useBreakpoint.ts` |
+| Constant | UPPER_SNAKE_CASE | `API_BASE_URL`, `STORAGE_KEYS` |
 
-## 6. Checklist truoc khi sua code
+---
 
-- Da doc file bat buoc trong `.agent/mandatory-reading.md`
-- Da xac dinh source of truth
-- Da xac dinh file nao khong nen sua
-- Da xac dinh can test bang gi: lint, flow auth, flow route, flow responsive
+## 7. Mock va backend integration
 
-## 7. Checklist truoc khi ket thuc task
+### Mock mode
 
-- Code chay hop ly ve mat logic
-- Khong pha route hien co
-- Khong pha auth redirect
-- Khong them hard-code moi trai quy chuan
-- Khong tao duplication ro rang
-- Da cap nhat tai lieu neu thay doi kien truc/quy trinh
+- `src/core/config.ts` dieu khien `USE_MOCK` (hien tai `false`)
+- Mock API nam trong `src/core/mocks/api/`
+- Mock data nam trong `src/core/mocks/data/`
+- Chat hien tai van mock-first qua `src/core/mocks/chatMocks.ts`
 
-## 8. Nhung dieu cam
+Khi viet service moi, PHAI ho tro ca 2 che do:
 
-- Khong goi API truc tiep trong screen.
-- Khong hard-code them `API_BASE_URL` hoac env logic rai rac.
-- Khong mo rong thu muc `components/` o root nhu noi chua component chinh moi.
-- Khong bo qua responsive system khi sua UI.
-- Khong them state toan cuc cho van de cuc bo.
-- Khong xem wrapper trong `src/core/` la noi chua logic domain moi.
-- Khong sua file lon theo kieu rewrite toan bo khi chi can thay doi nho.
+```tsx
+const res = USE_MOCK
+  ? await mockApi.getData()
+  : await api.get<{ data: SomeDTO }>(`${BASE}/endpoint`);
+const result = unwrap(res);
+```
 
-## 9. Tieu chuan hoan thanh
+### Compatibility wrappers
 
-Mot thay doi chi duoc xem la hoan thanh khi:
+Cac file trong `src/core/services/`, `src/core/store/`, `src/core/adapters/` chi la re-export wrappers:
 
-- dung muc tieu nghiep vu
-- khop kien truc hien tai
-- khong tao no ky thuat ro rang
-- co cach kiem tra hop ly
-- co the duoc nguoi khac doc va tiep tuc ma khong phai doan y dinh
+```tsx
+// src/core/services/userService.ts → chi 1 dong
+export { userService } from '@/src/features/profile/services/userService';
+```
+
+**Khong them logic moi vao day.** Giu chung de import cu khong bi vo.
+
+---
+
+## 8. Checklist truoc khi commit
+
+### Truoc khi bat dau code
+
+- [ ] Da doc nhom file bat buoc (muc 2.2)
+- [ ] Da xac dinh source of truth (muc 2.3)
+- [ ] Da biet file nao khong nen vao
+- [ ] Da biet cach verify sau khi sua
+
+### Truoc khi commit / push
+
+- [ ] `npm run lint` pass
+- [ ] Khong pha route hien co (thu navigate qua man hinh chung quanh)
+- [ ] Khong pha auth redirect (thu guest flow va logged-in flow)
+- [ ] Khong hard-code mau/spacing/font (da dung theme tokens)
+- [ ] Khong tao duplication (khong copy-paste tu screen khac)
+- [ ] Khong de `console.log` debug con sot
+- [ ] Khong sua file ngoai pham vi feature cua minh ma khong thong bao team
+- [ ] Cap nhat tai lieu neu thay doi kien truc/route/source of truth
+
+---
+
+## 9. Quy trinh debug
+
+Khi gap loi, debug theo thu tu:
+
+```
+1. Xac dinh noi loi bieu hien (screen, component, route)
+2. Tim nguoc source of truth (route → screen → service → adapter → API)
+3. Kiem tra du lieu dau vao (props, response, params)
+4. Kiem tra dieu kien (role, auth state, USE_MOCK)
+5. Chi sua khi co gia thuyet ro rang
+6. Verify lai tren dung flow da gay ra loi
+```
+
+Phan loai nhanh:
+
+| Trieu chung | Nguyen nhan thuong gap | Kiem tra |
+| --- | --- | --- |
+| Man hinh trang | Route entry sai, screen export sai | `app/` route file, screen export default |
+| Data undefined | Service chua goi, adapter mapping sai | Service, adapter, `USE_MOCK` |
+| Redirect loop | Auth guard logic | `_layout.tsx`, `authStore`, `isAuthenticated` |
+| UI vo layout | Thieu responsive, hard-code size | theme tokens, responsive utils |
+| 401 error | Token expired, refresh fail | `api.ts` interceptor, token storage |
+
+---
+
+## 10. Tieu chuan hoan thanh
+
+Mot thay doi duoc xem la hoan thanh khi:
+
+- [x] Giai quyet dung yeu cau ky thuat / nghiep vu
+- [x] Nam dung lop trong kien truc (route / feature / core / theme)
+- [x] Su dung shared component va theme tokens nhat quan
+- [x] Khong tao source of truth kep (1 entity chi luu 1 noi)
+- [x] Khong pha route, auth, role guard hoac responsive cua nguoi khac
+- [x] `npm run lint` pass
+- [x] Nguoi khac co the mo file va hieu y dinh ma khong phai doan

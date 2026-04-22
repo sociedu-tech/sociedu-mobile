@@ -1,182 +1,244 @@
 # Skill
 
-Tai lieu nay mo ta bo ky nang chuan ma mot coding agent phai van dung khi xu ly task trong `sociedu-mobile`.
+Tai lieu nay tong hop bo ky nang va quy trinh code chuan cho `sociedu-mobile`.
+Muc tieu cua repo la cho phep nhieu thanh vien co the cung phat trien giao dien app ma it xung dot, de review va de tiep noi.
 
-## 1. Ky nang doc hieu codebase
+## 1. Tu duy goc cua repo
 
-Agent phai:
+Agent phai lam viec voi 4 nguyen tac nen:
 
-- Xac dinh lop cua van de truoc: route, feature screen, feature service, feature adapter, feature store, UI chung, theme hay config.
-- Tim source of truth thay vi sua theo cam tinh tai noi loi bieu hien.
-- Doc toi thieu nhung dung file, dua tren `.agent/mandatory-reading.md`.
-- Phan biet component dung chung o `src/components/` voi component noi bo cua feature trong `src/features/<feature>/components/`.
-- Phan biet wrapper trong `app/` va `src/core/` voi file source of truth trong `src/features/`.
+1. `src/features/` la source of truth theo domain
+2. `app/` chi la route layer mong cua Expo Router
+3. `src/components/` la shared UI layer, khong phai noi chua logic man hinh
+4. `src/core/` la ha tang chung va compatibility wrapper, khong phai noi uu tien de viet logic domain moi
 
-Chuan muc:
+Neu mot thay doi lam lech 4 nguyen tac tren, agent phai dung lai va xac dinh lai source of truth.
 
-- Khong ket luan kien truc chi tu mot file.
-- Khong sua khi chua hieu luong du lieu vao va ra.
+## 2. Ky nang doc hieu codebase dung cach
 
-## 2. Ky nang phan ra van de
+Truoc khi sua, agent phai tra loi duoc:
 
-Khi nhan task, agent phai tach thanh cac cau hoi:
-
-1. Day la van de ve hien thi, dieu huong, du lieu, trang thai hay kien truc
-2. Loi xuat hien o dau va nguon goc nam o dau
-3. Can sua toi thieu o may lop de giai quyet tan goc
-4. Tieu chi hoan thanh la gi
+1. Van de nay thuoc feature nao
+2. Man hinh nay dang duoc route tu file nao trong `app/`
+3. Logic that su dang nam o screen, service, adapter hay store
+4. Co wrapper nao trong `src/core/` dang giu compatibility khong
+5. UI nay dung shared component nao va bam theme/responsive nao
 
 Chuan muc:
 
-- Uu tien root cause hon patch be mat.
-- Neu mot bug xuat phat tu data shape, sua o adapter hoac service truoc khi va UI.
+- Khong ket luan kien truc chi tu 1 file.
+- Khong sua file route neu chua doc feature screen duoc route toi.
+- Khong sua wrapper trong `src/core/` neu chua doc feature implementation phia sau no.
 
-## 3. Ky nang lam viec voi routing
+## 3. Ky nang lam viec de nhieu nguoi code song song
 
-Agent phai:
+Repo nay uu tien chia ownership theo feature. Agent phai giu cach lam viec nay:
 
-- Hieu Expo Router dung file-based routing.
-- Kiem tra anh huong cua `_layout.tsx` truoc khi them hoac doi route.
-- Bao ve auth flow va role guard khi them man hinh protected.
-- Uu tien de route file trong `app/` chi lam route entry, con logic man hinh nam trong `src/features/.../screens/`.
+- Neu task thuoc `mentor`, uu tien sua trong `src/features/mentor/...`
+- Neu task thuoc `booking`, uu tien sua trong `src/features/booking/...`
+- Neu task thuoc `profile`, uu tien sua trong `src/features/profile/...`
+- Neu task chi la wiring route, moi sua `app/...`
+- Neu task la shared UI, moi sua `src/components/...`
 
-Chuan muc:
+Nguyen tac tranh xung dot:
 
-- Khong chi them screen roi de auth tu xu ly ngam.
-- Neu man hinh can role dac biet, phai quyet dinh ro dung `ProtectedRoute` hay root guard.
+- Khong dat business logic chung vao `app/`
+- Khong keo logic cua feature A sang feature B neu khong that su can
+- Khong tao utility chung chung neu no moi phuc vu 1 feature
+- Uu tien component noi bo cua feature truoc khi nang cap thanh shared component
 
-## 4. Ky nang lam viec voi auth
+## 4. Quy trinh chuan khi sua giao dien
 
-Agent phai:
+Khi sua mot man hinh UI, agent phai di theo thu tu:
 
-- Doc `app/_layout.tsx`, `src/features/auth/store/authStore.ts`, `src/features/auth/services/authService.ts`, `src/core/api.ts` truoc khi chinh.
-- Giu thong nhat giua cache user, access token, refresh token va redirect logic.
-- Ton trong flow hydrate khi app khoi dong.
-
-Chuan muc:
-
-- Khong tao auth state cuc bo trong screen thay cho store.
-- Khong bypass flow refresh token bang logic ad hoc trong UI.
-
-## 5. Ky nang lam viec voi API va data mapping
-
-Agent phai:
-
-- Xem backend tra DTO gi, app can model gi.
-- Dung adapter de map thay vi nhoi logic transform o screen.
-- Kiem tra mock path neu `USE_MOCK = true`.
-- Dat service va adapter moi vao feature tuong ung neu domain da duoc tach.
+1. Doc route entry trong `app/`
+2. Doc feature screen la source of truth
+3. Doc component con trong feature hoac shared UI lien quan
+4. Doc `theme.ts`, `responsiveUtils.ts`, va responsive helper neu co
+5. Xac dinh state nao la local UI state, state nao la shared state
+6. Sua o lop thap nhat co the giai quyet dung van de
 
 Chuan muc:
 
-- Screen khong goi API truc tiep.
-- Service khong nen tra shape kho dung neu adapter co the chuan hoa.
-- Error handling phai du cho UI nhung khong lam mat ngu nghia.
+- Khong sua `app/` de fix van de layout neu screen that su nam trong `src/features/...`
+- Khong fix du lieu sai bang condition trong JSX neu adapter/service moi la noi dung
+- Khong dua API call vao screen
 
-## 6. Ky nang quan ly state
+## 5. Quy trinh chuan khi them man hinh moi
 
-Agent phai:
+Neu can them mot man hinh moi, agent phai lam dung thu tu sau:
 
-- Giu local UI state trong component neu chi dung tai cho.
-- Chi dua vao Zustand khi state can chia se, luu giu hoac phoi hop giua nhieu man.
-- Dat store cua domain da tach vao `src/features/<feature>/store/`.
-- Tranh source of truth kep.
-
-Chuan muc:
-
-- Khong tao store chi de luu state form tam thoi neu khong can.
-- Khong dong thoi luu mot entity o ca store va nhieu local state ma khong co ly do.
-
-## 7. Ky nang xay UI va responsive
-
-Agent phai:
-
-- Bam `theme.ts`, `responsiveUtils.ts` va cac responsive helper co san.
-- Giu visual language hien co neu task khong yeu cau redesign.
-- Kiem tra man nho va man lon khi sua spacing, typography, kich thuoc card hoac avatar.
+1. Xac dinh man hinh do thuoc feature nao
+2. Tao screen trong `src/features/<feature>/screens/`
+3. Neu can data, tao hoac sua service trong `src/features/<feature>/services/`
+4. Neu response shape khac UI model, tao hoac sua adapter trong `src/features/<feature>/adapters/`
+5. Neu state can chia se qua nhieu man hinh, tao store trong `src/features/<feature>/store/`
+6. Cuoi cung moi them route entry mong trong `app/`
 
 Chuan muc:
 
-- Khong hard-code kich thuoc moi mot cach tuy tien.
-- Khong bo qua quy chuan responsive trong `docs/ARCHITECTURE.md` khi sua UI quan trong.
+- Khong tao man hinh moi truc tiep trong `app/` roi de logic o do
+- Khong them state toan cuc cho nhu cau chi cuc bo trong 1 screen
+- Khong them wrapper trong `src/core/` neu khong co nhu cau compatibility that
 
-## 8. Ky nang them feature moi
+## 6. Quy trinh chuan khi sua route
 
-Quy trinh chuan:
+Khi sua route, agent phai kiem tra:
 
-1. Xac dinh route moi hay chi la thanh phan cua route cu
-2. Xac dinh domain lien quan
-3. Tao screen trong `src/features/<feature>/screens/`
-4. Tao service truoc neu feature can du lieu
-5. Tao adapter neu response shape khong truc tiep phu hop
-6. Tao store chi khi can chia se state
-7. Wiring route trong `app/` bang file entry mong
+- `app/_layout.tsx` neu route lien quan auth hoac protected stack
+- `app/(auth)/_layout.tsx` neu route thuoc auth
+- `app/(tabs)/_layout.tsx` neu route thuoc tab flow
+- file route entry dang sua
+- feature screen phia sau route do
 
 Chuan muc:
 
-- Feature moi phai di dung lop.
-- Khong lay screen lam trung tam chua het moi logic.
+- Route file trong `app/` nen uu tien chi `export { default }`
+- Role-specific screen phai qua `ProtectedRoute` hoac guard ro rang
+- Khong de route moi pha redirect hien co
 
-## 9. Ky nang debug chuan muc
+## 7. Quy trinh chuan khi sua auth
 
-Khi gap loi, agent phai di theo thu tu:
+Auth la vung rui ro cao. Truoc khi sua, agent phai doc:
+
+- `app/_layout.tsx`
+- `app/(auth)/_layout.tsx`
+- `src/features/auth/store/authStore.ts`
+- `src/features/auth/services/authService.ts`
+- `src/core/api.ts`
+
+Can hieu ro:
+
+- hydrate session xay ra luc nao
+- redirect guest va logged-in user xay ra o dau
+- access token, refresh token va cached user duoc luu o dau
+- logout se clear du lieu nao
+
+Chuan muc:
+
+- Khong tao auth state cuc bo trong screen
+- Khong bypass refresh flow bang patch UI
+- Khong doi auth redirect ma khong kiem tra ca guest flow va logged-in flow
+
+## 8. Quy trinh chuan khi sua data layer
+
+Khi task lien quan data, agent phai di theo thu tu:
+
+1. DTO backend nam o `src/core/types.ts`
+2. Service feature goi API hoac mock
+3. Adapter feature map DTO sang UI model
+4. Store hoac screen nhan model da duoc chuan hoa
+
+Chuan muc:
+
+- Screen khong tu map raw DTO neu adapter da co
+- Service khong nen tra shape mo ho cho UI
+- Neu `USE_MOCK = true`, kiem tra mock path truoc khi ket luan bug
+- Wrapper trong `src/core/services/*` phai tiep tuc tro dung sang feature implementation
+
+## 9. Quy trinh chuan khi sua state
+
+Agent phai phan biet ro:
+
+- Local UI state: modal open, tab chon, text input tam thoi, loading cuc bo
+- Shared feature state: booking list, auth session, data can dung lai giua nhieu man
+
+Chuan muc:
+
+- Local state de o component/screen
+- Shared state moi dua vao Zustand
+- Store cua feature dat trong `src/features/<feature>/store/`
+- Khong luu 1 entity o nhieu noi ma khong co ly do
+
+## 10. Quy trinh chuan khi sua shared UI
+
+Khi sua `src/components/`, agent phai coi day la thay doi anh huong toan app.
+
+Truoc khi sua can doc:
+
+- component dang sua
+- responsive helper di kem neu co
+- `src/theme/theme.ts`
+- `src/theme/responsiveUtils.ts`
+- `docs/ARCHITECTURE.md`
+
+Chuan muc:
+
+- Khong them visual language moi neu task khong yeu cau
+- Khong hard-code spacing, font size, card size neu theme/responsive da co
+- Neu component chi phuc vu 1 feature, nen dat trong feature do thay vi nang len shared layer
+
+## 11. Quy trinh debug chuan muc
+
+Khi gap loi, agent phai debug theo thu tu:
 
 1. Xac dinh noi loi bieu hien
-2. Lan nguoc source of truth
-3. Kiem tra luong du lieu vao
-4. Kiem tra dieu kien bien
-5. Chi sua sau khi co gia thuyet ro rang
-6. Verify lai o dung luong gay loi
+2. Lan nguoc route va source of truth
+3. Kiem tra du lieu vao
+4. Kiem tra adapter/service/store
+5. Kiem tra dieu kien bien va role/auth state
+6. Chi sua khi da co gia thuyet ro rang
+7. Verify lai tren dung flow gay loi
 
-Khuon mau debug:
+Mau debug theo loai loi:
 
-- Loi route: kiem tra file route entry, feature screen, `_layout`, redirect logic, params
-- Loi auth: kiem tra hydrate, token storage, interceptor, `isAuthenticated`, `userRole`
-- Loi UI: kiem tra theme, responsive helper, props truyen vao, du lieu adapter
-- Loi API: kiem tra `USE_MOCK`, endpoint, unwrap, adapter, error mapping
-- Loi state: kiem tra noi ghi state, noi doc state, timing fetch, loading/error state
+- Loi route: route entry, layout, redirect logic, params
+- Loi auth: hydrate, token storage, refresh flow, `isAuthenticated`, `userRole`
+- Loi UI: theme, responsive helper, props, shared component
+- Loi data: `USE_MOCK`, endpoint, unwrap, adapter, error mapping
+- Loi state: noi ghi, noi doc, timing fetch, loading/error state
 
-Chuan muc:
+## 12. Quy trinh refactor dung chuan
 
-- Khong fix bang cach them condition chong condition neu chua ro nguyen nhan.
-- Khong xoa logic cu chi vi chua hieu no.
-
-## 10. Ky nang refactor
-
-Refactor chi duoc xem la chuan khi:
+Refactor chi duoc xem la dung khi:
 
 - giam duplication
 - tang do ro trach nhiem
+- dua logic ve dung feature/layer
 - khong doi hanh vi ngoai y muon
-- khong lam route hoac flow auth kho hieu hon
-- dua logic ve dung feature hoac dung lop ha tang
+- khong lam route hay auth flow kho hieu hon
 
-Chuan muc:
+Refactor nho dung cach:
 
-- Refactor nho, co muc tieu ro.
-- Khong gom qua nhieu thay doi khong lien quan trong mot lan sua.
+1. Xac dinh pham vi hep
+2. Di chuyen source of truth ve dung cho
+3. Giu route entry mong
+4. Giu wrapper compatibility neu import cu con ton tai
+5. Cap nhat docs neu kien truc doi
 
-## 11. Ky nang review truoc khi ket thuc
+## 13. Checklist review truoc khi ket thuc
 
 Truoc khi chot task, agent phai tu hoi:
 
 1. Thay doi nay co dung source of truth khong
-2. Co pha mock flow khong
-3. Co pha responsive khong
-4. Co lam route hoac auth kho doan hon khong
-5. Co tao file moi khong can thiet khong
-6. Co cho nao nen cap nhat tai lieu khong
+2. Co de logic sai cho vao `app/` khong
+3. Co pha auth redirect hoac role guard khong
+4. Co pha responsive system khong
+5. Co tao duplication giua feature va shared layer khong
+6. Co can giu compatibility wrapper khong
+7. Co file tai lieu nao can cap nhat khong
 
-## 12. Ky nang giao tiep ky thuat
+## 14. Tieu chuan giao tiep ky thuat
 
-Agent phai:
+Khi lam viec, agent phai giao tiep theo cach sau:
 
-- Noi ro dang sua lop nao va vi sao.
-- Neu duoc gia dinh khi chua du du lieu.
-- Bao rui ro that, khong noi chung chung.
-- Ket luan bang thay doi thuc te, kiem tra da lam, va phan chua kiem tra duoc.
+- Noi ro dang sua layer nao va vi sao
+- Neu co gia dinh, phai noi ro
+- Bao rui ro that, khong noi chung chung
+- Ket luan bang thay doi da lam, cach verify da chay, va phan chua verify duoc
 
 Chuan muc:
 
-- Ngan gon nhung cu the.
-- Khong dung ngon ngu mo ho nhu "co the on", "chac la duoc" neu chua verify.
+- ngan gon nhung cu the
+- khong dung ngon ngu mo ho neu chua verify
+
+## 15. Tieu chuan hoan thanh cho repo nay
+
+Mot thay doi duoc xem la dung voi muc tieu “nhieu thanh vien co the cung code giao dien” khi:
+
+- feature ownership ro rang
+- route layer van mong
+- shared UI layer khong bi nhom logic domain vao
+- auth va role guard van on dinh
+- responsive system van duoc ton trong
+- nguoi khac co the mo feature lien quan va tiep tuc code ma khong phai doan source of truth

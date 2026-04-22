@@ -1,33 +1,34 @@
 # .agent
 
-Thu muc nay la bo dieu hanh noi bo cho agent lam viec voi `sociedu-mobile`.
+Thu muc nay la bo tai lieu van hanh noi bo cho coding agent lam viec trong `sociedu-mobile`.
 
-## Tai lieu chinh
-
-- `instruction.md`: luat lam viec, quy trinh lap trinh, nguyen tac ky thuat, quy chuan code.
-- `mandatory-reading.md`: checklist cac file bat buoc phai doc truoc khi viet code theo tung loai task.
-- `skill.md`: bo ky nang chuan, cach suy nghi, cach debug, cach xu ly task theo chuan muc.
-
-## Tai lieu tham chieu
-
-- `project-context.md`: buc tranh nhanh ve kien truc repo va module hien tai.
-- `workflows.md`: cac workflow thao tac thuong gap.
-- `external-skills.md`: danh gia cac skill ben ngoai co the bo sung cho repo nay.
-- `../docs/ARCHITECTURE.md`: tai lieu kien truc goc va quy chuan responsive cua du an.
-
-## External skills da cai
-
-- `vercel-react-native-skills`
-- `vercel-composition-patterns`
-
-Day la lop bo sung. Tai lieu trong `.agent/` van la nguon uu tien cao hon.
-
-## Quy tac su dung
-
-Agent phai doc theo thu tu:
+## Thu tu doc bat buoc
 
 1. `instruction.md`
 2. `mandatory-reading.md`
 3. `skill.md`
 
-Sau do moi quyet dinh chinh sua code.
+Chi sau khi doc du 3 file tren moi duoc quyet dinh chinh sua code.
+
+## Noi dung tung file
+
+- `instruction.md`: quy trinh lam viec, nguyen tac kien truc, quy chuan code
+- `mandatory-reading.md`: cac file bat buoc doc theo tung loai task
+- `skill.md`: ky nang doc codebase, debug, refactor, review
+- `project-context.md`: buc tranh nhanh ve repo hien tai
+- `workflows.md`: checklist thao tac cho cac loai task pho bien
+- `external-skills.md`: cach dung skill ngoai da cai trong repo
+
+## Nguyen tac uu tien
+
+Thu tu uu tien giua cac nguon huong dan:
+
+1. `AGENTS.md`
+2. `.agent/instruction.md`
+3. `.agent/mandatory-reading.md`
+4. `.agent/skill.md`
+5. `.agent/project-context.md`
+6. `.agent/workflows.md`
+7. skill trong `.agents/skills/`
+
+Neu co xung dot, uu tien tai lieu noi bo cua repo nay.

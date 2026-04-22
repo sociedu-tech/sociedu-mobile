@@ -1,266 +1,139 @@
-# Unishare Mobile — System Overview
+# Unishare Mobile - System Overview
 
-> **Đọc file này trước khi làm bất kỳ task nào.** Đây là tài liệu tổng quan hệ thống cho ứng dụng mobile để AI Agent nắm bài toán, actor, luồng nghiệp vụ và ràng buộc kiến trúc nhanh nhất.
+Tai lieu tong quan he thong cho `sociedu-mobile`. Doc file nay truoc khi lam task neu can hieu bai toan nghiep vu va cac actor chinh.
 
----
+## 1. San pham nay la gi
 
-## 1. Unishare Mobile là gì?
+Ung dung mobile nay phuc vu nen tang ket noi nguoi hoc voi mentor. Tren mobile, nguoi dung co the:
 
-`Unishare Mobile` là ứng dụng client cho nền tảng kết nối **Mentee** với **Mentor**. Người dùng có thể:
+- dang ky va dang nhap
+- kham pha mentor
+- xem profile cong khai
+- xem marketplace placeholder
+- xem bookings va session
+- nhan tin
+- quan ly profile cua minh
+- vao mentor dashboard hoac admin dashboard theo role
 
-- đăng ký, đăng nhập và duy trì phiên làm việc trên thiết bị
-- khám phá mentor và hồ sơ chuyên môn
-- xem gói dịch vụ / nội dung marketplace
-- tạo đơn hàng, đi tới bước thanh toán
-- theo dõi booking và các session học
-- nhắn tin với đối tác trong quá trình học
-- quản lý hồ sơ cá nhân, học vấn, kinh nghiệm và chứng chỉ
+Mobile app khong chua business rule backend day du. Trach nhiem chinh cua app la:
 
-Ứng dụng mobile không chứa business rule backend. Vai trò của mobile là:
+- dieu huong dung flow theo auth va role
+- goi API qua service layer
+- map DTO sang UI model qua adapter
+- giu state man hinh va session on dinh
+- render UI bam theme va responsive system
 
-- hiển thị đúng flow nghiệp vụ cho từng actor
-- gọi API qua service layer
-- chuẩn hóa dữ liệu backend qua adapter
-- điều phối state màn hình và session
-- bảo vệ auth flow, role-based access và responsive UI
+## 2. Actor trong app
 
----
+| Actor | Vai tro trong mobile |
+| --- | --- |
+| `guest` | Chua dang nhap, chi di duoc auth flow |
+| `user` | Mentee mac dinh, xem mentor, dat lich, chat, quan ly profile |
+| `mentor` | Co them mentor dashboard va booking flow cho mentor |
+| `admin` | Duoc vao admin dashboard qua role guard |
 
-## 2. Các Actor trong mobile
+Nguon role hien tai di qua `authStore` va `ProtectedRoute`.
 
-| Actor | Mô tả trên mobile |
-|---|---|
-| **GUEST** | Người chưa đăng nhập, chỉ đi được các màn auth/onboarding |
-| **MENTEE** | Người học, khám phá mentor, mua dịch vụ, theo dõi booking, nhắn tin |
-| **MENTOR** | Người hướng dẫn, quản lý hồ sơ mentor, booking, session và dashboard |
-| **ADMIN** | Quản trị viên, truy cập khu vực quản trị qua role guard |
+## 3. Module hien co trong codebase
 
-> `userRole` hiện được hydrate từ `authStore` và dùng bởi `ProtectedRoute` để chặn route theo vai trò.
+| Module | Trang thai |
+| --- | --- |
+| `auth` | Hoan chinh co screen, service, adapter, store |
+| `home` | Hero/home tab cho user |
+| `mentor` | List, detail, dashboard, service, adapter, components |
+| `booking` | List, detail, store, service, adapter, components |
+| `profile` | My profile, public profile, edit profile, service, adapter |
+| `message` | Message list, detail, mock-first chat service |
+| `marketplace` | Placeholder screens, chua co service/store rieng |
+| `admin` | Skeleton protected screen |
 
----
+## 4. Luong he thong quan trong
 
-## 3. Bản đồ Module mobile
+### Auth va route guard
 
-| Module | Trách nhiệm |
-|---|---|
-| `auth-session` | Đăng nhập, đăng ký, hydrate session, logout, refresh token |
-| `app-shell-routing` | Root layout, tab layout, redirect auth, protected screen orchestration |
-| `user-profile` | Hồ sơ cá nhân, bio, location, education, experience, languages, certificates |
-| `mentor-discovery` | Danh sách mentor, chi tiết mentor, ghép profile công khai với mentor data |
-| `service-marketplace` | Hiển thị package/service hoặc nội dung marketplace cho người dùng khám phá |
-| `order-payment` | Checkout, nhận `paymentUrl`, polling trạng thái đơn hàng sau thanh toán |
-| `booking-session` | Danh sách booking, chi tiết booking, cập nhật session, meeting URL, evidence |
-| `chat` | Danh sách hội thoại, chi tiết tin nhắn, session card trong chat |
-| `role-dashboards` | Màn mentor dashboard, admin dashboard, role gating |
-| `ui-system` | Theme, responsive utilities, reusable components, loading/error/empty states |
+1. App mo len o `app/_layout.tsx`
+2. `useAuthStore().hydrate()` doc user cache tu AsyncStorage
+3. Neu chua dang nhap, route ngoai `(auth)` se bi redirect ve `/(auth)/login`
+4. Neu da dang nhap, route trong `(auth)` se bi redirect ve `/(tabs)`
+5. Route protected hoac role-specific dung `src/components/ProtectedRoute.tsx`
 
----
+### API va session
 
-## 4. Luồng Nghiệp Vụ Xuyên Module (Happy Path)
+- `src/core/api.ts` la noi cau hinh Axios instance
+- Request interceptor tu gan bearer token
+- Response interceptor thu refresh token mot lan khi gap `401`
+- Session expired se clear token va user cache
+- `src/core/config.ts` dieu khien mock mode bang `USE_MOCK`
 
-```text
-[Người dùng mở app]
-  app-shell-routing
-    → auth-session.hydrate()
-      → nếu chưa đăng nhập: /(auth)/welcome | /(auth)/login
-      → nếu đã đăng nhập: /(tabs)
+### Feature flow hien tai
 
-[Mentee khám phá mentor]
-  mentor-discovery (danh sách mentor)
-    → mentor-discovery (chi tiết mentor + packages)
-      → service-marketplace (chọn package/version)
+- `home` dan nguoi dung sang mentor list
+- `mentor` lay danh sach mentor, ghep profile cong khai qua `userService`
+- `booking` doi hanh vi giua buyer va mentor dua tren `userRole`
+- `profile` load `getMe()`, cho phep logout, edit, vao dashboard theo role
+- `message` hien tai dung mock data va local in-memory updates
+- `marketplace` va `admin` hien la placeholder/skeleton, nhung da o dung kien truc
 
-[Mentee mua dịch vụ]
-  order-payment.checkout(packageVersionId)
-    → backend trả về order + paymentUrl
-      → mobile mở payment flow
-        → order-payment.pollUntilPaid(orderId)
-          → khi paid: booking-session hiển thị booking/sessions
-
-[Quá trình học]
-  booking-session (xem danh sách booking)
-    → booking-session (xem chi tiết session)
-      → mentor cập nhật meeting_url / status
-      → mentee mở link meeting
-      → booking-session tải evidence hoặc đánh dấu hoàn thành
-      → chat hiển thị hội thoại liên quan
-
-[Quản lý hồ sơ]
-  user-profile (xem hồ sơ của tôi)
-    → user-profile.updateProfile()
-    → user-profile CRUD education / experience / language / certificate
-
-[Theo vai trò]
-  mentor đăng nhập
-    → role-dashboards/mentor
-  admin đăng nhập
-    → role-dashboards/admin
-```
-
----
-
-## 5. Quan hệ Phụ thuộc trong mobile
-
-```text
-app routes/screens
-  ├──► src/core/store        (state chia sẻ, hydrate, cache màn hình)
-  ├──► src/core/services     (API orchestration theo domain)
-  ├──► src/components        (UI tái sử dụng)
-  └──► src/theme             (design tokens + responsive)
-
-src/core/services
-  ├──► src/core/api.ts       (axios instance, token, interceptors)
-  ├──► src/core/adapters     (map DTO sang model UI)
-  ├──► src/core/types.ts     (DTO + app models)
-  └──► src/core/mocks        (mock API/data khi USE_MOCK = true)
-
-src/core/store
-  └──► src/core/services     (fetch/update dữ liệu, không gọi axios trực tiếp)
-```
-
-### Quy tắc cứng
-
-- Screen/route **không được** gọi `axios` trực tiếp.
-- Screen/route **không được** tự map raw backend DTO nếu adapter đã là nơi chuẩn hóa phù hợp.
-- Store **không được** trở thành source of truth thứ hai cho state chỉ mang tính local UI.
-- Module A trong mobile **không được** đọc thẳng dữ liệu nội bộ của module B bằng cách bypass service/store đã có.
-- Mọi logic auth redirect phải đi qua `app/_layout.tsx` hoặc `ProtectedRoute`, không cài ad hoc trong từng screen.
-
----
-
-## 6. Kiến trúc thư mục chuẩn của repo
+## 5. Kien truc thu muc thuc te
 
 ```text
 app/
-  ├── (auth)/               # welcome, login, register
-  ├── (tabs)/               # home, mentor, messages, bookings, profile
-  ├── mentor/               # mentor detail, mentor dashboard
-  ├── profile/              # profile detail, edit
-  ├── booking/              # booking detail
-  ├── messages/             # conversation detail
-  └── _layout.tsx           # root auth guard + stack declarations
+  (auth)/
+  (tabs)/
+  admin/
+  booking/
+  mentor/
+  messages/
+  profile/
 
 src/
-  ├── components/           # reusable UI components
-  ├── core/
-  │   ├── services/         # domain services gọi API/mock
-  │   ├── adapters/         # DTO → app model
-  │   ├── store/            # Zustand stores
-  │   ├── mocks/            # mock API + mock data
-  │   ├── api.ts            # axios instance + interceptors
-  │   ├── config.ts         # project flags như USE_MOCK
-  │   └── types.ts          # DTO types + mobile domain types
-  └── theme/                # theme tokens + responsive utilities
+  components/
+  core/
+    adapters/
+    mocks/
+    services/
+    store/
+    api.ts
+    config.ts
+    types.ts
+  features/
+    admin/
+    auth/
+    booking/
+    home/
+    marketplace/
+    mentor/
+    message/
+    profile/
+  theme/
 ```
 
----
+## 6. Rule kien truc quan trong
 
-## 7. Stack Kỹ thuật
+- `app/` la route layer, khong phai noi de dat business logic nang
+- `src/features/` la source of truth theo domain
+- `src/core/` chu yeu cho ha tang chung va compatibility wrappers
+- `src/components/` chi chua UI dung lai toan app
+- `src/theme/` la nguon token va responsive utilities
+- Screen khong goi `axios` truc tiep
+- Bien doi shape du lieu backend nen o adapter, khong o screen
 
-- **Framework**: Expo + React Native + Expo Router
-- **Language**: TypeScript (`strict: true`)
-- **State Management**: Zustand
-- **Storage**: AsyncStorage
-- **HTTP Client**: Axios
-- **Auth Handling**: JWT access token + refresh token
-- **Navigation**: Expo Router (file-based routing)
-- **UI System**: Custom theme + reusable components + responsive utilities
-- **Build/Run**: Expo CLI
-- **Verification hiện có**: `npm run lint`
+## 7. Thuc trang can ghi nho
 
----
+- `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
+- `USE_MOCK` hien dang `false`
+- Chat van mock-first
+- Marketplace van la placeholder
+- Admin dashboard van la skeleton
+- Lint script hien tai la `eslint .`
 
-## 8. Thực trạng codebase hiện tại
+## 8. Muc tieu cua moi thay doi
 
-### Đã có rõ trong repo
+Mot thay doi duoc xem la dung khi:
 
-- Auth flow với hydrate ở `app/_layout.tsx`
-- Role guard qua `src/components/ProtectedRoute.tsx`
-- Services cho `auth`, `user`, `mentor`, `order`, `booking`, `chat`
-- Store dùng chung cho `auth` và `booking`
-- Adapter tách DTO khỏi model UI
-- Mock API toàn cục qua `src/core/config.ts` với `USE_MOCK = true`
-- Responsive system qua `src/theme/responsiveUtils.ts`
-
-### Cần hiểu đúng trước khi code
-
-- `API_BASE_URL` hiện đang hard-code trong `src/core/api.ts`
-- Chat hiện vẫn là mock-first
-- Marketplace tab đang tồn tại nhưng một phần flow còn ở dạng placeholder
-- Mentor dashboard và admin dashboard hiện mới là skeleton screens
-- Repo có cả `components/` của starter và `src/components/` của dự án; ưu tiên dùng `src/components/`
-
-### Diễn giải quan trọng
-
-Tài liệu này mô tả **bài toán đầy đủ của mobile app**, không đồng nghĩa toàn bộ module đã hoàn thiện trong repo. Khi làm task, luôn phân biệt:
-
-- **Target product flow**: app cần hỗ trợ gì
-- **Current implementation**: repo hiện đã làm tới đâu
-
----
-
-## 9. Flow dữ liệu chuẩn
-
-```text
-Backend API DTO
-  → service gọi API hoặc mock
-    → adapter chuẩn hóa dữ liệu
-      → store hoặc screen nhận model UI
-        → component render bằng theme/responsive system
-```
-
-Ví dụ:
-
-- `authService` gọi login/register/refresh/logout
-- `mentorService` ghép mentor data với public profile
-- `orderService` checkout rồi polling trạng thái thanh toán
-- `bookingService` lấy booking list/detail và cập nhật session
-
----
-
-## 10. Quy tắc Agent khi làm task trong mobile
-
-1. Đọc `SYSTEM.md` để hiểu bài toán tổng thể
-2. Đọc `AGENTS.md`
-3. Đọc `.agent/instruction.md`, `.agent/mandatory-reading.md`, `.agent/skill.md`
-4. Đọc thêm file theo đúng nhóm task trong `.agent/mandatory-reading.md`
-5. Xác định source of truth nằm ở route, service, adapter, store hay theme
-6. Chỉ sửa đúng layer gây ra vấn đề, không vá ở UI nếu lỗi đến từ data/service/config
-7. Không phá auth redirect, role guard hoặc responsive system
-8. Nếu thay đổi kiến trúc hoặc phạm vi nghiệp vụ, cập nhật lại tài liệu liên quan
-
----
-
-## 11. Checklist trước khi sửa code
-
-- Màn này thuộc actor nào: guest, mentee, mentor hay admin
-- Dữ liệu đang đi qua service nào
-- Có adapter nào đang là nơi map chuẩn không
-- State này nên ở local state hay Zustand store
-- Flow này đang chạy mock hay backend thật
-- Màn hình có đang nằm dưới auth guard hoặc role guard không
-- UI có đang dùng đúng `theme` và `responsiveUtils` không
-
----
-
-## 12. Một số quyết định kiến trúc không được phá
-
-- `app/_layout.tsx` là cổng kiểm soát session và redirect toàn app
-- `src/core/api.ts` là nơi duy nhất cấu hình axios instance và token interceptor
-- `src/core/config.ts` là nơi bật/tắt mock dùng chung
-- `src/core/types.ts` là nguồn type trung tâm giữa DTO và mobile model
-- `src/core/adapters/*` là nơi ưu tiên để sửa khác biệt shape dữ liệu
-- `src/theme/*` là nguồn token và responsive scaling; không hard-code lan man trong screen
-
----
-
-## 13. Mục tiêu của mọi thay đổi
-
-Một thay đổi trong repo mobile chỉ được xem là đúng khi:
-
-- giải quyết đúng bài toán của actor liên quan
-- bám kiến trúc Expo Router + `src/core` hiện có
-- không tạo source of truth kép
-- không phá flow auth hoặc role-based access
-- không bỏ qua responsive system
-- có cách verify tối thiểu bằng lint hoặc luồng màn hình tương ứng
+- giai quyet dung van de nghiep vu hoac ky thuat
+- giu on dinh auth flow va role guard
+- dat dung layer trong kien truc hien tai
+- khong tao source of truth kep
+- khong bo qua theme va responsive system
+- co cach verify ro rang, toi thieu bang `npm run lint`

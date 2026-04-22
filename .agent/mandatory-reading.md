@@ -1,6 +1,6 @@
 # Mandatory Reading
 
-Checklist nay xac dinh cac file phai doc truoc khi viet code. Khong doc luot toan repo; chi doc dung nhom file lien quan de giu context sach nhung du.
+Checklist nay xac dinh cac file phai doc truoc khi viet code. Muc tieu la doc dung file, khong doc luot ca repo.
 
 ## 1. Moi task deu phai doc
 
@@ -22,16 +22,18 @@ Phai doc:
 - `src/core/api.ts`
 - `src/components/ProtectedRoute.tsx`
 
-Doc them neu sua trang auth:
+Neu sua trang auth, doc them:
 
 - `app/(auth)/login.tsx`
 - `app/(auth)/register.tsx`
+- `app/(auth)/welcome.tsx`
 - `src/features/auth/screens/LoginScreen.tsx`
 - `src/features/auth/screens/RegisterScreen.tsx`
+- `src/features/auth/screens/WelcomeScreen.tsx`
 - `src/features/auth/adapters/authAdapter.ts`
 - `src/core/types.ts`
 
-## 3. Neu sua home, tab, man hinh nguoi dung hoac dieu huong chinh
+## 3. Neu sua home, tab hoac dieu huong chinh
 
 Phai doc:
 
@@ -54,6 +56,7 @@ Phai doc:
 - `src/features/mentor/screens/MentorDashboardScreen.tsx`
 - `src/features/mentor/services/mentorService.ts`
 - `src/features/mentor/adapters/mentorAdapter.ts`
+- `src/features/profile/services/userService.ts`
 - `src/core/types.ts`
 
 ## 5. Neu sua booking flow hoac payment
@@ -96,7 +99,19 @@ Phai doc:
 - `src/core/mocks/chatMocks.ts`
 - `src/core/types.ts`
 
-## 8. Neu sua UI component hoac design system
+## 8. Neu sua marketplace hoac admin
+
+Phai doc:
+
+- `app/(tabs)/marketplace/index.tsx`
+- `app/(tabs)/marketplace/[id].tsx`
+- `src/features/marketplace/screens/MarketplaceListScreen.tsx`
+- `src/features/marketplace/screens/MarketplaceDetailScreen.tsx`
+- `app/admin/index.tsx`
+- `src/features/admin/screens/AdminDashboardScreen.tsx`
+- `src/components/ProtectedRoute.tsx`
+
+## 9. Neu sua UI component hoac design system
 
 Phai doc:
 
@@ -106,49 +121,51 @@ Phai doc:
 - `src/theme/breakpoints.ts`
 - `docs/ARCHITECTURE.md`
 
-Neu component co file responsive di kem thi doc ca file do, vi du:
+Neu component co file responsive di kem thi doc them:
 
 - `src/components/button/buttonResponsive.ts`
+- `src/components/form/textInputResponsive.ts`
 - `src/components/ui/cardResponsive.ts`
 - `src/components/ui/sectionResponsive.ts`
-- `src/components/form/textInputResponsive.ts`
 - `src/components/typography/typographyResponsive.ts`
 
-## 9. Neu sua service, adapter, store hoac API layer
+## 10. Neu sua service, adapter, store hoac API layer
 
 Phai doc:
 
 - `src/core/api.ts`
 - `src/core/config.ts`
 - feature service/store/adapter dang sua trong `src/features/...`
-- wrapper lien quan trong `src/core/...` neu task duoc noi theo wrapper
+- wrapper lien quan trong `src/core/...` neu task noi theo wrapper
 - `src/core/types.ts`
 
-Neu repo dang chay mock cho domain do thi doc them:
+Neu domain dang co mock, doc them file lien quan trong:
 
-- file trong `src/core/mocks/api/`
-- file du lieu lien quan trong `src/core/mocks/`
+- `src/core/mocks/api/`
+- `src/core/mocks/data/`
+- `src/core/mocks/chatMocks.ts`
 
-## 10. Neu sua kien truc, quy chuan hoac cach lam viec
+## 11. Neu sua kien truc, quy chuan hoac tai lieu
 
 Phai doc:
 
+- `SYSTEM.md`
 - `docs/ARCHITECTURE.md`
 - `.agent/project-context.md`
 - `.agent/workflows.md`
 - `.agent/instruction.md`
 - `.agent/skill.md`
 
-## 11. Neu them file moi
+## 12. Neu them file moi
 
-Truoc khi them file moi, phai tu kiem tra:
+Truoc khi them file moi, tu kiem tra:
 
-- Co file hien co nao du gan de mo rong khong
+- Co file hien co nao gan de mo rong khong
 - File moi thuoc `app/`, `src/features/`, `src/components/`, `src/core/`, `src/theme/` hay `docs/`
 - Ten file da dung convention chua
 - File moi co lam trung trach nhiem voi file khac khong
 
-## 12. Dieu kien duoc phep bat dau code
+## 13. Dieu kien duoc phep bat dau code
 
 Chi bat dau viet code khi:
 

@@ -1,50 +1,74 @@
-# Welcome to your Expo app 👋
+# sociedu-mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Ung dung mobile cua Sociedu, duoc xay dung bang Expo, React Native va Expo Router.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- Expo `~54.0.33`
+- React `19.1.0`
+- React Native `0.81.5`
+- Expo Router `~6.0.23`
+- Zustand
+- Axios
+- AsyncStorage
+- TypeScript `strict`
 
-   ```bash
-   npm install
-   ```
+## Kien truc nhanh
 
-2. Start the app
+- `app/`: route entry va layout cua Expo Router
+- `src/features/`: source of truth theo domain
+- `src/components/`: UI dung chung toan app
+- `src/core/`: API layer, mocks, types va compatibility wrappers
+- `src/theme/`: theme tokens va responsive utilities
 
-   ```bash
-   npx expo start
-   ```
+Feature hien co:
 
-In the output, you'll find options to open the app in a
+- `admin`
+- `auth`
+- `booking`
+- `home`
+- `marketplace`
+- `mentor`
+- `message`
+- `profile`
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Auth flow
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Root guard nam o `app/_layout.tsx`
+- App hydrate session tu `src/features/auth/store/authStore.ts`
+- Chua dang nhap se bi redirect ve `/(auth)/login`
+- Da dang nhap se khong duoc o lai auth screens
+- `ProtectedRoute` duoc dung cho man protected va role-based access
 
-## Get a fresh project
-
-When you're ready, run:
+## Chay du an
 
 ```bash
-npm run reset-project
+npm install
+npm run start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Lenh khac:
 
-## Learn more
+```bash
+npm run android
+npm run ios
+npm run web
+npm run lint
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Quy uoc code
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Khong goi API truc tiep trong screen
+- Uu tien dat logic o `src/features/<feature>`
+- Route trong `app/` nen giu mong
+- UI phai bam `src/theme/theme.ts` va `src/theme/responsiveUtils.ts`
+- Neu can doi kien truc hoac quy trinh, cap nhat `.agent/` va `docs/`
 
-## Join the community
+## Tai lieu can doc
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `AGENTS.md`
+- `SYSTEM.md`
+- `.agent/instruction.md`
+- `.agent/mandatory-reading.md`
+- `.agent/skill.md`
+- `docs/ARCHITECTURE.md`

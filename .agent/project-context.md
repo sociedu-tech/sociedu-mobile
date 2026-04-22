@@ -6,31 +6,40 @@
 - React `19.1.0`
 - React Native `0.81.5`
 - Expo Router `~6.0.23`
-- Zustand cho state chia se
+- Zustand cho shared state
 - Axios cho HTTP client
 - AsyncStorage cho token va user cache
+- TypeScript `strict`
 
 ## Cau truc thu muc hien tai
 
 ### `app/`
 
-- Chua route theo file cua Expo Router.
-- Da duoc lam mong cho nhieu route.
-- Uu tien chi route wiring, layout va redirect.
-- Nhieu file trong `app/` hien chi `export { default }` sang `src/features/.../screens/...`
+- Chua route theo file cua Expo Router
+- Da duoc lam mong cho nhieu route
+- Uu tien chi route wiring, layout va redirect
+- Nhieu file hien chi `export { default }` sang `src/features/.../screens/...`
+
+Route hien co:
+
+- `(auth)`: `welcome`, `login`, `register`
+- `(tabs)`: `index`, `mentor`, `messages`, `bookings`, `profile`, `marketplace`
+- ngoai tabs: `admin`, `booking/[id]`, `mentor/[id]`, `mentor/dashboard`, `messages/[id]`, `profile/[id]`, `profile/edit`
 
 ### `src/features/`
 
 Day la source of truth theo domain. Hien tai da co:
 
-- `auth/`
-- `booking/`
-- `home/`
-- `mentor/`
-- `message/`
-- `profile/`
+- `admin`
+- `auth`
+- `booking`
+- `home`
+- `marketplace`
+- `mentor`
+- `message`
+- `profile`
 
-Moi feature co the gom:
+Thu muc feature co the gom:
 
 - `screens/`
 - `services/`
@@ -40,31 +49,35 @@ Moi feature co the gom:
 
 ### `src/core/`
 
-- `api.ts`: axios instance, interceptor, refresh token flow, storage keys
-- `config.ts`: config dung chung, dang bat mock API toan cuc
+- `api.ts`: Axios instance, token helpers, interceptors, refresh flow
+- `config.ts`: config dung chung, hien co `USE_MOCK`
+- `types.ts`: DTO va mobile model chung
 - `mocks/`: mock API va mock data
-- `services/`, `store/`, `adapters/`: nhieu file hien la compatibility wrapper sang `src/features/`
+- `services/`, `store/`, `adapters/`: compatibility wrappers re-export sang feature implementations
 
 ### `src/components/`
 
-- Component dung chung theo nhom `button`, `form`, `ui`, `states`, `typography`
-- Day la shared UI layer, khong phai noi uu tien de dat component chi dung trong 1 feature
+- Shared UI theo nhom `button`, `display`, `form`, `states`, `typography`, `ui`
+- Chua cac helper responsive di kem component
 
 ### `src/theme/`
 
-- Theme token, breakpoint va responsive utilities
+- Theme tokens
+- Breakpoints
+- Responsive utilities
+- Hook `useBreakpoint`
 
 ## Luong auth hien tai
 
-1. App mo len, `app/_layout.tsx` goi `useAuthStore().hydrate()`
-2. `src/features/auth/services/authService.ts` doc user da luu
-3. Neu da dang nhap, route se bi day khoi `(auth)` sang `(tabs)`
-4. Neu chua dang nhap, truy cap route ngoai `(auth)` se bi redirect ve `/(auth)/login`
-5. Neu API tra `401`, `src/core/api.ts` se thu refresh token mot lan truoc khi clear session
+1. App mo len o `app/_layout.tsx`
+2. `useAuthStore().hydrate()` doc user cache tu AsyncStorage
+3. Neu da dang nhap, route trong `(auth)` bi day sang `(tabs)`
+4. Neu chua dang nhap, route ngoai `(auth)` bi redirect ve `/(auth)/login`
+5. Neu API tra `401`, `src/core/api.ts` thu refresh token 1 lan truoc khi clear session
 
-## Trang thai refactor hien tai
+## Trang thai feature hien tai
 
-Da tach xong cac feature chinh:
+### Hoan chinh tuong doi
 
 - `auth`
 - `mentor`
@@ -72,29 +85,27 @@ Da tach xong cac feature chinh:
 - `profile`
 - `message`
 - `home`
-- `admin`
-- `marketplace`
 
-Da clean `npm run lint`.
+### Skeleton hoac placeholder
 
-Chua tach hoac chua chuan hoa day du:
-
-- mot so route phu, route demo hoac route dev neu phat sinh trong tuong lai
-- tai lieu `docs/` co the chua cap nhat het theo feature-based structure
+- `admin`: protected skeleton screen
+- `marketplace`: placeholder list/detail screens, chua co service/store rieng
 
 ## Diem can chu y khi sua code
 
-- `API_BASE_URL` dang hard-code theo IP mang LAN trong `src/core/api.ts`
-- Repo con giu ca `components/` mac dinh tu starter Expo va `src/components/` do du an tu xay
-- Neu sua UI, xac minh dang dung `src/components/` thay vi `components/` starter
-- Kiem tra ky file co encoding cu neu sua file cu chua duoc refactor
-- Kiem tra chinh hien tai la `npm run lint`
+- `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
+- `USE_MOCK` hien dang `false`
+- Chat service hien van mock-first
+- `src/core/*` wrappers can duoc giu de tranh gay import cu
+- Co mot so file cu con comment/chuoi bi lech encoding, nen sua co kiem soat
+- Lint script hien tai la `npm run lint` -> `eslint .`
 
-## Vung uu tien khi feature moi
+## Vung uu tien khi them hoac sua feature
 
-- Route entry: them trong `app/`
-- Logic man hinh: them trong `src/features/<feature>/screens/`
-- Logic goi API: them trong `src/features/<feature>/services/`
-- Chuan hoa du lieu: them hoac sua trong `src/features/<feature>/adapters/`
-- State chia se: them trong `src/features/<feature>/store/`
+- Route entry: `app/`
+- Logic man hinh: `src/features/<feature>/screens/`
+- Logic goi API: `src/features/<feature>/services/`
+- Chuan hoa du lieu: `src/features/<feature>/adapters/`
+- Shared state cua feature: `src/features/<feature>/store/`
 - UI tai su dung toan app: `src/components/`
+- Ha tang chung va wrappers: `src/core/`
