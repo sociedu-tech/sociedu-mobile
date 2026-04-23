@@ -13,11 +13,23 @@ import {
   MentorProfileResponseDTO,
   ServicePackageResponseDTO,
   ServicePackageVersionResponseDTO,
+  CurriculumItemResponseDTO,
   User,
   MentorPackage,
   MentorPackageVersion,
+  CurriculumItem,
   VerificationStatus,
 } from '../types';
+
+function toCurriculumItem(dto: CurriculumItemResponseDTO): CurriculumItem {
+  return {
+    id: String(dto.id),
+    title: dto.title ?? '',
+    description: dto.description ?? '',
+    orderIndex: dto.orderIndex ?? 0,
+    duration: dto.duration ?? 0,
+  };
+}
 
 function toPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageVersion {
   return {
@@ -26,10 +38,11 @@ function toPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageV
     duration: dto.duration,
     deliveryType: dto.deliveryType ?? 'ONLINE',
     isDefault: dto.isDefault ?? false,
+    curriculums: (dto.curriculums ?? []).map(toCurriculumItem),
   };
 }
 
-function toPackage(dto: ServicePackageResponseDTO): MentorPackage {
+export function toPackage(dto: ServicePackageResponseDTO): MentorPackage {
   return {
     id: String(dto.id),
     title: dto.name,

@@ -51,36 +51,36 @@ function toOrderStatus(raw: string): OrderStatus {
 
 function toEvidence(dto: EvidenceResponseDTO): SessionEvidence {
   return {
-    id: dto.id,
-    type: dto.type,
-    url: dto.url,
-    uploadedAt: dto.uploadedAt,
+    id: dto?.id ?? '',
+    type: dto?.type ?? 'unknown',
+    url: dto?.url ?? '',
+    uploadedAt: dto?.uploadedAt ?? '',
   };
 }
 
 function toSession(dto: BookingSessionResponseDTO): BookingSession {
   return {
-    id: dto.id,
-    curriculumId: dto.curriculumId,
-    title: dto.title,
-    scheduledAt: dto.scheduledAt ?? null,
-    completedAt: dto.completedAt ?? null,
-    status: toSessionStatus(dto.status),
-    meetingUrl: dto.meetingUrl ?? null,
-    evidences: (dto.evidences ?? []).map(toEvidence),
+    id: dto?.id ?? '',
+    curriculumId: dto?.curriculumId ?? '',
+    title: dto?.title ?? 'Buổi học',
+    scheduledAt: dto?.scheduledAt ?? null,
+    completedAt: dto?.completedAt ?? null,
+    status: toSessionStatus(dto?.status),
+    meetingUrl: dto?.meetingUrl ?? null,
+    evidences: (dto?.evidences ?? []).map(toEvidence),
   };
 }
 
 export function toBooking(dto: BookingResponseDTO): Booking {
   return {
-    id: dto.id,
-    orderId: dto.orderId,
-    buyerId: dto.buyerId,
-    mentorId: dto.mentorId,
-    packageId: dto.packageId,
-    status: toBookingStatus(dto.status),
-    createdAt: dto.createdAt,
-    sessions: (dto.sessions ?? []).map(toSession),
+    id: dto?.id ?? '',
+    orderId: dto?.orderId ?? '',
+    buyerId: dto?.buyerId ?? '',
+    mentorId: dto?.mentorId ?? '',
+    packageId: dto?.packageId ?? '',
+    status: toBookingStatus(dto?.status),
+    createdAt: dto?.createdAt ?? '',
+    sessions: (dto?.sessions ?? []).map(toSession),
   };
 }
 
@@ -90,14 +90,14 @@ export function toBookingList(dtos: BookingResponseDTO[]): Booking[] {
 
 export function toOrder(dto: OrderResponseDTO): Order {
   return {
-    id: dto.id,
-    buyerId: dto.buyerId,
-    serviceId: dto.serviceId,
-    status: toOrderStatus(dto.status),
-    totalAmount: Number(dto.totalAmount),
-    paidAt: dto.paidAt ?? null,
-    createdAt: dto.createdAt,
-    paymentUrl: dto.paymentUrl ?? null,
+    id: dto?.id ?? '',
+    buyerId: dto?.buyerId ?? '',
+    serviceId: dto?.serviceId ?? '',
+    status: toOrderStatus(dto?.status),
+    totalAmount: Number(dto?.totalAmount ?? 0),
+    paidAt: dto?.paidAt ?? null,
+    createdAt: dto?.createdAt ?? '',
+    paymentUrl: dto?.paymentUrl ?? null,
   };
 }
 

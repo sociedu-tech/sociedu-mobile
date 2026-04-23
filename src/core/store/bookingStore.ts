@@ -45,3 +45,13 @@ export const useBookingStore = create<BookingState>((set) => ({
     }));
   },
 }));
+
+// ─── SELECTORS (UI Filter Logic) ───────────────────────────────
+export const getUpcomingBookings = (state: BookingState) => 
+  state.bookings.filter(b => b.status === 'active');
+
+export const getCompletedBookings = (state: BookingState) => 
+  state.bookings.filter(b => b.status === 'completed');
+
+export const getCanceledBookings = (state: BookingState) => 
+  state.bookings.filter(b => b.status === 'cancelled');

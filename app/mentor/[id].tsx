@@ -27,9 +27,6 @@ export default function MentorDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  // Selected package version state
-  const [selectedVer, setSelectedVer] = useState<MentorPackageVersion | null>(null);
-
   useEffect(() => {
     fetchMentor();
   }, [id]);
@@ -41,57 +38,10 @@ export default function MentorDetailScreen() {
       if (!id) throw new Error('Missing Mentor ID');
       const data = await mentorService.getProfile(id);
       setMentor(data);
-      
-      // Auto-select the first version of the first package
-      const firstPkg = data.mentorInfo?.packages?.[0];
-      if (firstPkg && firstPkg.versions?.length > 0) {
-         setSelectedVer(firstPkg.versions[0]);
-      }
     } catch (err: any) {
       setError(err.message || 'Không thể tải chi tiết Mentor.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCheckout = async () => {
-    if (!selectedVer) {
-      Alert.alert('Lỗi', 'Vui lòng chọn một gói dịch vụ.');
-      return;
-    }
-
-    setCheckoutLoading(true);
-    try {
-      // 1. Tạo order lấy URL VNPay
-      const order = await orderService.checkout(Number(selectedVer.id));
-      if (!order.paymentUrl) {
-         throw new Error('Không lấy được URL thanh toán.');
-      }
-
-      // 2. Mở trình duyệt thanh toán
-      // Trong thực tế cần truyền redirect_url của app (e.g. unishare://payment-result)
-      const result = await WebBrowser.openBrowserAsync(order.paymentUrl);
-      
-      // 3. Polling từ server để kiểm tra đơn đã thanh toán chưa
-      // Vì expo-web-browser chỉ trả về 'cancel' nếu user đóng, chúng ta cần poll
-      // Chú ý: Ở môi trường thật, kết hợp deep linking + polling.
-      const finalOrder = await orderService.pollUntilPaid(order.id, 5); // 5 x 3s = 15s chờ
-      
-      if (finalOrder.status === 'paid') {
-        Alert.alert('Thành công', 'Thanh toán thành công. Lịch hẹn đã được tạo.', [
-          { text: 'Xem lịch hẹn', onPress: () => router.replace('/(tabs)/bookings') }
-        ]);
-      } else {
-        // Fallback: có thể webhook đã xử lý xong nhưng polling chậm. Yêu cầu user tự check.
-        Alert.alert('Chờ xác nhận', 'Vui lòng kiểm tra tab Lịch hẹn sau ít phút xem đơn hàng đã được cập nhật chưa.', [
-          { text: 'Đóng', onPress: () => router.replace('/(tabs)/bookings') }
-        ]);
-      }
-
-    } catch (err: any) {
-      Alert.alert('Lỗi thanh toán', err.message || 'Đã có lỗi xảy ra.');
-    } finally {
-      setCheckoutLoading(false);
     }
   };
 
@@ -101,7 +51,7 @@ export default function MentorDetailScreen() {
   const info = mentor.mentorInfo;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header Bar */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -142,58 +92,33 @@ export default function MentorDetailScreen() {
           <Typography variant="bodyMedium" color="secondary">Mentor chưa cung cấp gói dịch vụ nào.</Typography>
         ) : (
           info?.packages?.map(pkg => (
-            <View key={pkg.id} style={styles.packageCard}>
-              <Typography variant="bodyMedium" style={styles.pkgTitle}>{pkg.title}</Typography>
-              <Typography variant="caption" color="secondary" style={{ marginBottom: 12 }}>{pkg.description}</Typography>
-              
-              {/* Versions List */}
-              {pkg.versions.map(ver => {
-                const isSelected = selectedVer?.id === ver.id;
-                return (
-                  <TouchableOpacity
-                    key={ver.id}
-                    style={[styles.versionItem, isSelected && styles.versionItemSelected]}
-                    onPress={() => setSelectedVer(ver)}
-                  >
-                     <View style={styles.radio}>
-                       {isSelected && <View style={styles.radioInner} />}
-                     </View>
-                     <View style={{ flex: 1 }}>
-                       <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
-                         {ver.duration} phút
-                       </Typography>
-                       <Typography variant="caption" color="secondary">
-                         {ver.deliveryType}
-                       </Typography>
-                     </View>
-                     <Typography variant="bodyMedium" style={{ fontWeight: '800', color: theme.colors.primary }}>
-                       ${ver.price}
-                     </Typography>
-                  </TouchableOpacity>
-                );
+            <TouchableOpacity 
+              key={pkg.id} 
+              style={styles.packageCard}
+              onPress={() => router.push({
+                pathname: "/package/[id]",
+                params: { id: pkg.id, mentorId: id }
               })}
-            </View>
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                   <Typography variant="bodyMedium" style={styles.pkgTitle}>{pkg.title}</Typography>
+                   <Typography variant="caption" color="secondary" numberOfLines={2}>{pkg.description}</Typography>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={theme.colors.border.default} />
+              </View>
+              
+              <View style={styles.pkgFooter}>
+                 <Typography variant="caption" color="secondary">Bắt đầu từ</Typography>
+                 <Typography variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '800' }}>
+                   ${pkg.versions[0]?.price || 0}
+                 </Typography>
+              </View>
+            </TouchableOpacity>
           ))
         )}
 
       </ScrollView>
-
-      {/* Floating Checkout Button */}
-      {selectedVer && (
-        <View style={styles.footerWrap}>
-           <View style={{ flex: 1 }}>
-             <Typography variant="caption" color="secondary">Tổng thanh toán</Typography>
-             <Typography variant="h2" style={{ color: theme.colors.primary }}>${selectedVer.price}</Typography>
-           </View>
-           <CustomButton 
-             label="Thanh toán ngay"
-             onPress={handleCheckout}
-             loading={checkoutLoading}
-             disabled={checkoutLoading}
-             style={{ flex: 1.5 }}
-           />
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -268,34 +193,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 4,
   },
-  versionItem: {
+  pkgFooter: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    marginBottom: 8,
-  },
-  versionItemSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryLight + '20', // Transparent hex
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: theme.colors.primary,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.default,
   },
   footerWrap: {
     flexDirection: 'row',

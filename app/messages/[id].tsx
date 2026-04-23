@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -47,6 +49,7 @@ export default function ConversationDetailScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputText, setInputText] = useState('');
+  const [isSessionPinned, setIsSessionPinned] = useState(true);
   
   // Load dữ liệu ban đầu
   useEffect(() => {
@@ -58,19 +61,14 @@ export default function ConversationDetailScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Trong thực tế sẽ lấy info conversation từ API
-      // Ở đây ta tìm trong danh sách mock
       const allConvs = await chatService.getConversations();
       const currentConv = allConvs.find(c => c.id === id);
       
       if (currentConv) {
         setConversation(currentConv);
-        
-        // Load messages
         const msgs = await chatService.getMessages(currentConv.id);
         setMessages(msgs);
 
-        // Load session nếu có
         if (currentConv.sessionId) {
           const sess = await chatService.getChatSession(currentConv.sessionId);
           setSession(sess);
@@ -85,20 +83,36 @@ export default function ConversationDetailScreen() {
 
   const handleSend = async () => {
     if (inputText.trim().length === 0 || !id) return;
-
     const text = inputText.trim();
     setInputText('');
-
     try {
       const newMessage = await chatService.sendMessage(id, text, 'mentee');
       setMessages(prev => [...prev, newMessage]);
-      
-      // Cuộn xuống dưới cùng
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (error) {
       console.error('Failed to send message:', error);
+    }
+  };
+
+  const handleImagePick = async () => {
+    const result = await require('expo-image-picker').launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && id) {
+      // Giả lập gửi ảnh
+      const imageMsg: ChatMessage = {
+        id: Math.random().toString(),
+        conversationId: id,
+        sender: 'mentee',
+        text: 'Đã gửi một ảnh',
+        type: 'image',
+        imageUrl: result.assets[0].uri,
+        createdAt: Date.now(),
+      };
+      setMessages(prev => [...prev, imageMsg]);
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     }
   };
 
@@ -111,14 +125,23 @@ export default function ConversationDetailScreen() {
         )}
         <View style={[
           styles.bubble, 
-          isMentee ? styles.menteeBubble : styles.mentorBubble
+          isMentee ? styles.menteeBubble : styles.mentorBubble,
+          item.type === 'image' && styles.imageBubble
         ]}>
-          <Typography 
-            variant="body" 
-            style={{ color: isMentee ? '#FFF' : theme.colors.text.primary }}
-          >
-            {item.text}
-          </Typography>
+          {item.type === 'image' && item.imageUrl ? (
+            <Image 
+               source={{ uri: item.imageUrl }} 
+               style={styles.messageImage} 
+               resizeMode="cover" 
+            />
+          ) : (
+            <Typography 
+              variant="body" 
+              style={{ color: isMentee ? '#FFF' : theme.colors.text.primary }}
+            >
+              {item.text}
+            </Typography>
+          )}
           <Typography 
             variant="caption" 
             style={[
@@ -165,81 +188,65 @@ export default function ConversationDetailScreen() {
           </View>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.headerAction}>
-          <Ionicons name="ellipsis-vertical" size={20} color={theme.colors.text.secondary} />
+        <TouchableOpacity 
+          style={styles.headerAction}
+          onPress={() => session && setIsSessionPinned(!isSessionPinned)}
+        >
+          <Ionicons 
+            name={session ? "calendar" : "ellipsis-vertical"} 
+            size={20} 
+            color={session ? theme.colors.primary : theme.colors.text.secondary} 
+          />
         </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messageList}
-          ListHeaderComponent={
-            session ? (
-              <Card style={styles.sessionCard}>
-                <View style={styles.sessionHeader}>
-                  <View style={styles.sessionIconWrapper}>
-                    <Ionicons name="calendar" size={24} color={theme.colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Typography variant="bodyMedium" weight="700">
-                      Chi tiết buổi học
+        <View style={{ flex: 1 }}>
+          {/* PINNED SESSION CARD */}
+          {session && isSessionPinned && (
+            <Animated.View style={styles.pinnedSession}>
+               <Card style={styles.sessionCardMini}>
+                  <View style={styles.sessionHeaderMini}>
+                    <Ionicons name="school" size={20} color={theme.colors.primary} />
+                    <Typography variant="bodyMedium" weight="700" style={{ flex: 1, marginLeft: 8 }}>
+                       {session.subject}
                     </Typography>
+                    <TouchableOpacity onPress={() => setIsSessionPinned(false)}>
+                       <Ionicons name="close" size={20} color={theme.colors.text.disabled} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.sessionFooterMini}>
                     <Typography variant="caption" color="secondary">
-                      ID: {session.id}
+                       {formatDateTime(session.startTime)}
                     </Typography>
+                    <TouchableOpacity style={styles.joinBtnMini} onPress={() => router.push(`/booking/${id}`)}>
+                       <Typography variant="caption" style={{ color: '#FFF', fontWeight: '700' }}>Chi tiết</Typography>
+                    </TouchableOpacity>
                   </View>
-                  <View style={[styles.statusBadge, { backgroundColor: theme.colors.primaryLighter }]}>
-                    <Typography variant="caption" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                      {session.status.toUpperCase()}
-                    </Typography>
-                  </View>
-                </View>
+               </Card>
+            </Animated.View>
+          )}
 
-                <View style={styles.sessionInfoGrid}>
-                  <View style={styles.sessionInfoItem}>
-                    <Typography variant="caption" color="secondary">Môn học</Typography>
-                    <Typography variant="bodyMedium" numberOfLines={1}>{session.subject}</Typography>
-                  </View>
-                  <View style={styles.sessionInfoItem}>
-                    <Typography variant="caption" color="secondary">Giá tiền</Typography>
-                    <Typography variant="bodyMedium" weight="700">{formatCurrency(session.price)}</Typography>
-                  </View>
-                </View>
-                
-                <View style={[styles.sessionInfoItem, { marginTop: 12 }]}>
-                  <Typography variant="caption" color="secondary">Thời gian</Typography>
-                  <Typography variant="bodyMedium">
-                    {formatDateTime(session.startTime)} - {formatDateTime(session.endTime).split(' ')[0]}
-                  </Typography>
-                </View>
-
-                <View style={styles.sessionActions}>
-                  <TouchableOpacity style={[styles.actionButton, styles.cancelButton]}>
-                    <Typography variant="label" color="error">Hủy bỏ</Typography>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.actionButton, styles.confirmButton]}>
-                    <Typography variant="label" color="inverse">Xác nhận</Typography>
-                  </TouchableOpacity>
-                </View>
-              </Card>
-            ) : null
-          }
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
-        />
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={[styles.messageList, session && isSessionPinned && { paddingTop: 100 }]}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          />
+        </View>
 
         {/* INPUT AREA */}
         <View style={styles.inputArea}>
+          <TouchableOpacity style={styles.attachmentButton} onPress={handleImagePick}>
+            <Ionicons name="image-outline" size={26} color={theme.colors.primary} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.attachmentButton}>
-            <Ionicons name="add-circle-outline" size={28} color={theme.colors.primary} />
+            <Ionicons name="document-attach-outline" size={26} color={theme.colors.primary} />
           </TouchableOpacity>
           
           <View style={styles.inputContainer}>
@@ -388,11 +395,56 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: theme.colors.primary,
   },
+  pinnedSession: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    padding: 12,
+  },
+  sessionCardMini: {
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: theme.colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryLight,
+  },
+  sessionHeaderMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sessionFooterMini: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  joinBtnMini: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  imageBubble: {
+    padding: 4,
+    borderRadius: 12,
+  },
+  messageImage: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+  },
   inputArea: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
@@ -406,8 +458,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    marginHorizontal: 8,
+    marginHorizontal: 4,
     maxHeight: 100,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
   },
   textInput: {
     fontSize: 15,
@@ -415,13 +469,12 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
   },
   sendButtonDisabled: {
     backgroundColor: theme.colors.text.disabled,

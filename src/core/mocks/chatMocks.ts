@@ -46,12 +46,12 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
 
 export const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
   conv_1: [
-    { id: '1', sender: 'mentor', text: 'Chào em, anh có thể giúp gì cho em?', createdAt: Date.now() - 1000 * 60 * 60 },
-    { id: '2', sender: 'mentee', text: 'Em muốn hỏi về buổi học ngày mai ạ', createdAt: Date.now() - 1000 * 60 * 30 },
-    { id: '3', sender: 'mentor', text: 'Buổi học đó mình sẽ tập trung vào React Native nhé.', createdAt: Date.now() - 1000 * 60 * 25 },
+    { id: '1', conversationId: 'conv_1', sender: 'mentor', text: 'Chào em, anh có thể giúp gì cho em?', createdAt: Date.now() - 1000 * 60 * 60 },
+    { id: '2', conversationId: 'conv_1', sender: 'mentee', text: 'Em muốn hỏi về buổi học ngày mai ạ', createdAt: Date.now() - 1000 * 60 * 30 },
+    { id: '3', conversationId: 'conv_1', sender: 'mentor', text: 'Buổi học đó mình sẽ tập trung vào React Native nhé.', createdAt: Date.now() - 1000 * 60 * 25 },
   ],
   conv_2: [
-    { id: '1', sender: 'mentor', text: 'Chào em, xác nhận lịch hẹn lúc 2h chiều nay nhé.', createdAt: Date.now() - 1000 * 60 * 60 * 2 },
+    { id: '1', conversationId: 'conv_2', sender: 'mentor', text: 'Chào em, xác nhận lịch hẹn lúc 2h chiều nay nhé.', createdAt: Date.now() - 1000 * 60 * 60 * 2 },
   ],
 };
 

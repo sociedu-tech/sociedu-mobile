@@ -17,8 +17,19 @@ export const mockMentorListDTO: MentorProfileResponseDTO[] = [
         description: "Review logic kiến trúc và Mock Phỏng vấn thử",
         isActive: true,
         versions: [
-          { id: 1001, price: 50, duration: 60, deliveryType: "ONLINE", isDefault: true },
-          { id: 1002, price: 80, duration: 120, deliveryType: "ONLINE", isDefault: false }
+          { 
+            id: 1001, price: 50, duration: 60, deliveryType: "ONLINE", isDefault: true,
+            curriculums: [
+              { id: 1, packageVersionId: 1001, title: "Review CV & Định hướng", description: "Đánh giá chi tiết CV hiện tại", orderIndex: 1, duration: 20 },
+              { id: 2, packageVersionId: 1001, title: "Mock Interview (Kỹ thuật)", description: "Phỏng vấn thuật toán và system design", orderIndex: 2, duration: 40 }
+            ]
+          },
+          { 
+            id: 1002, price: 80, duration: 120, deliveryType: "ONLINE", isDefault: false,
+            curriculums: [
+              { id: 3, packageVersionId: 1002, title: "Mock Interview Full", description: "120 phút phỏng vấn chuyên sâu", orderIndex: 1, duration: 120 }
+            ]
+          }
         ]
       }
     ]

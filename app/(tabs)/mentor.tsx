@@ -7,6 +7,7 @@ import {
   TextInput,
   RefreshControl,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -25,8 +26,8 @@ import { Avatar } from '../../src/components/ui/Avatar';
 import { scaleSpace, scaleFont } from '../../src/theme/responsiveUtils';
 
 
-// Lấy tất cả các lĩnh vực chuyên môn từ mentors (dùng useMemo để tối ưu)
 import { useMemo } from 'react';
+import { useDebounce } from '../../src/hooks/useDebounce';
 
 // ...existing code...
 
@@ -43,6 +44,10 @@ export default function MentorScreen() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+
+  // Debounce 300ms – tránh filter/re-render liên tục khi user đang gõ
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const isSearching = searchTerm !== debouncedSearch;
 
   // Lấy tất cả các lĩnh vực chuyên môn duy nhất từ mentors
   const expertiseTags = useMemo(() => {
@@ -75,9 +80,9 @@ export default function MentorScreen() {
     fetchMentors(true);
   }, [fetchMentors]);
 
-  // ─── Filtering ──────────────────────────────────────────
+  // ─── Filtering (dùng debouncedSearch, không phải searchTerm thô) ──
   const filteredMentors = mentors.filter((m) => {
-    const term = searchTerm.toLowerCase();
+    const term = debouncedSearch.toLowerCase();
     const matchesSearch =
       !term ||
       m.name.toLowerCase().includes(term) ||
@@ -128,11 +133,14 @@ export default function MentorScreen() {
               autoCapitalize="none"
               returnKeyType="search"
             />
-            {searchTerm.length > 0 && (
+            {/* Hiển thị spinner khi đang chờ debounce */}
+            {isSearching ? (
+              <ActivityIndicator size="small" color={theme.colors.text.disabled} />
+            ) : searchTerm.length > 0 ? (
               <TouchableOpacity onPress={() => setSearchTerm('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Ionicons name="close-circle" size={18} color={theme.colors.text.disabled} />
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         </View>
         {/* FILTER CHIPS */}
@@ -197,7 +205,7 @@ export default function MentorScreen() {
             />
           }
           renderItem={({ item, index }) => (
-            <MentorCard mentor={item} index={index} onPress={() => router.push(`/profile/${item.id}` as any)} />
+            <MentorCard mentor={item} index={index} onPress={() => router.push(`/mentor/${item.id}` as any)} />
           )}
         />
       </Section>
@@ -242,64 +250,66 @@ function MentorCard({ mentor, index, onPress }: MentorCardProps) {
       <Card style={{ marginBottom: theme.spacing.md }}>
         <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={{ flex: 1 }}>
           {/* Header: Avatar + Info */}
-          <View style={{ flexDirection: 'row', gap: scaleSpace(12), marginBottom: scaleSpace(14) }}>
+          <View style={styles.cardHeader}>
             <Avatar uri={mentor.avatar || undefined} size={56} />
-            <View style={{ flex: 1, justifyContent: 'center' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(6) }}>
-                <Typography variant="bodyMedium" style={{ color: theme.colors.text.primary, fontWeight: '700', flexShrink: 1 }} numberOfLines={1}>
+            <View style={styles.cardInfo}>
+              <View style={styles.nameRow}>
+                <Typography variant="bodyMedium" style={styles.mentorName} numberOfLines={1}>
                   {mentor.name}
                 </Typography>
                 {info?.verificationStatus === 'verified' && (
                   <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
                 )}
               </View>
-              <Typography variant="caption" color="secondary" numberOfLines={1} style={{ marginTop: scaleSpace(2) }}>
+              <Typography variant="caption" color="secondary" numberOfLines={1} style={styles.headline}>
                 {info?.headline || 'Mentor'}
               </Typography>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(8), marginTop: scaleSpace(6) }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(3) }}>
+              <View style={styles.statsRow}>
+                <View style={styles.ratingBadge}>
                   <Ionicons name="star" size={12} color={theme.colors.warning} />
-                  <Typography variant="caption" style={{ color: theme.colors.text.primary, fontWeight: '700', fontSize: scaleFont(12) }}>
+                  <Typography variant="caption" style={styles.ratingText}>
                     {info?.rating?.toFixed(1) || '0.0'}
                   </Typography>
                 </View>
-                <View style={{ width: scaleSpace(4), height: scaleSpace(4), borderRadius: scaleSpace(2), backgroundColor: theme.colors.border.default }} />
-                <Typography variant="caption" color="secondary" style={{ fontSize: scaleFont(11), textTransform: 'uppercase', letterSpacing: 0.3 }}>
+                <View style={styles.dotSeparator} />
+                <Typography variant="caption" color="secondary" style={styles.sessionText}>
                   {info?.sessionsCompleted || 0} buổi học
                 </Typography>
               </View>
             </View>
           </View>
+
           {/* Expertise Tags */}
           {info?.expertise && info.expertise.length > 0 && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: scaleSpace(6), marginBottom: scaleSpace(14) }}>
+            <View style={styles.tagsContainer}>
               {info.expertise.slice(0, 3).map((exp) => (
-                <View key={exp} style={{ backgroundColor: theme.colors.background, paddingHorizontal: scaleSpace(12), paddingVertical: scaleSpace(6), borderRadius: scaleSpace(8), borderWidth: 1, borderColor: theme.colors.border.default, justifyContent: 'center', alignItems: 'center' }}>
-                  <Typography variant="caption" style={{ fontSize: scaleFont(13), fontWeight: '600', color: theme.colors.text.secondary, transform: [{ translateY: -1 }] }}>{exp}</Typography>
+                <View key={exp} style={styles.tag}>
+                  <Typography variant="caption" style={styles.tagText}>{exp}</Typography>
                 </View>
               ))}
               {info.expertise.length > 3 && (
-                <View style={{ backgroundColor: theme.colors.primaryLight, borderColor: theme.colors.primaryLight, paddingHorizontal: scaleSpace(12), paddingVertical: scaleSpace(6), borderRadius: scaleSpace(8), borderWidth: 1, marginLeft: scaleSpace(2), justifyContent: 'center', alignItems: 'center' }}>
-                  <Typography variant="caption" style={{ fontSize: scaleFont(13), fontWeight: '600', color: theme.colors.text.secondary, transform: [{ translateY: -1 }] }}>+{info.expertise.length - 3}</Typography>
+                <View style={[styles.tag, styles.tagMore]}>
+                  <Typography variant="caption" style={styles.tagText}>+{info.expertise.length - 3}</Typography>
                 </View>
               )}
             </View>
           )}
+
           {/* Footer: Price + CTA */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: theme.colors.border.default, paddingTop: scaleSpace(14) }}>
+          <View style={styles.cardFooter}>
             <View>
-              <Typography variant="caption" style={{ fontSize: scaleFont(10), fontWeight: '700', color: theme.colors.text.secondary, letterSpacing: 1, marginBottom: scaleSpace(2) }}>
+              <Typography variant="caption" style={styles.priceLabel}>
                 GIÁ TỪ
               </Typography>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: scaleSpace(2) }}>
-                <Typography variant="h3" style={{ color: theme.colors.text.primary, fontWeight: '800' }}>
+              <View style={styles.priceRow}>
+                <Typography variant="h3" style={styles.priceValue}>
                   ${info?.price || 0}
                 </Typography>
                 <Typography variant="caption" color="secondary">/giờ</Typography>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scaleSpace(6), backgroundColor: theme.colors.primary, paddingHorizontal: scaleSpace(18), paddingVertical: scaleSpace(10), borderRadius: theme.borderRadius.lg, shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 }}>
-              <Typography variant="label" style={{ color: '#FFFFFF', fontWeight: '700', fontSize: scaleFont(13) }}>Xem hồ sơ</Typography>
+            <View style={styles.viewButton}>
+              <Typography variant="label" style={styles.viewButtonText}>Xem hồ sơ</Typography>
               <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
             </View>
           </View>

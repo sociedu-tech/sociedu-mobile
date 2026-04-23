@@ -65,6 +65,7 @@ export interface ServicePackageVersionResponseDTO {
   duration: number;               // minutes
   deliveryType: string;
   isDefault: boolean;
+  curriculums?: CurriculumItemResponseDTO[]; // Null-safe array
 }
 
 export interface ServicePackageResponseDTO {
@@ -83,6 +84,26 @@ export interface CurriculumItemResponseDTO {
   description: string;
   orderIndex: number;
   duration: number;              // minutes
+}
+
+export interface CreateCurriculumRequest {
+  title: string;
+  description: string;
+  orderIndex: number;
+  duration: number;
+}
+
+export interface CreateServiceRequest {
+  name: string;
+  description: string;
+  isActive: boolean;
+  versions: {
+    price: number;
+    duration: number;
+    deliveryType: string;
+    isDefault: boolean;
+    curriculums: CreateCurriculumRequest[];
+  }[];
 }
 
 // ── Order ─────────────────────────────────────────────────────
@@ -203,12 +224,21 @@ export interface MentorPackage {
   versions: MentorPackageVersion[];
 }
 
+export interface CurriculumItem {
+  id: string;
+  title: string;
+  description: string;
+  orderIndex: number;
+  duration: number;
+}
+
 export interface MentorPackageVersion {
   id: string;
   price: number;
   duration: number;
   deliveryType: string;
   isDefault: boolean;
+  curriculums: CurriculumItem[];
 }
 
 export interface MentorInfo {
@@ -317,9 +347,12 @@ export type ConversationType = 'chat' | 'session' | 'follow-up';
 
 export interface ChatMessage {
   id: string;
+  conversationId: string;
   sender: 'mentee' | 'mentor';
   text: string;
   createdAt: number;
+  type?: 'text' | 'image' | 'file';
+  imageUrl?: string;
 }
 
 export interface ChatSession {
