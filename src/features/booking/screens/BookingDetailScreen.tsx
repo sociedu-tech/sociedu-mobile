@@ -35,7 +35,7 @@ export default function BookingDetailScreen() {
       const data = await bookingService.getById(id);
       setBooking(data);
     } catch (err: any) {
-      setError(err.message || 'Khong the tai lich hen.');
+      setError(err.message || 'Không thể tải lịch hẹn.');
     } finally {
       setLoading(false);
     }
@@ -54,12 +54,12 @@ export default function BookingDetailScreen() {
       await bookingService.updateSession(booking.id, sessionId, { status: newStatus });
       await fetchBooking();
     } catch (err: any) {
-      Alert.alert('Loi', err.message || 'Khong the cap nhat trang thai.');
+      Alert.alert('Lỗi', err.message || 'Không thể cập nhật trạng thái.');
     }
   };
 
   if (loading) {
-    return <LoadingState message="Dang tai lich hen..." />;
+    return <LoadingState message="Đang tải lịch hẹn..." />;
   }
 
   if (error || !booking) {
@@ -72,34 +72,34 @@ export default function BookingDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chi tiet lich hen</Typography>
+        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chi tiết lịch hẹn</Typography>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: 32 }]}>
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Ma don:</Typography>
+            <Typography variant="caption" color="secondary">Mã đơn:</Typography>
             <Typography variant="bodyMedium" style={styles.bold}>{booking.orderId.slice(0, 8)}</Typography>
           </View>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Ngay tao:</Typography>
+            <Typography variant="caption" color="secondary">Ngày tạo:</Typography>
             <Typography variant="bodyMedium" style={styles.bold}>
               {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
             </Typography>
           </View>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Trang thai chung:</Typography>
+            <Typography variant="caption" color="secondary">Trạng thái chung:</Typography>
             <Typography variant="bodyMedium" style={[styles.bold, { color: theme.colors.primary }]}>
               {booking.status.toUpperCase()}
             </Typography>
           </View>
         </View>
 
-        <Typography variant="h3" style={{ marginVertical: 16 }}>Danh sach buoi hoc</Typography>
+        <Typography variant="h3" style={{ marginVertical: 16 }}>Danh sách buổi học</Typography>
 
         {booking.sessions.length === 0 ? (
-          <Typography variant="bodyMedium" color="secondary">Khong co buoi hoc nao.</Typography>
+          <Typography variant="bodyMedium" color="secondary">Không có buổi học nào.</Typography>
         ) : (
           booking.sessions.map((session, index) => (
             <SessionCard

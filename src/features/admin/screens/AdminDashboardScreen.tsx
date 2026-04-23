@@ -21,7 +21,7 @@ function AdminContent() {
           Trang Quan tri
         </Typography>
         <Typography variant="body" style={styles.subtitle}>
-          Quan ly nguoi dung, bao cao va cai dat he thong.
+          Quản lý người dùng, báo cáo và cài đặt hệ thống.
         </Typography>
       </View>
     </View>

@@ -151,7 +151,7 @@ export default function MessageDetailScreen() {
               {conversation.name}
             </Typography>
             <Typography variant="caption" color="secondary">
-              Dang hoat dong
+              Đang hoạt động
             </Typography>
           </View>
         </TouchableOpacity>
@@ -181,7 +181,7 @@ export default function MessageDetailScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Typography variant="bodyMedium" weight="700">
-                      Chi tiet buoi hoc
+                      Chi tiết buổi học
                     </Typography>
                     <Typography variant="caption" color="secondary">
                       ID: {session.id}
@@ -196,17 +196,17 @@ export default function MessageDetailScreen() {
 
                 <View style={styles.sessionInfoGrid}>
                   <View style={styles.sessionInfoItem}>
-                    <Typography variant="caption" color="secondary">Mon hoc</Typography>
+                    <Typography variant="caption" color="secondary">Môn học</Typography>
                     <Typography variant="bodyMedium" numberOfLines={1}>{session.subject}</Typography>
                   </View>
                   <View style={styles.sessionInfoItem}>
-                    <Typography variant="caption" color="secondary">Gia tien</Typography>
+                    <Typography variant="caption" color="secondary">Giá tiền</Typography>
                     <Typography variant="bodyMedium" weight="700">{formatCurrency(session.price)}</Typography>
                   </View>
                 </View>
 
                 <View style={[styles.sessionInfoItem, { marginTop: 12 }]}>
-                  <Typography variant="caption" color="secondary">Thoi gian</Typography>
+                  <Typography variant="caption" color="secondary">Thời gian</Typography>
                   <Typography variant="bodyMedium">
                     {formatDateTime(session.startTime)} - {formatDateTime(session.endTime).split(' ')[0]}
                   </Typography>
@@ -214,10 +214,10 @@ export default function MessageDetailScreen() {
 
                 <View style={styles.sessionActions}>
                   <TouchableOpacity style={[styles.actionButton, styles.cancelButton]}>
-                    <Typography variant="label" color="error">Huy bo</Typography>
+                    <Typography variant="label" color="error">Hủy bỏ</Typography>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.actionButton, styles.confirmButton]}>
-                    <Typography variant="label" color="inverse">Xac nhan</Typography>
+                    <Typography variant="label" color="inverse">Xác nhận</Typography>
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -235,7 +235,7 @@ export default function MessageDetailScreen() {
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder="Nhap tin nhan..."
+              placeholder="Nhập tin nhắn..."
               placeholderTextColor={theme.colors.text.disabled}
               value={inputText}
               onChangeText={setInputText}

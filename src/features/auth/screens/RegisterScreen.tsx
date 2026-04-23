@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -9,8 +11,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { TextInput } from '@/src/components/form/TextInput';
@@ -77,7 +77,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      setError('Vui long nhap day du thong tin.');
+      setError('Vui lòng nhập đầy đủ thông tin.');
       return;
     }
 
@@ -94,7 +94,7 @@ export default function RegisterScreen() {
       setSuccess(true);
       setTimeout(() => router.replace('/(auth)/login'), 2000);
     } catch (err: any) {
-      setError(err.message || 'Co loi xay ra, vui long thu lai.');
+      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,7 @@ export default function RegisterScreen() {
             </View>
             <Typography variant="h1" style={styles.brandName}>UniShare</Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              San tri thuc danh cho sinh vien
+              Sân tri thức dành cho sinh viên
             </Typography>
           </Animated.View>
 
@@ -130,15 +130,15 @@ export default function RegisterScreen() {
           >
             <View style={styles.heading}>
               <Typography variant="h2" style={styles.title}>
-                Tao tai khoan moi
+                Tạo tài khoản mới
               </Typography>
               <Typography variant="body" color="secondary">
-                Tham gia cong dong UniShare ngay hom nay.
+                Tham gia cộng đồng UniShare ngay hôm nay.
               </Typography>
             </View>
 
             <TextInput
-              label="HO"
+              label="HỌ"
               placeholder="Nguyen"
               value={lastName}
               onChangeText={setLastName}
@@ -146,7 +146,7 @@ export default function RegisterScreen() {
               returnKeyType="next"
             />
             <TextInput
-              label="TEN"
+              label="TÊN"
               placeholder="Van A"
               value={firstName}
               onChangeText={setFirstName}
@@ -155,7 +155,7 @@ export default function RegisterScreen() {
             />
 
             <TextInput
-              label="EMAIL SINH VIEN"
+              label="EMAIL SINH VIÊN"
               placeholder="name@university.edu.vn"
               leftIcon="mail-outline"
               value={email}
@@ -167,7 +167,7 @@ export default function RegisterScreen() {
             />
 
             <TextInput
-              label="MAT KHAU"
+              label="MẬT KHẨU"
               placeholder="********"
               leftIcon="lock-closed-outline"
               rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -193,7 +193,7 @@ export default function RegisterScreen() {
               <View style={styles.successBox}>
                 <Ionicons name="checkmark-circle" size={18} color={C.success} />
                 <Typography variant="label" style={styles.successText}>
-                  Dang ky thanh cong! Dang chuyen huong...
+                  Đăng ký thành công! Đang chuyển hướng...
                 </Typography>
               </View>
             )}
@@ -212,7 +212,7 @@ export default function RegisterScreen() {
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <Typography variant="caption" style={styles.dividerText}>
-                HOAC TIEP TUC VOI
+                HOẶC TIẾP TỤC VỚI
               </Typography>
               <View style={styles.dividerLine} />
             </View>
@@ -230,12 +230,12 @@ export default function RegisterScreen() {
 
             <View style={styles.loginRow}>
               <Typography variant="body" color="secondary">
-                Da co tai khoan?
+                Đã có tài khoản?
               </Typography>
               <Link href="/(auth)/login" asChild>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Typography variant="bodyMedium" weight="700" style={styles.loginLink}>
-                    {' '}Dang nhap ngay
+                    {' '}Đăng nhập ngay
                   </Typography>
                 </TouchableOpacity>
               </Link>

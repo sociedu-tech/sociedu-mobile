@@ -50,10 +50,10 @@ export default function MyProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Dang xuat', 'Ban co chac chan muon dang thoat phien dang nhap?', [
-      { text: 'Huy', style: 'cancel' },
+    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn thoát phiên đăng nhập?', [
+      { text: 'Hủy', style: 'cancel' },
       {
-        text: 'Dang xuat',
+        text: 'Đăng xuất',
         style: 'destructive',
         onPress: async () => {
           await logout();
@@ -62,7 +62,7 @@ export default function MyProfileScreen() {
     ]);
   };
 
-  const displayName = fullUser?.name || authUser?.fullName || 'Nguoi Dung';
+  const displayName = fullUser?.name || authUser?.fullName || 'Người Dùng';
   const displayEmail = fullUser?.email || authUser?.email || '';
   const avatarUri = fullUser?.avatar || null;
 
@@ -85,7 +85,7 @@ export default function MyProfileScreen() {
           alignItems: 'center',
         }}
       >
-        <Typography variant="h3" style={{ fontWeight: '800' }}>Ho so ca nhan</Typography>
+        <Typography variant="h3" style={{ fontWeight: '800' }}>Hồ sơ cá nhân</Typography>
       </View>
 
       <ScrollView
@@ -160,7 +160,7 @@ export default function MyProfileScreen() {
           >
             <Ionicons name="pencil" size={14} color={theme.colors.primary} />
             <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.primary, fontSize: 14 }}>
-              Chinh sua ho so
+              Chỉnh sửa hồ sơ
             </Typography>
           </TouchableOpacity>
         </View>
@@ -179,13 +179,13 @@ export default function MyProfileScreen() {
                 letterSpacing: 0.5,
               }}
             >
-              Bang dieu khien
+              Bảng điều khiển
             </Typography>
             <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
               {userRole === 'mentor' && (
                 <ListItem
                   title="Mentor Dashboard"
-                  subtitle="Quan ly lich hen, goi dich vu"
+                  subtitle="Quản lý lịch hẹn, gói dịch vụ"
                   iconName="briefcase-outline"
                   onPress={() => router.push('/mentor/dashboard' as any)}
                 />
@@ -193,7 +193,7 @@ export default function MyProfileScreen() {
               {userRole === 'admin' && (
                 <ListItem
                   title="Admin Panel"
-                  subtitle="Kiem duyet user va he thong"
+                  subtitle="Kiểm duyệt user và hệ thống"
                   iconName="shield-checkmark-outline"
                   onPress={() => router.push('/admin/index' as any)}
                 />
@@ -219,18 +219,18 @@ export default function MyProfileScreen() {
           </Typography>
           <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
             <ListItem
-              title="Chung chi va Kinh nghiem"
-              subtitle="Cap nhat lich su lam viec"
+              title="Chứng chỉ và Kinh nghiệm"
+              subtitle="Cập nhật lịch sử làm việc"
               iconName="document-text-outline"
               onPress={() => {}}
             />
             <ListItem
-              title="Cai dat tai khoan"
+              title="Cài đặt tài khoản"
               iconName="settings-outline"
               onPress={() => {}}
             />
             <ListItem
-              title="Trung tam tro giup"
+              title="Trung tâm trợ giúp"
               iconName="help-circle-outline"
               onPress={() => {}}
             />
@@ -256,13 +256,13 @@ export default function MyProfileScreen() {
           >
             <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
             <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.error }}>
-              Dang xuat
+              Đăng xuất
             </Typography>
           </TouchableOpacity>
         </Section>
 
         <Typography variant="caption" color="secondary" align="center" style={{ opacity: 0.5, marginTop: theme.spacing.xl }}>
-          Phien ban 1.0.0
+          Phiên bản 1.0.0
         </Typography>
       </ScrollView>
     </SafeAreaView>

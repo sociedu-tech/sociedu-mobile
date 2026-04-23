@@ -24,7 +24,7 @@ export default function PublicProfileScreen() {
         const data = await userService.getPublicProfile(id);
         setProfile(data);
       } catch {
-        setError('Khong the tai ho so nguoi dung.');
+        setError('Không thể tải hồ sơ người dùng.');
       } finally {
         setLoading(false);
       }
@@ -48,7 +48,7 @@ export default function PublicProfileScreen() {
       <View style={styles.center}>
         <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
         <Typography variant="body" style={styles.errorText}>
-          {error || 'Khong tim thay ho so.'}
+          {error || 'Không tìm thấy hồ sơ.'}
         </Typography>
       </View>
     );
@@ -66,7 +66,7 @@ export default function PublicProfileScreen() {
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#3B82F6" />
               <Typography variant="caption" style={{ color: '#3B82F6', fontWeight: '600' }}>
-                Da xac minh
+                Đã xác minh
               </Typography>
             </View>
           )}
@@ -85,7 +85,7 @@ export default function PublicProfileScreen() {
             <Typography variant="h3" style={styles.statValue}>
               {profile.mentorInfo.rating}
             </Typography>
-            <Typography variant="caption" style={styles.statLabel}>Danh gia</Typography>
+            <Typography variant="caption" style={styles.statLabel}>Đánh giá</Typography>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
@@ -93,7 +93,7 @@ export default function PublicProfileScreen() {
             <Typography variant="h3" style={styles.statValue}>
               {profile.mentorInfo.sessionsCompleted}
             </Typography>
-            <Typography variant="caption" style={styles.statLabel}>Buoi hoc</Typography>
+            <Typography variant="caption" style={styles.statLabel}>Buổi học</Typography>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
@@ -101,14 +101,14 @@ export default function PublicProfileScreen() {
             <Typography variant="h3" style={styles.statValue}>
               ${profile.mentorInfo.price}
             </Typography>
-            <Typography variant="caption" style={styles.statLabel}>/ gio</Typography>
+            <Typography variant="caption" style={styles.statLabel}>/ giờ</Typography>
           </View>
         </View>
       )}
 
       {profile.mentorInfo?.expertise && profile.mentorInfo.expertise.length > 0 && (
         <View style={styles.section}>
-          <Typography variant="h3" style={styles.sectionTitle}>Chuyen mon</Typography>
+          <Typography variant="h3" style={styles.sectionTitle}>Chuyên môn</Typography>
           <View style={styles.tagsContainer}>
             {profile.mentorInfo.expertise.map((expertise) => (
               <View key={expertise} style={styles.tag}>
@@ -121,7 +121,7 @@ export default function PublicProfileScreen() {
 
       {profile.bio && (
         <View style={styles.section}>
-          <Typography variant="h3" style={styles.sectionTitle}>Gioi thieu</Typography>
+          <Typography variant="h3" style={styles.sectionTitle}>Giới thiệu</Typography>
           <Typography variant="body" style={styles.bio}>
             {profile.bio}
           </Typography>

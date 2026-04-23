@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -7,8 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import { EmptyState } from '@/src/components/states/EmptyState';
 import { ErrorState } from '@/src/components/states/ErrorState';
@@ -47,7 +47,7 @@ export default function MentorListScreen() {
       const data = await mentorService.getAll();
       setMentors(data);
     } catch {
-      setError('Khong the tai danh sach mentor. Vui long thu lai.');
+      setError('Không thể tải danh sách mentor. Vui lòng thử lại.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -72,7 +72,7 @@ export default function MentorListScreen() {
       mentor.mentorInfo?.expertise?.some((item) => item.toLowerCase().includes(term));
 
     const matchesCategory =
-      selectedCategory === 'Tat ca' ||
+      selectedCategory === 'Tất cả' ||
       mentor.mentorInfo?.expertise?.some((item) =>
         item.toLowerCase().includes(selectedCategory.toLowerCase())
       );
@@ -81,7 +81,7 @@ export default function MentorListScreen() {
   });
 
   if (loading) {
-    return <LoadingState message="Dang tim kiem cac chuyen gia..." />;
+    return <LoadingState message="Đang tìm kiếm các chuyên gia..." />;
   }
 
   if (error) {
@@ -102,14 +102,14 @@ export default function MentorListScreen() {
           }}
         >
           <Typography variant="h2" style={{ color: '#FFF', fontWeight: '800' }}>
-            Ket noi voi{' '}
+            Kết nối với{' '}
             <Typography variant="h2" style={{ color: theme.colors.primary, fontWeight: '800' }}>
               Mentor
             </Typography>{' '}
-            hang dau
+            hàng đầu
           </Typography>
           <Typography variant="body" style={{ color: 'rgba(255,255,255,0.6)', marginTop: theme.spacing.sm }}>
-            Nhan tu van 1-1 de but pha trong hoc tap va su nghiep.
+            Nhận tư vấn 1-1 để bứt phá trong học tập và sự nghiệp.
           </Typography>
           <View
             style={{
@@ -127,7 +127,7 @@ export default function MentorListScreen() {
             <Ionicons name="search" size={18} color={theme.colors.text.disabled} />
             <TextInput
               style={{ flex: 1, fontSize: 15, color: '#FFF', padding: 0, marginLeft: theme.spacing.sm }}
-              placeholder="Tim theo ten, chuyen mon..."
+              placeholder="Tìm theo tên, chuyên môn..."
               placeholderTextColor={theme.colors.text.disabled}
               value={searchTerm}
               onChangeText={setSearchTerm}
@@ -204,8 +204,8 @@ export default function MentorListScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              title="Khong tim thay Mentor"
-              description="Thu tim kiem voi tu khoa khac hoac xoa bo loc."
+              title="Không tìm thấy mentor"
+              description="Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc."
               icon="person-outline"
               fullScreen={false}
             />

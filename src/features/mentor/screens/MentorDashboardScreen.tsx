@@ -1,6 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ProtectedRoute } from '@/src/components/ProtectedRoute';
 import { Typography } from '@/src/components/typography/Typography';
@@ -17,7 +17,7 @@ function MentorDashboardContent() {
           Mentor Dashboard
         </Typography>
         <Typography variant="body" style={styles.subtitle}>
-          Quan ly lich day, danh gia tu hoc vien va thu nhap cua ban.
+          Quản lý lịch dạy, đánh giá từ học viên và thu nhập của bạn.
         </Typography>
       </View>
     </View>

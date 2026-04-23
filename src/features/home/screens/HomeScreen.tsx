@@ -1,8 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Animated, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { Typography } from '@/src/components/typography/Typography';
@@ -13,22 +13,22 @@ import { theme } from '@/src/theme/theme';
 const HIGHLIGHTS = [
   {
     icon: 'people-outline' as const,
-    title: 'Mentor chat luong',
-    desc: 'Ket noi voi sinh vien xuat sac va chuyen gia trong nganh.',
+    title: 'Mentor chất lượng',
+    desc: 'Kết nối với sinh viên xuất sắc và chuyên gia trong ngành.',
     color: theme.colors.primary,
     bg: theme.colors.primaryLight,
   },
   {
     icon: 'chatbubbles-outline' as const,
-    title: 'Tu van 1-1',
-    desc: 'Dat lich hen va nhan tu van truc tiep voi mentor.',
+    title: 'Tư vấn 1-1',
+    desc: 'Đặt lịch hẹn và nhận tư vấn trực tiếp với mentor.',
     color: theme.colors.success,
     bg: '#D1FAE5',
   },
   {
     icon: 'shield-checkmark-outline' as const,
-    title: 'Da xac minh',
-    desc: 'Moi mentor deu duoc he thong xac minh nang luc.',
+    title: 'Đã xác minh',
+    desc: 'Mọi mentor đều được hệ thống xác minh năng lực.',
     color: theme.colors.info,
     bg: '#DBEAFE',
   },
@@ -61,17 +61,17 @@ export default function HomeScreen() {
               <Ionicons name="school" size={36} color={theme.colors.primary} />
             </View>
             <Typography variant="h1" align="center">
-              {'Tim kiem '}
+              {'Tìm kiếm '}
               <Typography variant="h1" style={{ color: theme.colors.primary, fontWeight: '900' }}>
                 Mentor
               </Typography>
-              {'\nhoan hao cho ban'}
+              {'\nhoàn hảo cho bạn'}
             </Typography>
             <Typography variant="body" color="secondary" align="center" style={{ marginTop: theme.spacing.md }}>
-              Ket noi voi nhung nguoi di truoc giau kinh nghiem de nhan duoc loi khuyen, dinh huong va hoc hoi.
+              Kết nối với những người đi trước giàu kinh nghiệm để nhận được lời khuyên, định hướng và học hỏi.
             </Typography>
             <CustomButton
-              label="Kham pha Mentor"
+              label="Khám phá Mentor"
               variant="primary"
               size="lg"
               icon={<Ionicons name="arrow-forward" size={18} color="#FFF" />}
@@ -96,7 +96,7 @@ export default function HomeScreen() {
             align="center"
             style={{ fontWeight: '700', color: theme.colors.text.primary, marginBottom: theme.spacing.lg }}
           >
-            Tai sao chon UniShare?
+            Tại sao chọn UniShare?
           </Typography>
           {HIGHLIGHTS.map((item) => (
             <Card key={item.title} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.md }}>
@@ -133,12 +133,12 @@ export default function HomeScreen() {
               <View style={{ width: 1, backgroundColor: theme.colors.border.default, marginVertical: 4 }} />
               <View style={{ alignItems: 'center', flex: 1 }}>
                 <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>2K+</Typography>
-                <Typography variant="caption" color="secondary">Buoi hoc</Typography>
+                <Typography variant="caption" color="secondary">Buổi học</Typography>
               </View>
               <View style={{ width: 1, backgroundColor: theme.colors.border.default, marginVertical: 4 }} />
               <View style={{ alignItems: 'center', flex: 1 }}>
                 <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>4.8</Typography>
-                <Typography variant="caption" color="secondary">Danh gia</Typography>
+                <Typography variant="caption" color="secondary">Đánh giá</Typography>
               </View>
             </View>
           </Card>

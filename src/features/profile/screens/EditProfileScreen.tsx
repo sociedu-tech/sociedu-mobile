@@ -55,7 +55,7 @@ export default function EditProfileScreen() {
   const handlePickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert('Cap quyen', 'Ban can cap quyen truy cap anh de doi avatar.');
+      Alert.alert('Cấp quyền', 'Bạn cần cấp quyền truy cập ảnh để đổi avatar.');
       return;
     }
 
@@ -73,7 +73,7 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) {
-      Alert.alert('Loi', 'Ho va ten khong duoc de trong.');
+      Alert.alert('Lỗi', 'Họ và tên không được để trống.');
       return;
     }
 
@@ -86,11 +86,11 @@ export default function EditProfileScreen() {
         bio: bio.trim() || undefined,
       });
 
-      Alert.alert('Thanh cong', 'Da cap nhat ho so.', [
+      Alert.alert('Thành công', 'Đã cập nhật hồ sơ.', [
         { text: 'Xong', onPress: () => router.back() },
       ]);
     } catch (err: any) {
-      Alert.alert('Loi', err.message || 'Khong the luu ho so.');
+      Alert.alert('Lỗi', err.message || 'Không thể lưu hồ sơ.');
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export default function EditProfileScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerBox}>
-          <Typography variant="bodyMedium" color="secondary">Dang tai...</Typography>
+          <Typography variant="bodyMedium" color="secondary">Đang tải...</Typography>
         </View>
       </SafeAreaView>
     );
@@ -119,7 +119,7 @@ export default function EditProfileScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
-          <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chinh sua ho so</Typography>
+          <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chỉnh sửa hồ sơ</Typography>
           <View style={{ width: 24 }} />
         </View>
 
@@ -135,63 +135,63 @@ export default function EditProfileScreen() {
 
             <TouchableOpacity onPress={handlePickImage} style={styles.avatarChangeBtn}>
               <Typography variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                Thay doi anh
+                Thay đổi ảnh
               </Typography>
             </TouchableOpacity>
           </View>
 
           <View style={styles.formSection}>
-            <Typography variant="bodyMedium" style={styles.sectionHeader}>THONG TIN CO BAN</Typography>
+            <Typography variant="bodyMedium" style={styles.sectionHeader}>THÔNG TIN CƠ BẢN</Typography>
 
             <View style={styles.rowInputs}>
               <View style={{ flex: 1, paddingRight: 8 }}>
                 <TextInput
-                  label="HO VA TEN DEM"
-                  placeholder="VD: Nguyen Van"
+                  label="HỌ VÀ TÊN ĐỆM"
+                  placeholder="VD: Nguyễn Văn"
                   leftIcon="person-outline"
                   value={firstName}
                   onChangeText={setFirstName}
-                  helperText="Ten dem lot"
+                  helperText="Tên đệm lót"
                 />
               </View>
               <View style={{ flex: 1, paddingLeft: 8 }}>
                 <TextInput
-                  label="TEN"
+                  label="TÊN"
                   placeholder="VD: Nam"
                   leftIcon="person"
                   value={lastName}
                   onChangeText={setLastName}
-                  helperText="Ten chinh"
+                  helperText="Tên chính"
                 />
               </View>
             </View>
 
             <TextInput
-              label="CHUC DANH (HEADLINE)"
-              placeholder="VD: Sinh vien nam 4 / Ky su phan mem"
+              label="CHỨC DANH (HEADLINE)"
+              placeholder="VD: Sinh viên năm 4 / Kỹ sư phần mềm"
               leftIcon="briefcase-outline"
               value={headline}
               onChangeText={setHeadline}
-              helperText="Cong viec hoac chuyen mon hien tai"
+              helperText="Công việc hoặc chuyên môn hiện tại"
             />
 
             <TextInput
-              label="TIEU SU"
-              placeholder="Viet mot vai dong gioi thieu ban than..."
+              label="TIỂU SỬ"
+              placeholder="Viết một vài dòng giới thiệu bản thân..."
               leftIcon="document-text-outline"
               value={bio}
               onChangeText={setBio}
               multiline
               numberOfLines={4}
               isTextArea
-              helperText="Ke ngan gon ve kinh nghiem cua ban"
+              helperText="Kể ngắn gọn về kinh nghiệm của bạn"
             />
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
           <CustomButton
-            label="Luu thay doi"
+            label="Lưu thay đổi"
             size="lg"
             onPress={handleSave}
             loading={loading}

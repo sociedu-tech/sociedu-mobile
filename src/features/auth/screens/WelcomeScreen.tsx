@@ -21,16 +21,16 @@ export default function WelcomeScreen() {
         UniShare
       </Typography>
       <Typography variant="body" color="secondary" align="center" style={{ marginBottom: theme.spacing.xl }}>
-        Nen tang chia se tai lieu va ket noi Mentor tot nhat danh cho sinh vien.
+        Nền tảng chia sẻ tài liệu và kết nối Mentor tốt nhất dành cho sinh viên.
       </Typography>
 
       <CustomButton
-        label="Dang Nhat Ngay"
+        label="Đăng nhập ngay"
         onPress={() => router.push('/(auth)/login')}
         style={{ marginBottom: theme.spacing.md }}
       />
       <CustomButton
-        label="Tao Tai Khoan"
+        label="Tạo tài khoản"
         variant="outline"
         onPress={() => router.push('/(auth)/register')}
       />

@@ -19,7 +19,7 @@ import { theme } from '@/src/theme/theme';
 
 import { chatService } from '../services/chatService';
 
-type FilterTab = 'Tat ca' | 'Chua doc' | 'Lich hen';
+type FilterTab = 'Tất cả' | 'Chưa đọc' | 'Lịch hẹn';
 
 const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
@@ -38,7 +38,7 @@ export default function MessageListScreen() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<FilterTab>('Tat ca');
+  const [activeTab, setActiveTab] = useState<FilterTab>('Tất cả');
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -64,9 +64,9 @@ export default function MessageListScreen() {
           conversation.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesTab =
-          activeTab === 'Tat ca' ||
-          (activeTab === 'Chua doc' && conversation.unreadCount > 0) ||
-          (activeTab === 'Lich hen' && conversation.type === 'session');
+          activeTab === 'Tất cả' ||
+          (activeTab === 'Chưa đọc' && conversation.unreadCount > 0) ||
+          (activeTab === 'Lịch hẹn' && conversation.type === 'session');
 
         return matchesSearch && matchesTab;
       })
@@ -125,7 +125,7 @@ export default function MessageListScreen() {
           <View style={styles.sessionTag}>
             <Ionicons name="calendar-outline" size={12} color={theme.colors.info} />
             <Typography variant="caption" style={{ color: theme.colors.info, marginLeft: 4, fontWeight: '600' }}>
-              Phien hoc
+              Phiên học
             </Typography>
           </View>
         )}
@@ -139,13 +139,13 @@ export default function MessageListScreen() {
 
       <View style={styles.headerContainer}>
         <Typography variant="h2" weight="800" style={{ marginBottom: theme.spacing.md }}>
-          Tin nhan
+          Tin nhắn
         </Typography>
 
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={20} color={theme.colors.text.secondary} />
           <TextInput
-            placeholder="Tim kiem tin nhan..."
+            placeholder="Tìm kiếm tin nhắn..."
             style={styles.searchInput}
             value={searchTerm}
             onChangeText={setSearchTerm}
@@ -160,7 +160,7 @@ export default function MessageListScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        {(['Tat ca', 'Chua doc', 'Lich hen'] as FilterTab[]).map((tab) => (
+        {(['Tất cả', 'Chưa đọc', 'Lịch hẹn'] as FilterTab[]).map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -188,7 +188,7 @@ export default function MessageListScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="chatbubble-ellipses-outline" size={64} color={theme.colors.text.disabled} />
               <Typography variant="body" color="secondary" style={{ marginTop: 16 }}>
-                Khong tim thay cuoc hoi thoai nao
+                Không tìm thấy cuộc hội thoại nào
               </Typography>
             </View>
           }

@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -9,8 +11,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { TextInput } from '@/src/components/form/TextInput';
@@ -72,7 +72,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      setError('Vui long nhap day du email va mat khau.');
+      setError('Vui lòng nhập đầy đủ email và mật khẩu');
       return;
     }
 
@@ -83,7 +83,7 @@ export default function LoginScreen() {
       const data = await authService.login({ email: email.trim(), password });
       storeLogin(data);
     } catch (err: any) {
-      setError(err.message || 'Co loi xay ra, vui long thu lai.');
+      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ export default function LoginScreen() {
             </View>
             <Typography variant="h1" style={styles.brandName}>UniShare</Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              San tri thuc danh cho sinh vien
+              Sân tri thức dành cho sinh viên
             </Typography>
           </Animated.View>
 
@@ -119,15 +119,15 @@ export default function LoginScreen() {
           >
             <View style={styles.heading}>
               <Typography variant="h2" style={styles.welcomeTitle}>
-                Chao mung tro lai!
+                Chào mừng trở lại!
               </Typography>
               <Typography variant="body" color="secondary">
-                Vui long dang nhap de tiep tuc.
+                Vui lòng đăng nhập để tiếp tục.
               </Typography>
             </View>
 
             <TextInput
-              label="EMAIL SINH VIEN"
+              label="EMAIL SINH VIÊN"
               placeholder="name@university.edu.vn"
               leftIcon="mail-outline"
               value={email}
@@ -139,7 +139,7 @@ export default function LoginScreen() {
             />
 
             <TextInput
-              label="MAT KHAU"
+              label="MẬT KHẨU"
               placeholder="********"
               leftIcon="lock-closed-outline"
               rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -154,7 +154,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
               <Typography variant="label" style={styles.forgotText}>
-                Quen mat khau?
+                Quên mật khẩu?
               </Typography>
             </TouchableOpacity>
 
@@ -168,7 +168,7 @@ export default function LoginScreen() {
             )}
 
             <CustomButton
-              label="Dang nhap"
+              label="Đăng nhập"
               variant="primary"
               size="lg"
               loading={loading}
@@ -181,7 +181,7 @@ export default function LoginScreen() {
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
               <Typography variant="caption" style={styles.dividerText}>
-                HOAC TIEP TUC VOI
+                HOẶC TIẾP TỤC VỚI
               </Typography>
               <View style={styles.dividerLine} />
             </View>
@@ -199,12 +199,12 @@ export default function LoginScreen() {
 
             <View style={styles.registerRow}>
               <Typography variant="body" color="secondary">
-                Chua co tai khoan?
+                Chưa có tài khoản?
               </Typography>
               <Link href="/(auth)/register" asChild>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Typography variant="bodyMedium" weight="700" style={styles.registerLink}>
-                    {' '}Dang ky mien phi
+                    {' '}Đăng ký miễn phí
                   </Typography>
                 </TouchableOpacity>
               </Link>
