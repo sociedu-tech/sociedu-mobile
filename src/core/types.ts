@@ -47,6 +47,21 @@ export interface RefreshTokenRequestDTO {
   refreshToken: string;
 }
 
+export interface VerifyResetPasswordOtpRequestDTO {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyResetPasswordOtpResponseDTO {
+  resetToken: string;
+  expiresIn: number;
+}
+
+export interface CompleteResetPasswordRequestDTO {
+  resetToken: string;
+  newPassword: string;
+}
+
 // ── Mentor / Service ──────────────────────────────────────────
 export interface MentorProfileResponseDTO {
   userId: number;                 // Long
@@ -65,6 +80,7 @@ export interface ServicePackageVersionResponseDTO {
   duration: number;               // minutes
   deliveryType: string;
   isDefault: boolean;
+  curriculums?: CurriculumItemResponseDTO[];
 }
 
 export interface ServicePackageResponseDTO {
@@ -209,6 +225,15 @@ export interface MentorPackageVersion {
   duration: number;
   deliveryType: string;
   isDefault: boolean;
+  curriculums: CurriculumItem[];
+}
+
+export interface CurriculumItem {
+  id: string;
+  title: string;
+  description: string;
+  orderIndex: number;
+  duration: number;
 }
 
 export interface MentorInfo {

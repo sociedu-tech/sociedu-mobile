@@ -1,4 +1,6 @@
 import {
+  CurriculumItem,
+  CurriculumItemResponseDTO,
   MentorPackage,
   MentorPackageVersion,
   MentorProfileResponseDTO,
@@ -8,23 +10,34 @@ import {
   VerificationStatus,
 } from '@/src/core/types';
 
-function toPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageVersion {
+function toCurriculumItem(dto: CurriculumItemResponseDTO): CurriculumItem {
+  return {
+    id: String(dto.id),
+    title: dto.title,
+    description: dto.description ?? '',
+    orderIndex: dto.orderIndex,
+    duration: dto.duration ?? 0,
+  };
+}
+
+export function toMentorPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageVersion {
   return {
     id: String(dto.id),
     price: Number(dto.price),
     duration: dto.duration,
     deliveryType: dto.deliveryType ?? 'ONLINE',
     isDefault: dto.isDefault ?? false,
+    curriculums: (dto.curriculums ?? []).map(toCurriculumItem),
   };
 }
 
-function toPackage(dto: ServicePackageResponseDTO): MentorPackage {
+export function toMentorPackage(dto: ServicePackageResponseDTO): MentorPackage {
   return {
     id: String(dto.id),
     title: dto.name,
     description: dto.description ?? '',
     isActive: dto.isActive ?? true,
-    versions: (dto.versions ?? []).map(toPackageVersion),
+    versions: (dto.versions ?? []).map(toMentorPackageVersion),
   };
 }
 
@@ -43,7 +56,7 @@ export function toMentorUser(dto: MentorProfileResponseDTO): User {
     ? dto.expertise.split(',').map((s) => s.trim()).filter(Boolean)
     : [];
 
-  const packages = (dto.packages ?? []).map(toPackage);
+  const packages = (dto.packages ?? []).map(toMentorPackage);
   const allPrices = packages.flatMap((pkg) => pkg.versions.map((ver) => ver.price)).filter((price) => price > 0);
   const basePrice = allPrices.length > 0 ? Math.min(...allPrices) : Number(dto.basePrice ?? 0);
 

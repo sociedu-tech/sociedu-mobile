@@ -21,6 +21,8 @@ import { theme } from '@/src/theme/theme';
 import { MentorCard } from '../components/MentorCard';
 import { mentorService } from '../services/mentorService';
 
+const ALL_CATEGORY = 'Tất cả';
+
 export default function MentorListScreen() {
   const router = useRouter();
   const [mentors, setMentors] = useState<User[]>([]);
@@ -28,12 +30,12 @@ export default function MentorListScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Tat ca');
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
 
   const expertiseTags = useMemo(() => {
     const tags = new Set<string>();
     mentors.forEach((mentor) => mentor.mentorInfo?.expertise?.forEach((item) => tags.add(item)));
-    return ['Tat ca', ...Array.from(tags)];
+    return [ALL_CATEGORY, ...Array.from(tags)];
   }, [mentors]);
 
   const fetchMentors = useCallback(async (isRefresh = false) => {
@@ -72,7 +74,7 @@ export default function MentorListScreen() {
       mentor.mentorInfo?.expertise?.some((item) => item.toLowerCase().includes(term));
 
     const matchesCategory =
-      selectedCategory === 'Tất cả' ||
+      selectedCategory === ALL_CATEGORY ||
       mentor.mentorInfo?.expertise?.some((item) =>
         item.toLowerCase().includes(selectedCategory.toLowerCase())
       );
@@ -108,7 +110,10 @@ export default function MentorListScreen() {
             </Typography>{' '}
             hàng đầu
           </Typography>
-          <Typography variant="body" style={{ color: 'rgba(255,255,255,0.6)', marginTop: theme.spacing.sm }}>
+          <Typography
+            variant="body"
+            style={{ color: 'rgba(255,255,255,0.6)', marginTop: theme.spacing.sm }}
+          >
             Nhận tư vấn 1-1 để bứt phá trong học tập và sự nghiệp.
           </Typography>
           <View
@@ -126,7 +131,13 @@ export default function MentorListScreen() {
           >
             <Ionicons name="search" size={18} color={theme.colors.text.disabled} />
             <TextInput
-              style={{ flex: 1, fontSize: 15, color: '#FFF', padding: 0, marginLeft: theme.spacing.sm }}
+              style={{
+                flex: 1,
+                fontSize: 15,
+                color: '#FFF',
+                padding: 0,
+                marginLeft: theme.spacing.sm,
+              }}
               placeholder="Tìm theo tên, chuyên môn..."
               placeholderTextColor={theme.colors.text.disabled}
               value={searchTerm}
@@ -134,11 +145,14 @@ export default function MentorListScreen() {
               autoCapitalize="none"
               returnKeyType="search"
             />
-            {searchTerm.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchTerm('')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            {searchTerm.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => setSearchTerm('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <Ionicons name="close-circle" size={18} color={theme.colors.text.disabled} />
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         </View>
 
@@ -192,7 +206,10 @@ export default function MentorListScreen() {
         <FlatList
           data={filteredMentors}
           keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingBottom: theme.spacing.xl }}
+          contentContainerStyle={{
+            paddingHorizontal: theme.spacing.lg,
+            paddingBottom: theme.spacing.xl,
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -211,7 +228,11 @@ export default function MentorListScreen() {
             />
           }
           renderItem={({ item, index }) => (
-            <MentorCard mentor={item} index={index} onPress={() => router.push(`/profile/${item.id}` as any)} />
+            <MentorCard
+              mentor={item}
+              index={index}
+              onPress={() => router.push(`/mentor/${item.id}` as any)}
+            />
           )}
         />
       </Section>

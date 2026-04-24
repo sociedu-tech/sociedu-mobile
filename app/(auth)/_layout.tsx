@@ -2,16 +2,8 @@ import { Redirect, Stack } from 'expo-router';
 
 import { useAuthStore } from '@/src/features/auth/store/authStore';
 
-/**
- * Auth Layout
- * ─────────────────────────────────────────────
- * Web equivalent: LoginPage / RegisterPage được render tự do,
- *   nhưng redirect về "/" nếu đã authenticated.
- *
- * Expo Router: nếu đã login → <Redirect> về (tabs).
- */
 export default function AuthLayout() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (isAuthenticated) {
     return <Redirect href="/(tabs)" />;
@@ -21,7 +13,10 @@ export default function AuthLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="welcome" />
       <Stack.Screen name="login" />
-      <Stack.Screen name="register" options={{ headerShown: true, title: 'Đăng Ký' }} />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="otp" />
+      <Stack.Screen name="reset-password" />
+      <Stack.Screen name="register" options={{ headerShown: true, title: 'Đăng ký' }} />
     </Stack>
   );
 }

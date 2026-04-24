@@ -1,126 +1,104 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
-import { orderService } from '@/src/core/services/orderService';
-import { MentorPackageVersion, User } from '@/src/core/types';
+import { User } from '@/src/core/types';
 import { theme } from '@/src/theme/theme';
 
 import { mentorService } from '../services/mentorService';
 
-WebBrowser.maybeCompleteAuthSession();
-
 export default function MentorDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
 
   const [mentor, setMentor] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [selectedVer, setSelectedVer] = useState<MentorPackageVersion | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     const loadMentor = async () => {
       setLoading(true);
       setError(null);
 
       try {
         if (!id) {
-          throw new Error('Missing Mentor ID');
+          throw new Error('Thiếu mã mentor.');
         }
 
         const data = await mentorService.getProfile(id);
-        setMentor(data);
-
-        const firstPkg = data.mentorInfo?.packages?.[0];
-        if (firstPkg && firstPkg.versions?.length > 0) {
-          setSelectedVer(firstPkg.versions[0]);
+        if (active) {
+          setMentor(data);
         }
       } catch (err: any) {
-        setError(err.message || 'Không thể tải chi tiết mentor.');
+        if (active) {
+          setError(err.message || 'Không thể tải chi tiết mentor.');
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
     loadMentor();
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
-  const handleCheckout = async () => {
-    if (!selectedVer) {
-      Alert.alert('Lỗi', 'Vui lòng chọn một gói dịch vụ.');
-      return;
-    }
-
-    setCheckoutLoading(true);
-    try {
-      const order = await orderService.checkout(Number(selectedVer.id));
-      if (!order.paymentUrl) {
-        throw new Error('Không lấy được URL thanh toán.');
-      }
-
-      await WebBrowser.openBrowserAsync(order.paymentUrl);
-
-      const finalOrder = await orderService.pollUntilPaid(order.id, 5);
-      if (finalOrder.status === 'paid') {
-        Alert.alert('Thành công', 'Thanh toán thành công. Lịch hẹn đã được tạo.', [
-          { text: 'Xem lịch hẹn', onPress: () => router.replace('/(tabs)/bookings') },
-        ]);
-      } else {
-        Alert.alert('Chờ xác nhận', 'Vui lòng kiểm tra tab Lịch hẹn sau ít phút.', [
-          { text: 'Đóng', onPress: () => router.replace('/(tabs)/bookings') },
-        ]);
-      }
-    } catch (err: any) {
-      Alert.alert('Lỗi thanh toán', err.message || 'Đã có lỗi xảy ra.');
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
   if (loading) {
-    return <LoadingState message="Đang tải dữ liệu Mentor..." />;
+    return <LoadingState message="Đang tải dữ liệu mentor..." />;
   }
 
   if (error || !mentor) {
-    return <ErrorState error={error || 'Profile not found'} onRetry={() => router.replace(`/mentor/${id}` as any)} />;
+    return (
+      <ErrorState
+        error={error || 'Không tìm thấy hồ sơ mentor.'}
+        onRetry={() => router.replace(`/mentor/${id}` as any)}
+      />
+    );
   }
 
   const info = mentor.mentorInfo;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chi tiết</Typography>
+        <Typography variant="bodyMedium" style={styles.headerTitle}>
+          Chi tiết mentor
+        </Typography>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.profileHeader}>
           <View style={styles.avatarPlaceholder} />
-          <Typography variant="h2" style={styles.name}>{mentor.name}</Typography>
+          <Typography variant="h2" style={styles.name}>
+            {mentor.name}
+          </Typography>
           <Typography variant="body" color="secondary" style={styles.headline}>
             {info?.headline || 'Chuyên gia'}
           </Typography>
-          {info?.verificationStatus === 'verified' && (
+          {info?.verificationStatus === 'verified' ? (
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#FFF" />
-              <Typography variant="caption" style={{ color: '#FFF', fontWeight: '700', marginLeft: 4 }}>
+              <Typography variant="caption" style={styles.verifiedText}>
                 Đã xác thực
               </Typography>
             </View>
-          )}
+          ) : null}
         </View>
 
         <Typography variant="body" style={styles.bio}>
@@ -129,63 +107,57 @@ export default function MentorDetailScreen() {
 
         <View style={styles.divider} />
 
-        <Typography variant="h3" style={{ marginBottom: 12 }}>Các gói dịch vụ</Typography>
+        <Typography variant="h3" style={styles.sectionTitle}>
+          Các gói dịch vụ
+        </Typography>
 
-        {info?.packages?.length === 0 ? (
-          <Typography variant="bodyMedium" color="secondary">Mentor chưa cung cấp gói dịch vụ nào.</Typography>
-        ) : (
-          info?.packages?.map((pkg) => (
-            <View key={pkg.id} style={styles.packageCard}>
-              <Typography variant="bodyMedium" style={styles.pkgTitle}>{pkg.title}</Typography>
-              <Typography variant="caption" color="secondary" style={{ marginBottom: 12 }}>
-                {pkg.description}
-              </Typography>
+        {info?.packages?.length ? (
+          info.packages.map((pkg) => {
+            const firstVersion = pkg.versions.find((version) => version.isDefault) ?? pkg.versions[0];
+            return (
+              <View key={pkg.id} style={styles.packageCard}>
+                <Typography variant="bodyMedium" style={styles.pkgTitle}>
+                  {pkg.title}
+                </Typography>
+                <Typography variant="caption" color="secondary" style={styles.pkgDesc}>
+                  {pkg.description || 'Chưa có mô tả cho gói dịch vụ này.'}
+                </Typography>
 
-              {pkg.versions.map((ver) => {
-                const isSelected = selectedVer?.id === ver.id;
-                return (
-                  <TouchableOpacity
-                    key={ver.id}
-                    style={[styles.versionItem, isSelected && styles.versionItemSelected]}
-                    onPress={() => setSelectedVer(ver)}
-                  >
-                    <View style={styles.radio}>
-                      {isSelected && <View style={styles.radioInner} />}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
-                        {ver.duration} phút
-                      </Typography>
+                {firstVersion ? (
+                  <View style={styles.pkgMeta}>
+                    <View>
                       <Typography variant="caption" color="secondary">
-                        {ver.deliveryType}
+                        Giá từ
+                      </Typography>
+                      <Typography variant="h3" style={styles.pkgPrice}>
+                        ${firstVersion.price}
                       </Typography>
                     </View>
-                    <Typography variant="bodyMedium" style={{ fontWeight: '800', color: theme.colors.primary }}>
-                      ${ver.price}
-                    </Typography>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ))
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Typography variant="caption" color="secondary">
+                        Thời lượng
+                      </Typography>
+                      <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
+                        {firstVersion.duration} phút
+                      </Typography>
+                    </View>
+                  </View>
+                ) : null}
+
+                <CustomButton
+                  label="Xem chi tiết và đặt lịch"
+                  onPress={() => router.push(`/package/${pkg.id}?mentorId=${mentor.id}` as any)}
+                  style={{ marginTop: 16 }}
+                />
+              </View>
+            );
+          })
+        ) : (
+          <Typography variant="bodyMedium" color="secondary">
+            Mentor chưa cung cấp gói dịch vụ nào.
+          </Typography>
         )}
       </ScrollView>
-
-      {selectedVer && (
-        <View style={styles.footerWrap}>
-          <View style={{ flex: 1 }}>
-            <Typography variant="caption" color="secondary">Tổng thanh toán</Typography>
-            <Typography variant="h2" style={{ color: theme.colors.primary }}>${selectedVer.price}</Typography>
-          </View>
-          <CustomButton
-            label="Thanh toán ngay"
-            onPress={handleCheckout}
-            loading={checkoutLoading}
-            disabled={checkoutLoading}
-            style={{ flex: 1.5 }}
-          />
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -207,6 +179,9 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 8,
     marginLeft: -8,
+  },
+  headerTitle: {
+    fontWeight: '700',
   },
   scroll: {
     padding: 20,
@@ -239,6 +214,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  verifiedText: {
+    color: '#FFF',
+    fontWeight: '700',
+    marginLeft: 4,
+  },
   bio: {
     lineHeight: 22,
     color: theme.colors.text.secondary,
@@ -247,6 +227,10 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: theme.colors.border.default,
     marginVertical: 24,
+  },
+  sectionTitle: {
+    marginBottom: 12,
+    fontWeight: '700',
   },
   packageCard: {
     backgroundColor: theme.colors.surface,
@@ -260,41 +244,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 4,
   },
-  versionItem: {
+  pkgDesc: {
+    marginBottom: 12,
+  },
+  pkgMeta: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    marginBottom: 8,
-  },
-  versionItemSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: `${theme.colors.primaryLight}20`,
-  },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: theme.colors.primary,
-  },
-  footerWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
-    backgroundColor: theme.colors.surface,
+    paddingTop: 12,
+  },
+  pkgPrice: {
+    color: theme.colors.primary,
+    fontWeight: '800',
   },
 });

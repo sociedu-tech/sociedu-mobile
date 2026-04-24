@@ -3,7 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api, STORAGE_KEYS, tokenStorage, unwrap } from '@/src/core/api';
 import { USE_MOCK } from '@/src/core/config';
 import { mockAuthApi } from '@/src/core/mocks/api/mockAuthApi';
-import { AuthResponseDTO, LoginRequestDTO, RegisterRequestDTO } from '@/src/core/types';
+import {
+  AuthResponseDTO,
+  CompleteResetPasswordRequestDTO,
+  LoginRequestDTO,
+  RegisterRequestDTO,
+  VerifyResetPasswordOtpRequestDTO,
+  VerifyResetPasswordOtpResponseDTO,
+} from '@/src/core/types';
 
 import { AuthUser, toAuthUser } from '../adapters/authAdapter';
 
@@ -35,7 +42,7 @@ export const authService = {
     }
 
     const res = await api.post(`${BASE}/register`, data);
-    return { message: res.data.message ?? 'Dang ky thanh cong. Vui long kiem tra email.' };
+    return { message: res.data.message ?? 'Đăng ký thành công. Vui lòng kiểm tra email.' };
   },
 
   logout: async (): Promise<void> => {
@@ -62,12 +69,42 @@ export const authService = {
     return unwrap(res);
   },
 
-  forgotPassword: async (email: string): Promise<void> => {
-    await api.post(`${BASE}/forgot-password`, { email });
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    if (USE_MOCK) {
+      return mockAuthApi.forgotPassword(email);
+    }
+
+    const res = await api.post(`${BASE}/forgot-password`, { email });
+    return { message: res.data.message ?? 'Đã gửi mã OTP. Vui lòng kiểm tra email.' };
+  },
+
+  verifyResetPasswordOtp: async (
+    payload: VerifyResetPasswordOtpRequestDTO
+  ): Promise<VerifyResetPasswordOtpResponseDTO> => {
+    if (USE_MOCK) {
+      return mockAuthApi.verifyResetPasswordOtp(payload);
+    }
+
+    const res = await api.post<{ data: VerifyResetPasswordOtpResponseDTO }>(
+      `${BASE}/forgot-password/verify-otp`,
+      payload
+    );
+    return unwrap(res);
+  },
+
+  completeResetPassword: async (
+    payload: CompleteResetPasswordRequestDTO
+  ): Promise<{ message: string }> => {
+    if (USE_MOCK) {
+      return mockAuthApi.completeResetPassword(payload);
+    }
+
+    const res = await api.post(`${BASE}/reset-password`, payload);
+    return { message: res.data.message ?? 'Đặt lại mật khẩu thành công.' };
   },
 
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
-    await api.post(`${BASE}/reset-password`, { token, newPassword });
+    await authService.completeResetPassword({ resetToken: token, newPassword });
   },
 
   verifyEmail: async (token: string): Promise<void> => {

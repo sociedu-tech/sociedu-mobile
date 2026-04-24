@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -35,13 +35,14 @@ const C = {
 };
 
 export default function LoginScreen() {
+  const router = useRouter();
+  const storeLogin = useAuthStore((state) => state.login);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const storeLogin = useAuthStore((s) => s.login);
 
   const logoScale = useRef(new Animated.Value(0)).current;
   const formOpacity = useRef(new Animated.Value(0)).current;
@@ -72,7 +73,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      setError('Vui lòng nhập đầy đủ email và mật khẩu');
+      setError('Vui lòng nhập đầy đủ email và mật khẩu.');
       return;
     }
 
@@ -80,8 +81,8 @@ export default function LoginScreen() {
     setError(null);
 
     try {
-      const data = await authService.login({ email: email.trim(), password });
-      storeLogin(data);
+      const user = await authService.login({ email: email.trim(), password });
+      storeLogin(user);
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại.');
     } finally {
@@ -105,9 +106,11 @@ export default function LoginScreen() {
             <View style={styles.logoBox}>
               <Ionicons name="code-slash-outline" size={28} color={C.dark} />
             </View>
-            <Typography variant="h1" style={styles.brandName}>UniShare</Typography>
+            <Typography variant="h1" style={styles.brandName}>
+              UniShare
+            </Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              Sân tri thức dành cho sinh viên
+              Sàn tri thức dành cho sinh viên
             </Typography>
           </Animated.View>
 
@@ -143,7 +146,7 @@ export default function LoginScreen() {
               placeholder="********"
               leftIcon="lock-closed-outline"
               rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              onRightIconPress={() => setShowPassword(!showPassword)}
+              onRightIconPress={() => setShowPassword((prev) => !prev)}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -152,20 +155,24 @@ export default function LoginScreen() {
               onSubmitEditing={handleLogin}
             />
 
-            <TouchableOpacity style={styles.forgotBtn} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.forgotBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push('/(auth)/forgot-password')}
+            >
               <Typography variant="label" style={styles.forgotText}>
                 Quên mật khẩu?
               </Typography>
             </TouchableOpacity>
 
-            {error && (
+            {error ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={18} color={C.error} />
                 <Typography variant="label" style={styles.errorText}>
                   {error}
                 </Typography>
               </View>
-            )}
+            ) : null}
 
             <CustomButton
               label="Đăng nhập"
@@ -189,11 +196,15 @@ export default function LoginScreen() {
             <View style={styles.socialRow}>
               <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
                 <Ionicons name="logo-google" size={20} color={C.google} />
-                <Typography variant="label" style={styles.socialBtnText}>Google</Typography>
+                <Typography variant="label" style={styles.socialBtnText}>
+                  Google
+                </Typography>
               </TouchableOpacity>
               <TouchableOpacity style={styles.socialBtn} activeOpacity={0.7}>
                 <Ionicons name="logo-github" size={20} color={C.dark} />
-                <Typography variant="label" style={styles.socialBtnText}>GitHub</Typography>
+                <Typography variant="label" style={styles.socialBtnText}>
+                  GitHub
+                </Typography>
               </TouchableOpacity>
             </View>
 
@@ -204,7 +215,8 @@ export default function LoginScreen() {
               <Link href="/(auth)/register" asChild>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Typography variant="bodyMedium" weight="700" style={styles.registerLink}>
-                    {' '}Đăng ký miễn phí
+                    {' '}
+                    Đăng ký miễn phí
                   </Typography>
                 </TouchableOpacity>
               </Link>

@@ -2,96 +2,189 @@ import { MentorProfileResponseDTO, UserFullProfileResponseDTO } from '../../type
 
 export const mockMentorListDTO: MentorProfileResponseDTO[] = [
   {
-    userId: 1, // Long -> ID mentor 1 (tương ứng với User ID UUID trong UserFullProfile)
-    headline: "Senior Software Engineer @ Google",
-    expertise: "React Native, Cloud, System Design",
-    basePrice: 50.0,
+    userId: 1,
+    headline: 'Senior Software Engineer @ Google',
+    expertise: 'React Native, Cloud, System Design',
+    basePrice: 50,
     ratingAvg: 4.9,
     sessionsCompleted: 142,
-    verificationStatus: "VERIFIED",
+    verificationStatus: 'VERIFIED',
     packages: [
       {
         id: 101,
         mentorId: 1,
-        name: "Mock Interview & Tư vấn CV",
-        description: "Review logic kiến trúc và Mock Phỏng vấn thử",
+        name: 'Mock Interview va Tu van CV',
+        description: 'Review logic kien truc va mock phong van thu.',
         isActive: true,
         versions: [
-          { id: 1001, price: 50, duration: 60, deliveryType: "ONLINE", isDefault: true },
-          { id: 1002, price: 80, duration: 120, deliveryType: "ONLINE", isDefault: false }
-        ]
-      }
-    ]
+          {
+            id: 1001,
+            price: 50,
+            duration: 60,
+            deliveryType: 'ONLINE',
+            isDefault: true,
+            curriculums: [
+              {
+                id: 5001,
+                packageVersionId: 1001,
+                title: 'Khai van muc tieu',
+                description: 'Lam ro muc tieu phong van va CV hien tai.',
+                orderIndex: 1,
+                duration: 20,
+              },
+              {
+                id: 5002,
+                packageVersionId: 1001,
+                title: 'Mock interview',
+                description: 'Phong van thu va feedback chi tiet.',
+                orderIndex: 2,
+                duration: 40,
+              },
+            ],
+          },
+          {
+            id: 1002,
+            price: 80,
+            duration: 120,
+            deliveryType: 'ONLINE',
+            isDefault: false,
+            curriculums: [
+              {
+                id: 5003,
+                packageVersionId: 1002,
+                title: 'Review CV chuyen sau',
+                description: 'Tinh chinh CV theo vi tri muc tieu.',
+                orderIndex: 1,
+                duration: 30,
+              },
+              {
+                id: 5004,
+                packageVersionId: 1002,
+                title: 'Mock interview chuyen sau',
+                description: 'Mo phong phong van va phan tich diem yeu.',
+                orderIndex: 2,
+                duration: 60,
+              },
+              {
+                id: 5005,
+                packageVersionId: 1002,
+                title: 'Ke hoach follow-up',
+                description: 'De xuat lo trinh cai thien sau buoi hoc.',
+                orderIndex: 3,
+                duration: 30,
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
     userId: 2,
-    headline: "Marketing Manager & Content Creator",
-    expertise: "Digital Marketing, SEO, Copywriting",
-    basePrice: 35.0,
+    headline: 'Marketing Manager & Content Creator',
+    expertise: 'Digital Marketing, SEO, Copywriting',
+    basePrice: 35,
     ratingAvg: 4.7,
     sessionsCompleted: 89,
-    verificationStatus: "VERIFIED",
+    verificationStatus: 'VERIFIED',
     packages: [
       {
         id: 201,
         mentorId: 2,
-        name: "Lộ trình Content Từ Zero đến Hero",
-        description: "Học cách viết lách có tư duy",
+        name: 'Lo trinh Content tu Zero den Hero',
+        description: 'Hoc cach viet lach co tu duy.',
         isActive: true,
         versions: [
-          { id: 2001, price: 35, duration: 60, deliveryType: "ONLINE", isDefault: true }
-        ]
-      }
-    ]
-  }
+          {
+            id: 2001,
+            price: 35,
+            duration: 60,
+            deliveryType: 'ONLINE',
+            isDefault: true,
+            curriculums: [
+              {
+                id: 6001,
+                packageVersionId: 2001,
+                title: 'Nen tang content',
+                description: 'Xac dinh audience va thong diep.',
+                orderIndex: 1,
+                duration: 30,
+              },
+              {
+                id: 6002,
+                packageVersionId: 2001,
+                title: 'Viet bai thuc chien',
+                description: 'Thuc hanh mot bai viet va review truc tiep.',
+                orderIndex: 2,
+                duration: 30,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export const mockUserProfilesDTO: Record<string, UserFullProfileResponseDTO> = {
-  "1": {
+  '1': {
     profile: {
-      userId: "1",
-      firstName: "Hoàng Minh",
-      lastName: "Trần",
-      headline: "Senior Software Engineer @ Google",
-      avatarFileId: "c2003c2a-da77-4b15-9988-121f00a44abc", // Dummy avatar
-      bio: "Mình có hơn 8 năm làm việc tại môi trường SI Silicon, sẵn sàng chia sẻ kinh nghiệm.",
-      location: "San Francisco, USA",
-      createdAt: "2024-01-01T12:00:00Z",
-      updatedAt: "2024-01-02T12:00:00Z"
+      userId: '1',
+      firstName: 'Hoang Minh',
+      lastName: 'Tran',
+      headline: 'Senior Software Engineer @ Google',
+      avatarFileId: 'c2003c2a-da77-4b15-9988-121f00a44abc',
+      bio: 'Minh co hon 8 nam lam viec tai moi truong SI Silicon, san sang chia se kinh nghiem.',
+      location: 'San Francisco, USA',
+      createdAt: '2024-01-01T12:00:00Z',
+      updatedAt: '2024-01-02T12:00:00Z',
     },
     educations: [
-      { id: 1, institution: "Đại học Bách Khoa", degree: "Kỹ sư", fieldOfStudy: "CNTT", startYear: 2012, endYear: 2016 }
+      {
+        id: 1,
+        institution: 'Dai hoc Bach Khoa',
+        degree: 'Ky su',
+        fieldOfStudy: 'CNTT',
+        startYear: 2012,
+        endYear: 2016,
+      },
     ],
     experiences: [],
     languages: [],
-    certificates: []
+    certificates: [],
   },
-  "2": {
+  '2': {
     profile: {
-      userId: "2",
-      firstName: "Hồng Nhung",
-      lastName: "Phạm",
-      headline: "Marketing Manager",
+      userId: '2',
+      firstName: 'Hong Nhung',
+      lastName: 'Pham',
+      headline: 'Marketing Manager',
       avatarFileId: null,
       bio: null,
-      location: "Hà Nội, Việt Nam",
-      createdAt: "2024-01-01T12:00:00Z",
-      updatedAt: "2024-01-02T12:00:00Z"
+      location: 'Ha Noi, Viet Nam',
+      createdAt: '2024-01-01T12:00:00Z',
+      updatedAt: '2024-01-02T12:00:00Z',
     },
-    educations: [], experiences: [], languages: [], certificates: []
+    educations: [],
+    experiences: [],
+    languages: [],
+    certificates: [],
   },
-  "me": {
+  me: {
     profile: {
-      userId: "e34a621c-a90b-4bd2-bea4-23be5185ea93",
-      firstName: "Nguyễn Văn",
-      lastName: "Học Viên",
-      headline: "Sinh viên ĐH Quốc Gia",
+      userId: 'e34a621c-a90b-4bd2-bea4-23be5185ea93',
+      firstName: 'Nguyen Van',
+      lastName: 'Hoc Vien',
+      headline: 'Sinh vien DH Quoc Gia',
       avatarFileId: null,
-      bio: "Đang học ngành Khoa học MT",
-      location: "Hồ Chí Minh",
-      createdAt: "2024-03-01T12:00:00Z",
-      updatedAt: "2024-03-01T12:00:00Z"
+      bio: 'Dang hoc nganh Khoa hoc May tinh.',
+      location: 'Ho Chi Minh',
+      createdAt: '2024-03-01T12:00:00Z',
+      updatedAt: '2024-03-01T12:00:00Z',
     },
-    educations: [], experiences: [], languages: [], certificates: []
-  }
+    educations: [],
+    experiences: [],
+    languages: [],
+    certificates: [],
+  },
 };

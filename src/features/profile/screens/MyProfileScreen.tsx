@@ -23,9 +23,9 @@ import { userService } from '../services/userService';
 
 export default function MyProfileScreen() {
   const router = useRouter();
-  const authUser = useAuthStore((s) => s.user);
-  const userRole = useAuthStore((s) => s.userRole);
-  const logout = useAuthStore((s) => s.logout);
+  const authUser = useAuthStore((state) => state.user);
+  const userRole = useAuthStore((state) => state.userRole);
+  const logout = useAuthStore((state) => state.logout);
 
   const [fullUser, setFullUser] = useState<User | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +62,7 @@ export default function MyProfileScreen() {
     ]);
   };
 
-  const displayName = fullUser?.name || authUser?.fullName || 'Người Dùng';
+  const displayName = fullUser?.name || authUser?.fullName || 'Người dùng';
   const displayEmail = fullUser?.email || authUser?.email || '';
   const avatarUri = fullUser?.avatar || null;
 
@@ -85,7 +85,9 @@ export default function MyProfileScreen() {
           alignItems: 'center',
         }}
       >
-        <Typography variant="h3" style={{ fontWeight: '800' }}>Hồ sơ cá nhân</Typography>
+        <Typography variant="h3" style={{ fontWeight: '800' }}>
+          Hồ sơ cá nhân
+        </Typography>
       </View>
 
       <ScrollView
@@ -141,7 +143,11 @@ export default function MyProfileScreen() {
           >
             {displayName}
           </Typography>
-          <Typography variant="body" color="secondary" style={{ textAlign: 'center', marginBottom: 20 }}>
+          <Typography
+            variant="body"
+            color="secondary"
+            style={{ textAlign: 'center', marginBottom: 20 }}
+          >
             {displayEmail}
           </Typography>
 
@@ -159,7 +165,10 @@ export default function MyProfileScreen() {
             activeOpacity={0.7}
           >
             <Ionicons name="pencil" size={14} color={theme.colors.primary} />
-            <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.primary, fontSize: 14 }}>
+            <Typography
+              variant="bodyMedium"
+              style={{ fontWeight: '700', color: theme.colors.primary, fontSize: 14 }}
+            >
               Chỉnh sửa hồ sơ
             </Typography>
           </TouchableOpacity>
@@ -183,12 +192,20 @@ export default function MyProfileScreen() {
             </Typography>
             <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
               {userRole === 'mentor' && (
-                <ListItem
-                  title="Mentor Dashboard"
-                  subtitle="Quản lý lịch hẹn, gói dịch vụ"
-                  iconName="briefcase-outline"
-                  onPress={() => router.push('/mentor/dashboard' as any)}
-                />
+                <>
+                  <ListItem
+                    title="Mentor Dashboard"
+                    subtitle="Quản lý lịch hẹn, gói dịch vụ"
+                    iconName="briefcase-outline"
+                    onPress={() => router.push('/mentor/dashboard' as any)}
+                  />
+                  <ListItem
+                    title="Gói dịch vụ"
+                    subtitle="Tạo mới và cập nhật gói mentoring"
+                    iconName="cube-outline"
+                    onPress={() => router.push('/mentor/services' as any)}
+                  />
+                </>
               )}
               {userRole === 'admin' && (
                 <ListItem
@@ -261,7 +278,12 @@ export default function MyProfileScreen() {
           </TouchableOpacity>
         </Section>
 
-        <Typography variant="caption" color="secondary" align="center" style={{ opacity: 0.5, marginTop: theme.spacing.xl }}>
+        <Typography
+          variant="caption"
+          color="secondary"
+          align="center"
+          style={{ opacity: 0.5, marginTop: theme.spacing.xl }}
+        >
           Phiên bản 1.0.0
         </Typography>
       </ScrollView>
