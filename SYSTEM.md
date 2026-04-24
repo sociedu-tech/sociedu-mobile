@@ -9,7 +9,6 @@ Ung dung mobile nay phuc vu nen tang ket noi nguoi hoc voi mentor. Tren mobile, 
 - dang ky va dang nhap
 - kham pha mentor
 - xem profile cong khai
-- xem marketplace placeholder
 - xem bookings va session
 - nhan tin
 - quan ly profile cua minh
@@ -44,7 +43,6 @@ Nguon role hien tai di qua `authStore` va `ProtectedRoute`.
 | `booking` | List, detail, store, service, adapter, components |
 | `profile` | My profile, public profile, edit profile, service, adapter |
 | `message` | Message list, detail, mock-first chat service |
-| `marketplace` | Placeholder screens, chua co service/store rieng |
 | `admin` | Skeleton protected screen |
 
 ## 4. Luong he thong quan trong
@@ -72,7 +70,7 @@ Nguon role hien tai di qua `authStore` va `ProtectedRoute`.
 - `booking` doi hanh vi giua buyer va mentor dua tren `userRole`
 - `profile` load `getMe()`, cho phep logout, edit, vao dashboard theo role
 - `message` hien tai dung mock data va local in-memory updates
-- `marketplace` va `admin` hien la placeholder/skeleton, nhung da o dung kien truc
+- `admin` hien la skeleton, nhung da o dung kien truc
 
 ## 5. Kien truc thu muc thuc te
 
@@ -101,7 +99,6 @@ src/
     auth/
     booking/
     home/
-    marketplace/
     mentor/
     message/
     profile/
@@ -123,7 +120,6 @@ src/
 - `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
 - `USE_MOCK` hien dang `false`
 - Chat van mock-first
-- Marketplace van la placeholder
 - Admin dashboard van la skeleton
 - Lint script hien tai la `eslint .`
 

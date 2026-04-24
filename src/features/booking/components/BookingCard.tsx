@@ -18,7 +18,7 @@ export function BookingCard({ booking, onPress }: BookingCardProps) {
         <View style={styles.titleRow}>
           <Ionicons name="calendar" size={18} color={theme.colors.primary} />
           <Typography variant="bodyMedium" style={styles.title}>
-            Ma lich hen: {booking.id.slice(0, 8).toUpperCase()}
+            Mã lịch hẹn: {booking.id.slice(0, 8).toUpperCase()}
           </Typography>
         </View>
         <View style={[styles.statusBadge, styles[`status_${booking.status}` as keyof typeof styles] as any]}>
@@ -30,10 +30,10 @@ export function BookingCard({ booking, onPress }: BookingCardProps) {
 
       <View style={styles.cardBody}>
         <Typography variant="body" color="secondary">
-          {booking.sessions.length} buoi hoc
+          {booking.sessions.length} buổi học
         </Typography>
         <Typography variant="caption" color="secondary" style={styles.date}>
-          Tao ngay: {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
+          Tạo ngày: {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
         </Typography>
       </View>
     </TouchableOpacity>

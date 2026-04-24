@@ -27,7 +27,6 @@ Feature hien co:
 - `auth`
 - `booking`
 - `home`
-- `marketplace`
 - `mentor`
 - `message`
 - `profile`

@@ -31,7 +31,6 @@ Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo trang thai codeb
 | `auth` | screens, services, adapters, store |
 | `booking` | screens, services, adapters, store, components |
 | `home` | screens |
-| `marketplace` | screens placeholder |
 | `mentor` | screens, services, adapters, components |
 | `message` | screens, services |
 | `profile` | screens, services, adapters |
@@ -52,10 +51,6 @@ Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo trang thai codeb
 - `/(tabs)/messages`
 - `/(tabs)/bookings`
 - `/(tabs)/profile`
-- `/(tabs)/marketplace`
-- `/(tabs)/marketplace/[id]`
-
-`marketplace` dang bi an khoi tab bar bang `href: null`.
 
 ### Ngoai tab group
 
@@ -164,7 +159,7 @@ Quy tac:
 ## 11. Diem can chu y hien tai
 
 - `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
-- `marketplace` va `admin` da o dung structure nhung logic con toi gian
+- `admin` da o dung structure nhung logic con toi gian
 - co wrappers trong `src/core` can tiep tuc duoc giu de tranh gay import cu
 - lint command hien tai la `eslint .`
 

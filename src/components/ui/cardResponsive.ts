@@ -21,7 +21,7 @@ export const cardResponsive = {
   lg: {
     padding: theme.spacing.xl,
     borderRadius: theme.borderRadius.xl,
-    maxWidth: 800,
+    maxWidth: 600,
   },
   xl: {
     padding: theme.spacing.xl,

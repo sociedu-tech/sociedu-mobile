@@ -49,7 +49,7 @@ export default function BookingListScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Typography variant="h2" style={styles.headerTitle}>
-          {role === 'mentor' ? 'Lich hen mentor' : 'Lich hen cua toi'}
+          {role === 'mentor' ? 'Lịch hẹn mentor' : 'Lịch hẹn của tôi'}
         </Typography>
         {contextRoles.length > 1 && (
           <View style={styles.roleSwitchRow}>
@@ -67,7 +67,7 @@ export default function BookingListScreen() {
                     variant="caption"
                     style={[styles.roleChipText, active && styles.roleChipTextActive]}
                   >
-                    {item === 'mentor' ? 'Mentor' : 'Nguoi dung'}
+                    {item === 'mentor' ? 'Mentor' : 'Người dùng'}
                   </Typography>
                 </TouchableOpacity>
               );
@@ -86,8 +86,8 @@ export default function BookingListScreen() {
         )}
         ListEmptyComponent={
           <EmptyState
-            title="Chua co lich hen nao"
-            description="Ban hien chua co lich hen nao trong he thong."
+            title="Chưa có lịch hẹn nào"
+            description="Bạn hiện chưa có lịch hẹn nào trong hệ thống."
             icon="calendar-outline"
             fullScreen={false}
           />

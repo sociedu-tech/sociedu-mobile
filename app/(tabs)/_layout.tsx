@@ -9,14 +9,11 @@ import { theme } from '../../src/theme/theme';
  * Tabs Layout
  *
  * Web equivalent mapping:
- *   "/"        -> index    (Home)
- *   "/mentors" -> mentor   (MentorMarketplace)
- *   "/messages"-> messages (Tin nhan)
- *   "/bookings"-> bookings (Lich hen)
- *   n/a        -> profile  (Ho so ca nhan - mobile only)
- *
- * Tab phu `marketplace` duoc an bang `href: null`
- * de tranh hien tren tab bar khi route van ton tai.
+ *   "/"         -> index    (Home)
+ *   "/mentors"  -> mentor   (Mentors)
+ *   "/messages" -> messages (Tin nhan)
+ *   "/bookings" -> bookings (Lich hen)
+ *   n/a         -> profile  (Ho so ca nhan - mobile only)
  */
 export default function TabsLayout() {
   return (
@@ -40,7 +37,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chu',
+          title: 'Trang chủ',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
@@ -52,7 +49,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="mentor"
         options={{
-          title: 'Chuyen gia',
+          title: 'Chuyên gia',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
@@ -64,7 +61,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Tin nhan',
+          title: 'Tin nhắn',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons
@@ -80,7 +77,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="bookings"
         options={{
-          title: 'Lich hen',
+          title: 'Lịch hẹn',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons
@@ -96,7 +93,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Ho so',
+          title: 'Hồ sơ',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
@@ -105,8 +102,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      <Tabs.Screen name="marketplace" options={{ href: null }} />
     </Tabs>
   );
 }
