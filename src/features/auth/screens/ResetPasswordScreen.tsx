@@ -29,7 +29,12 @@ const colors = {
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
-  const { email, resetToken } = useLocalSearchParams<{ email?: string; resetToken?: string }>();
+  const { email, token, resetToken } = useLocalSearchParams<{
+    email?: string;
+    token?: string;
+    resetToken?: string;
+  }>();
+  const passwordResetToken = token ?? resetToken;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -39,19 +44,19 @@ export default function ResetPasswordScreen() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!resetToken) {
+    if (!passwordResetToken) {
       router.replace('/(auth)/forgot-password');
     }
-  }, [resetToken, router]);
+  }, [passwordResetToken, router]);
 
   const handleSubmit = async () => {
-    if (!resetToken) {
+    if (!passwordResetToken) {
       setError('Phiên đặt lại mật khẩu không hợp lệ.');
       return;
     }
 
-    if (!password.trim() || password.length < 6) {
-      setError('Mật khẩu mới phải có ít nhất 6 ký tự.');
+    if (!password.trim() || password.length < 8) {
+      setError('Mật khẩu mới phải có ít nhất 8 ký tự.');
       return;
     }
 
@@ -65,7 +70,7 @@ export default function ResetPasswordScreen() {
 
     try {
       const result = await authService.completeResetPassword({
-        resetToken,
+        token: passwordResetToken,
         newPassword: password,
       });
       setSuccess(result.message || 'Đặt lại mật khẩu thành công.');

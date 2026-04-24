@@ -25,6 +25,9 @@ export default function MyProfileScreen() {
   const router = useRouter();
   const authUser = useAuthStore((state) => state.user);
   const userRole = useAuthStore((state) => state.userRole);
+  const roles = useAuthStore((state) => state.roles);
+  const effectiveRoles = useAuthStore((state) => state.effectiveRoles);
+  const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const logout = useAuthStore((state) => state.logout);
 
   const [fullUser, setFullUser] = useState<User | null>(null);
@@ -65,6 +68,17 @@ export default function MyProfileScreen() {
   const displayName = fullUser?.name || authUser?.fullName || 'Người dùng';
   const displayEmail = fullUser?.email || authUser?.email || '';
   const avatarUri = fullUser?.avatar || null;
+  const roleLabels: Record<string, string> = {
+    user: 'Nguoi dung',
+    mentor: 'Mentor',
+    admin: 'Admin',
+    guest: 'Guest',
+  };
+  const activeRoleLabel = roleLabels[userRole] || 'Nguoi dung';
+  const hasMentorRole = roles.includes('mentor');
+  const hasApprovedMentorRole = effectiveRoles.includes('mentor');
+  const hasAdminRole = effectiveRoles.includes('admin');
+  const mentorApprovalStatus = authUser?.mentorVerificationStatus;
 
   const getInitials = () => {
     const parts = displayName.split(' ');
@@ -127,7 +141,7 @@ export default function MyProfileScreen() {
                   textAlign: 'center',
                 }}
               >
-                {userRole.toUpperCase()}
+                {activeRoleLabel.toUpperCase()}
               </Typography>
             </View>
           </View>
@@ -150,6 +164,70 @@ export default function MyProfileScreen() {
           >
             {displayEmail}
           </Typography>
+
+          {effectiveRoles.length > 1 && (
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
+              {effectiveRoles.map((role) => {
+                const active = userRole === role;
+
+                return (
+                  <TouchableOpacity
+                    key={role}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: theme.borderRadius.full,
+                      backgroundColor: active ? theme.colors.primary : theme.colors.surface,
+                      borderWidth: 1,
+                      borderColor: active ? theme.colors.primary : theme.colors.border.default,
+                    }}
+                    onPress={() => setActiveRole(role)}
+                    activeOpacity={0.8}
+                  >
+                    <Typography
+                      variant="caption"
+                      style={{
+                        color: active ? theme.colors.text.inverse : theme.colors.text.secondary,
+                        fontWeight: '700',
+                      }}
+                    >
+                      {roleLabels[role]}
+                    </Typography>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
+          {hasMentorRole && !hasApprovedMentorRole && (
+            <Card
+              style={{
+                width: '100%',
+                marginBottom: theme.spacing.lg,
+                borderColor: theme.colors.warning,
+                backgroundColor: '#FFFBEB',
+              }}
+            >
+              <Typography
+                variant="bodyMedium"
+                style={{ fontWeight: '700', color: theme.colors.warning }}
+              >
+                Tai khoan mentor dang cho admin duyet
+              </Typography>
+              <Typography variant="caption" color="secondary" style={{ marginTop: 6 }}>
+                Trang thai hien tai: {(mentorApprovalStatus || 'pending').toUpperCase()}. Ban
+                van co the dung app voi vai tro nguoi dung thong thuong.
+              </Typography>
+            </Card>
+          )}
 
           <TouchableOpacity
             style={{
@@ -174,7 +252,7 @@ export default function MyProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {(userRole === 'mentor' || userRole === 'admin') && (
+        {(hasApprovedMentorRole || hasAdminRole) && (
           <Section style={{ marginBottom: theme.spacing.xl }}>
             <Typography
               variant="label"
@@ -191,7 +269,7 @@ export default function MyProfileScreen() {
               Bảng điều khiển
             </Typography>
             <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
-              {userRole === 'mentor' && (
+              {hasApprovedMentorRole && (
                 <>
                   <ListItem
                     title="Mentor Dashboard"
@@ -207,7 +285,7 @@ export default function MyProfileScreen() {
                   />
                 </>
               )}
-              {userRole === 'admin' && (
+              {hasAdminRole && (
                 <ListItem
                   title="Admin Panel"
                   subtitle="Kiểm duyệt user và hệ thống"

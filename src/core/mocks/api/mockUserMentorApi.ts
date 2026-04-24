@@ -40,9 +40,8 @@ export const mockMentorApi = {
     await delay(600);
     const normalizedId = Number(packageId);
     const owner =
-      mockMentorListDTO.find((mentor) =>
-        mentor.packages.some((pkg) => pkg.id === normalizedId)
-      ) ?? getCurrentMentorRecord();
+      mockMentorListDTO.find((mentor) => mentor.packages.some((pkg) => pkg.id === normalizedId)) ??
+      getCurrentMentorRecord();
 
     return withApiResponse(owner.packages.map(clonePackage));
   },
@@ -116,7 +115,7 @@ export const mockMentorApi = {
     const pkg = mentor.packages.find((item) => item.id === Number(packageId));
 
     if (!pkg) {
-      throw new Error('Khong tim thay goi dich vu.');
+      throw new Error('Không tìm thấy gói dịch vụ.');
     }
 
     pkg.isActive = isActive;

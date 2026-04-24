@@ -29,6 +29,7 @@ export interface AuthResponseDTO {
   firstName: string;
   lastName: string;
   roles: string[];           // e.g. ["ROLE_USER", "ROLE_MENTOR"]
+  mentorVerificationStatus?: string | null;
 }
 
 export interface LoginRequestDTO {
@@ -58,7 +59,7 @@ export interface VerifyResetPasswordOtpResponseDTO {
 }
 
 export interface CompleteResetPasswordRequestDTO {
-  resetToken: string;
+  token: string;
   newPassword: string;
 }
 

@@ -12,7 +12,7 @@ import {
   VerifyResetPasswordOtpResponseDTO,
 } from '@/src/core/types';
 
-import { AuthUser, toAuthUser } from '../adapters/authAdapter';
+import { AuthUser, hydrateAuthUser, toAuthUser } from '../adapters/authAdapter';
 
 const BASE = '/api/v1/auth';
 
@@ -42,7 +42,9 @@ export const authService = {
     }
 
     const res = await api.post(`${BASE}/register`, data);
-    return { message: res.data.message ?? 'Đăng ký thành công. Vui lòng kiểm tra email.' };
+    return {
+      message: res.data.message ?? 'Đăng ký thành công. Vui lòng kiểm tra email.',
+    };
   },
 
   logout: async (): Promise<void> => {
@@ -75,7 +77,9 @@ export const authService = {
     }
 
     const res = await api.post(`${BASE}/forgot-password`, { email });
-    return { message: res.data.message ?? 'Đã gửi mã OTP. Vui lòng kiểm tra email.' };
+    return {
+      message: res.data.message ?? 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra email.',
+    };
   },
 
   verifyResetPasswordOtp: async (
@@ -85,11 +89,7 @@ export const authService = {
       return mockAuthApi.verifyResetPasswordOtp(payload);
     }
 
-    const res = await api.post<{ data: VerifyResetPasswordOtpResponseDTO }>(
-      `${BASE}/forgot-password/verify-otp`,
-      payload
-    );
-    return unwrap(res);
+    throw new Error('Backend hiện tại dùng liên kết đặt lại mật khẩu, không hỗ trợ xác thực OTP.');
   },
 
   completeResetPassword: async (
@@ -104,21 +104,31 @@ export const authService = {
   },
 
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
-    await authService.completeResetPassword({ resetToken: token, newPassword });
+    await authService.completeResetPassword({ token, newPassword });
   },
 
   verifyEmail: async (token: string): Promise<void> => {
+    if (USE_MOCK) {
+      await mockAuthApi.verifyEmail(token);
+      return;
+    }
+
     await api.post(`${BASE}/verify-email`, { token });
   },
 
   resendVerification: async (email: string): Promise<void> => {
+    if (USE_MOCK) {
+      await mockAuthApi.resendVerification(email);
+      return;
+    }
+
     await api.post(`${BASE}/resend-verification`, { email });
   },
 
   getCachedUser: async (): Promise<AuthUser | null> => {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEYS.USER);
-      return raw ? (JSON.parse(raw) as AuthUser) : null;
+      return raw ? hydrateAuthUser(JSON.parse(raw)) : null;
     } catch {
       return null;
     }

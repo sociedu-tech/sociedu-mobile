@@ -25,6 +25,9 @@ const colors = {
   error: '#DC2626',
   errorBg: '#FEF2F2',
   errorBorder: '#FECACA',
+  success: '#16A34A',
+  successBg: '#F0FDF4',
+  successBorder: '#BBF7D0',
 };
 
 export default function ForgotPasswordScreen() {
@@ -32,24 +35,23 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleContinue = async () => {
     if (!email.trim()) {
-      setError('Vui lòng nhập email để nhận mã OTP.');
+      setError('Vui lòng nhập email để nhận liên kết đặt lại mật khẩu.');
       return;
     }
 
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
-      await authService.forgotPassword(email.trim());
-      router.push({
-        pathname: '/(auth)/otp',
-        params: { email: email.trim() },
-      });
+      const result = await authService.forgotPassword(email.trim());
+      setSuccess(result.message);
     } catch (err: any) {
-      setError(err.message || 'Không thể gửi mã OTP. Vui lòng thử lại.');
+      setError(err.message || 'Không thể gửi liên kết đặt lại mật khẩu. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ export default function ForgotPasswordScreen() {
               Quên mật khẩu?
             </Typography>
             <Typography variant="body" color="secondary" style={styles.subtitle}>
-              Nhập email đăng ký để nhận mã OTP đặt lại mật khẩu.
+              Nhập email đăng ký để nhận liên kết đặt lại mật khẩu.
             </Typography>
 
             <TextInput
@@ -98,8 +100,17 @@ export default function ForgotPasswordScreen() {
               </View>
             ) : null}
 
+            {success ? (
+              <View style={styles.successBox}>
+                <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                <Typography variant="label" style={styles.successText}>
+                  {success}
+                </Typography>
+              </View>
+            ) : null}
+
             <CustomButton
-              label="Gửi mã OTP"
+              label={success ? 'Gửi lại liên kết' : 'Gửi liên kết đặt lại'}
               loading={loading}
               disabled={loading}
               onPress={handleContinue}
@@ -176,6 +187,23 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.error,
+    fontWeight: '700',
+    flex: 1,
+  },
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.successBg,
+    borderWidth: 1,
+    borderColor: colors.successBorder,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  successText: {
+    color: colors.success,
     fontWeight: '700',
     flex: 1,
   },

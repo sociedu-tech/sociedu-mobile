@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -7,6 +7,7 @@ import { EmptyState } from '@/src/components/states/EmptyState';
 import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
+import { UserRole } from '@/src/core/types';
 import { useAuthStore } from '@/src/features/auth/store/authStore';
 import { theme } from '@/src/theme/theme';
 
@@ -16,7 +17,12 @@ import { useBookingStore } from '../store/bookingStore';
 export default function BookingListScreen() {
   const router = useRouter();
   const role = useAuthStore((s) => s.userRole);
+  const effectiveRoles = useAuthStore((s) => s.effectiveRoles);
+  const setActiveRole = useAuthStore((s) => s.setActiveRole);
   const { bookings, loading, error, fetchBuyerBookings, fetchMentorBookings } = useBookingStore();
+  const contextRoles = effectiveRoles.filter(
+    (item): item is Extract<UserRole, 'user' | 'mentor'> => item === 'user' || item === 'mentor'
+  );
 
   const loadData = useCallback(async () => {
     if (role === 'mentor') {
@@ -42,7 +48,32 @@ export default function BookingListScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Typography variant="h2" style={styles.headerTitle}>Lich hen cua toi</Typography>
+        <Typography variant="h2" style={styles.headerTitle}>
+          {role === 'mentor' ? 'Lich hen mentor' : 'Lich hen cua toi'}
+        </Typography>
+        {contextRoles.length > 1 && (
+          <View style={styles.roleSwitchRow}>
+            {contextRoles.map((item) => {
+              const active = role === item;
+
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.roleChip, active && styles.roleChipActive]}
+                  onPress={() => setActiveRole(item)}
+                  activeOpacity={0.8}
+                >
+                  <Typography
+                    variant="caption"
+                    style={[styles.roleChipText, active && styles.roleChipTextActive]}
+                  >
+                    {item === 'mentor' ? 'Mentor' : 'Nguoi dung'}
+                  </Typography>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
       <FlatList
@@ -79,6 +110,30 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: theme.colors.text.primary,
+  },
+  roleSwitchRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  roleChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.background,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+  },
+  roleChipActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  roleChipText: {
+    color: theme.colors.text.secondary,
+    fontWeight: '700',
+  },
+  roleChipTextActive: {
+    color: theme.colors.text.inverse,
   },
   list: {
     padding: 16,

@@ -1,21 +1,41 @@
 import { delay, withApiResponse } from '../utils';
-import { mockAuthData, mockMentorAuthData } from '../data/authData';
 import {
+  mockAdminAuthData,
+  mockApprovedMentorAuthData,
+  mockAuthData,
+  mockPendingMentorAuthData,
+} from '../data/authData';
+import {
+  AuthResponseDTO,
   CompleteResetPasswordRequestDTO,
   LoginRequestDTO,
   RegisterRequestDTO,
   VerifyResetPasswordOtpRequestDTO,
 } from '../../types';
 
+let currentAuthData: AuthResponseDTO = mockAuthData;
+
 export const mockAuthApi = {
   login: async (credentials: LoginRequestDTO) => {
     await delay(1000);
 
-    if (credentials.email.includes('mentor')) {
-      return withApiResponse(mockMentorAuthData);
+    if (credentials.email.includes('admin')) {
+      currentAuthData = mockAdminAuthData;
+      return withApiResponse(currentAuthData);
     }
 
-    return withApiResponse(mockAuthData);
+    if (credentials.email.includes('mentor.pending')) {
+      currentAuthData = mockPendingMentorAuthData;
+      return withApiResponse(currentAuthData);
+    }
+
+    if (credentials.email.includes('mentor')) {
+      currentAuthData = mockApprovedMentorAuthData;
+      return withApiResponse(currentAuthData);
+    }
+
+    currentAuthData = mockAuthData;
+    return withApiResponse(currentAuthData);
   },
 
   register: async (_data: RegisterRequestDTO) => {
@@ -26,7 +46,7 @@ export const mockAuthApi = {
   forgotPassword: async (email: string) => {
     await delay(900);
     return {
-      message: `Đã gửi mã OTP đặt lại mật khẩu đến ${email}. Dùng mã 123456 trong mock mode.`,
+      message: `Đã gửi liên kết đặt lại mật khẩu đến ${email}.`,
     };
   },
 
@@ -46,7 +66,7 @@ export const mockAuthApi = {
   completeResetPassword: async (payload: CompleteResetPasswordRequestDTO) => {
     await delay(900);
 
-    if (!payload.resetToken) {
+    if (!payload.token) {
       throw new Error('Phiên đặt lại mật khẩu không hợp lệ.');
     }
 
@@ -58,7 +78,7 @@ export const mockAuthApi = {
   refresh: async (_refreshToken: string) => {
     await delay(800);
     return withApiResponse({
-      ...mockAuthData,
+      ...currentAuthData,
       accessToken: `mock.jwt.access.token.refreshed.${Date.now()}`,
       refreshToken: `mock.jwt.refresh.token.refreshed.${Date.now()}`,
     });
@@ -66,6 +86,17 @@ export const mockAuthApi = {
 
   logout: async () => {
     await delay(500);
+    currentAuthData = mockAuthData;
     return { data: { message: 'Đã xóa token.' } };
+  },
+
+  verifyEmail: async (_token: string) => {
+    await delay(900);
+    return withApiResponse(currentAuthData);
+  },
+
+  resendVerification: async (_email: string) => {
+    await delay(900);
+    return { data: { message: 'Đã gửi lại email xác minh.' } };
   },
 };
