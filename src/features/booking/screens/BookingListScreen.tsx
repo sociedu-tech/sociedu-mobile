@@ -16,7 +16,7 @@ import { useBookingStore } from '../store/bookingStore';
 
 export default function BookingListScreen() {
   const router = useRouter();
-  const role = useAuthStore((s) => s.userRole);
+  const role = useAuthStore((s) => s.activeRole);
   const effectiveRoles = useAuthStore((s) => s.effectiveRoles);
   const setActiveRole = useAuthStore((s) => s.setActiveRole);
   const { bookings, loading, error, fetchBuyerBookings, fetchMentorBookings } = useBookingStore();

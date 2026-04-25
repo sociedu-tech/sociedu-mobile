@@ -99,14 +99,10 @@ Phai doc:
 - `src/core/mocks/chatMocks.ts`
 - `src/core/types.ts`
 
-## 8. Neu sua marketplace hoac admin
+## 8. Neu sua admin
 
 Phai doc:
 
-- `app/(tabs)/marketplace/index.tsx`
-- `app/(tabs)/marketplace/[id].tsx`
-- `src/features/marketplace/screens/MarketplaceListScreen.tsx`
-- `src/features/marketplace/screens/MarketplaceDetailScreen.tsx`
 - `app/admin/index.tsx`
 - `src/features/admin/screens/AdminDashboardScreen.tsx`
 - `src/components/ProtectedRoute.tsx`

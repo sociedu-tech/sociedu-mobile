@@ -104,13 +104,13 @@ export default function LoginScreen() {
         >
           <Animated.View style={[styles.branding, { transform: [{ scale: logoScale }] }]}>
             <View style={styles.logoBox}>
-              <Ionicons name="code-slash-outline" size={28} color={C.dark} />
+              <Ionicons name="school-outline" size={28} color={C.dark} />
             </View>
             <Typography variant="h1" style={styles.brandName}>
               UniShare
             </Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              Sàn tri thức dành cho sinh viên
+              Kết nối mentor dành cho sinh viên
             </Typography>
           </Animated.View>
 

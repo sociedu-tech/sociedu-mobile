@@ -62,10 +62,12 @@ export const bookingService = {
     sessionId: string,
     data: { type: string; url: string }
   ): Promise<EvidenceResponseDTO> => {
-    const res = await api.post<{ data: EvidenceResponseDTO }>(
-      `${BASE}/${bookingId}/sessions/${sessionId}/evidences`,
-      data
-    );
+    const res = USE_MOCK
+      ? await mockBookingApi.addEvidence(bookingId, sessionId, data)
+      : await api.post<{ data: EvidenceResponseDTO }>(
+          `${BASE}/${bookingId}/sessions/${sessionId}/evidences`,
+          data
+        );
     return unwrap(res);
   },
 };

@@ -1,6 +1,6 @@
 # Kien Truc Du An UniShare Mobile
 
-Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo trang thai codebase sau refactor feature-based.
+Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo feature-based structure.
 
 ## 1. Cong nghe loi
 
@@ -9,32 +9,33 @@ Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo trang thai codeb
 | Framework | React Native + Expo |
 | Routing | Expo Router |
 | State Management | Zustand |
-| Storage | AsyncStorage |
+| Token storage | Expo SecureStore |
+| User cache | AsyncStorage cho du lieu non-sensitive |
 | Networking | Axios + interceptors |
 | UI | Shared components + theme tokens |
 | Language | TypeScript `strict` |
 
 ## 2. Cau truc thu muc
 
-- `app/`: route entry, layout, route wiring
-- `src/features/`: source of truth theo domain
-- `src/components/`: shared UI components
-- `src/core/`: API layer, mocks, wrappers, types
-- `src/theme/`: theme tokens, breakpoints, responsive utilities
-- `.agent/`: operating docs cho coding agents
-- `docs/`: tai lieu bo sung cho kien truc
+- `app/`: route entry, layout, route wiring.
+- `src/features/`: source of truth theo domain.
+- `src/components/`: shared UI components.
+- `src/core/`: API layer, mocks, wrappers, config, shared types.
+- `src/theme/`: theme tokens, breakpoints, responsive utilities.
+- `.agent/`: operating docs cho coding agents.
+- `docs/`: tai lieu bo sung cho kien truc.
 
 ## 3. Feature map hien tai
 
 | Feature | Thanh phan hien co |
 | --- | --- |
 | `auth` | screens, services, adapters, store |
-| `booking` | screens, services, adapters, store, components |
+| `booking` | screens, services, adapters, store, components, payment result flow |
 | `home` | screens |
-| `mentor` | screens, services, adapters, components |
-| `message` | screens, services |
+| `mentor` | screens, services, adapters, components, paginated listing contract |
+| `message` | screens, backend/mock-aware chat service |
 | `profile` | screens, services, adapters |
-| `admin` | protected screen skeleton |
+| `admin` | protected moderation dashboard, admin service |
 
 ## 4. Route map hien tai
 
@@ -43,6 +44,9 @@ Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo trang thai codeb
 - `/(auth)/welcome`
 - `/(auth)/login`
 - `/(auth)/register`
+- `/(auth)/forgot-password`
+- `/(auth)/otp`
+- `/(auth)/reset-password`
 
 ### Tabs group
 
@@ -56,36 +60,33 @@ Tai lieu nay mo ta kien truc hien tai cua `sociedu-mobile` theo trang thai codeb
 
 - `/admin/index`
 - `/booking/[id]`
+- `/booking/payment-result`
 - `/mentor/[id]`
 - `/mentor/dashboard`
+- `/mentor/services`
+- `/mentor/services/form`
 - `/messages/[id]`
+- `/package/[id]`
 - `/profile/[id]`
 - `/profile/edit`
 
-## 5. Luong auth va protected routing
+## 5. Auth, Config Va Protected Routing
 
-### Root layout
+- `app/_layout.tsx` hydrate auth store, redirect guest ve auth flow va redirect logged-in user khoi auth flow.
+- Token access/refresh luu bang `expo-secure-store` qua `tokenStorage` trong `src/core/api.ts`.
+- Cached user luu AsyncStorage va chi nen chua du lieu non-sensitive can hydrate UI.
+- Khi refresh token fail, API layer clear storage va goi `expireSession()` gian tiep qua session-expired handler.
+- `ProtectedRoute` chi la client UX guard cho navigation. Backend endpoint bat buoc enforce role va ownership.
 
-`app/_layout.tsx` la cong kiem soat session cua toan app:
+## 6. API Va Mock Strategy
 
-- hydrate auth state tu AsyncStorage
-- redirect user chua login ve `/(auth)/login`
-- redirect user da login khoi auth group sang `/(tabs)`
-- khai bao stack cho detail/protected screens
+- `src/core/config.ts` doc `EXPO_PUBLIC_API_BASE_URL` va `EXPO_PUBLIC_USE_MOCK`.
+- Production runtime fail-fast neu thieu API URL, API URL khong dung HTTPS, hoac mock dang bat.
+- `API_BASE_URL` va `USE_MOCK` van duoc export de giu compatibility.
+- Service layer chon mock/backend theo `USE_MOCK`; screen khong goi Axios truc tiep.
+- API error duoc sanitize trong `src/core/api.ts`; UI khong nen hien raw backend payload.
 
-### Auth layout
-
-`app/(auth)/_layout.tsx` chan user da login o lai auth screens.
-
-### ProtectedRoute
-
-`src/components/ProtectedRoute.tsx` xu ly:
-
-- loading spinner khi auth store dang hydrate
-- redirect guest ve `/(auth)/login`
-- redirect sai role ve `/(tabs)`
-
-## 6. Architecture layers
+## 7. Data Flow Chuan
 
 ```mermaid
 graph TD
@@ -93,78 +94,25 @@ graph TD
     B --> C["src/components/ shared UI"]
     B --> D["src/core/ api + mocks + wrappers"]
     C --> E["src/theme/ tokens + responsive"]
-    D --> F["AsyncStorage + backend APIs"]
+    D --> F["SecureStore + AsyncStorage + backend APIs"]
 ```
-
-## 7. Quy tac layer
-
-### Route layer
-
-- `app/` chi nen chua route files, layout va route wiring
-- route entry nen uu tien `export { default }` sang feature screen
-- khong dua business logic nang vao route file
-
-### Feature layer
-
-- `src/features/<feature>/` la source of truth theo domain
-- screens goi service va dung adapter/store cua feature
-- component chi dung trong 1 feature nen dat trong feature do
-
-### Core layer
-
-- `src/core/api.ts` la noi cau hinh Axios instance, token helpers va refresh flow
-- `src/core/config.ts` dieu khien cac config chung nhu `USE_MOCK`
-- `src/core/types.ts` la noi dat DTO va app model chung
-- `src/core/services/*`, `src/core/store/*`, `src/core/adapters/*` hien chu yeu la compatibility wrappers
-
-### UI layer
-
-- `src/components/` la shared UI layer cua ca app
-- uu tien dung lai `Typography`, `CustomButton`, `Card`, `Section`, `Avatar`, `ListItem`, state components
-
-### Theme layer
-
-- `src/theme/theme.ts` chua token ve colors, spacing, radius, typography
-- `src/theme/responsiveUtils.ts` chua cac utility scale va detection theo man hinh
-- component moi nen bam vao token va utility thay vi so raw
-
-## 8. Networking va mock strategy
-
-- Service layer goi API qua `api` trong `src/core/api.ts`
-- `unwrap()` duoc dung de lay `response.data.data`
-- `USE_MOCK` trong `src/core/config.ts` quyet dinh service di qua mock hay backend that
-- Chat hien tai van mock-first qua `src/core/mocks/chatMocks.ts`
-
-## 9. Responsive system
-
-Nguon su that cho responsive:
-
-- `src/theme/theme.ts`
-- `src/theme/responsiveUtils.ts`
-- `src/theme/breakpoints.ts`
-- responsive helper di kem component trong `src/components`
 
 Quy tac:
 
-- khong hard-code kich thuoc lon neu utility da co
-- typography, spacing, avatar, card, button phai kiem tra tren man hep va man rong
+- Route files trong `app/` uu tien `export { default }`.
+- Feature screens goi feature service, khong goi `api` truc tiep.
+- Adapter map DTO sang mobile model truoc khi UI render.
+- Compatibility wrappers trong `src/core/services`, `src/core/store`, `src/core/adapters` chi re-export.
 
-## 10. Kien truc data va type
+## 8. Flow Dang Luu Y
 
-- DTO backend nam trong `src/core/types.ts`
-- app models cung nam trong `src/core/types.ts`
-- feature adapters map DTO sang shape UI can dung
-- screen khong tu map raw backend response neu adapter da la noi chuan hoa
+- Payment: package detail bat buoc chon slot truoc checkout; checkout gui `{ packageVersionId, slotId }`; `/booking/payment-result` verify order status tu backend va chi polling fallback co gioi han.
+- Mentor listing: `mentorService.getAll(query)` tra paginated result, backend nen tra mentor card DTO da gom profile fields de tranh N+1.
+- Admin: admin dashboard co moderation queue approve/reject mentor va audit-log fallback.
+- Message: chat service ho tro mock/backend, pagination, mark-read, report conversation; backend phai enforce ownership.
 
-## 11. Diem can chu y hien tai
+## 9. Kiem Tra
 
-- `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
-- `admin` da o dung structure nhung logic con toi gian
-- co wrappers trong `src/core` can tiep tuc duoc giu de tranh gay import cu
-- lint command hien tai la `eslint .`
-
-## 12. Nguyen tac mo rong
-
-- Them feature moi: tao trong `src/features/<feature>/` truoc
-- Chi tao wrapper trong `src/core` neu can compatibility
-- Neu doi route map, auth flow, source of truth hoac shared UI rules, cap nhat `.agent/`, `SYSTEM.md` va file nay
+- `npm run typecheck`
+- `npm run lint`
+- Manual smoke voi login/logout, mentor list/detail, package checkout, bookings, admin, messages.

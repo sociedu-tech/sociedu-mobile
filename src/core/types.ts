@@ -116,6 +116,7 @@ export interface OrderResponseDTO {
 
 export interface CheckoutRequestDTO {
   packageVersionId: number;
+  slotId: string;
 }
 
 // ── Booking ───────────────────────────────────────────────────
@@ -336,6 +337,13 @@ export interface Order {
   paidAt: string | null;
   createdAt: string;
   paymentUrl: string | null;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  isAvailable: boolean;
 }
 
 // ── Chat ──────────────────────────────────────────────────────

@@ -59,6 +59,7 @@ export default function MessageDetailScreen() {
 
         const currentMessages = await chatService.getMessages(currentConversation.id);
         setMessages(currentMessages);
+        await chatService.markConversationRead(currentConversation.id);
 
         if (currentConversation.sessionId) {
           const currentSession = await chatService.getChatSession(currentConversation.sessionId);
@@ -85,15 +86,26 @@ export default function MessageDetailScreen() {
 
     const text = inputText.trim();
     setInputText('');
+    const optimisticMessage: ChatMessage = {
+      id: `optimistic-${Date.now()}`,
+      sender: 'mentee',
+      text,
+      createdAt: Date.now(),
+    };
+    setMessages((prev) => [...prev, optimisticMessage]);
 
     try {
       const newMessage = await chatService.sendMessage(id, text, 'mentee');
-      setMessages((prev) => [...prev, newMessage]);
+      setMessages((prev) =>
+        prev.map((message) => (message.id === optimisticMessage.id ? newMessage : message))
+      );
 
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     } catch (error) {
+      setMessages((prev) => prev.filter((message) => message.id !== optimisticMessage.id));
+      setInputText(text);
       console.error('Failed to send message:', error);
     }
   };

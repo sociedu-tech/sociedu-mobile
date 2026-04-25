@@ -8,104 +8,71 @@
 - Expo Router `~6.0.23`
 - Zustand cho shared state
 - Axios cho HTTP client
-- AsyncStorage cho token va user cache
+- Expo SecureStore cho access/refresh token
+- AsyncStorage cho cached user non-sensitive
 - TypeScript `strict`
 
 ## Cau truc thu muc hien tai
 
 ### `app/`
 
-- Chua route theo file cua Expo Router
-- Da duoc lam mong cho nhieu route
-- Uu tien chi route wiring, layout va redirect
-- Nhieu file hien chi `export { default }` sang `src/features/.../screens/...`
+- Chua route theo file cua Expo Router.
+- Uu tien route wiring/layout/redirect, khong dat business logic nang.
+- Nhieu file chi `export { default }` sang `src/features/.../screens/...`.
 
 Route hien co:
 
-- `(auth)`: `welcome`, `login`, `register`
-- `(tabs)`: `index`, `mentor`, `messages`, `bookings`, `profile`, `marketplace`
-- ngoai tabs: `admin`, `booking/[id]`, `mentor/[id]`, `mentor/dashboard`, `messages/[id]`, `profile/[id]`, `profile/edit`
+- `(auth)`: `welcome`, `login`, `register`, `forgot-password`, `otp`, `reset-password`
+- `(tabs)`: `index`, `mentor`, `messages`, `bookings`, `profile`
+- ngoai tabs: `admin`, `booking/[id]`, `booking/payment-result`, `mentor/[id]`, `mentor/dashboard`, `mentor/services`, `mentor/services/form`, `messages/[id]`, `package/[id]`, `profile/[id]`, `profile/edit`
 
 ### `src/features/`
 
-Day la source of truth theo domain. Hien tai da co:
+Source of truth theo domain:
 
-- `admin`
-- `auth`
-- `booking`
-- `home`
-- `marketplace`
-- `mentor`
-- `message`
-- `profile`
-
-Thu muc feature co the gom:
-
-- `screens/`
-- `services/`
-- `store/`
-- `adapters/`
-- `components/`
+- `admin`: moderation dashboard va service approve/reject mentor
+- `auth`: screens, service, adapter, store
+- `booking`: list/detail/package/payment result, services, adapter, store
+- `home`: home tab
+- `mentor`: list/detail/dashboard/services, paginated listing service
+- `message`: message screens, backend/mock-aware chat service
+- `profile`: profile screens, service, adapter
 
 ### `src/core/`
 
-- `api.ts`: Axios instance, token helpers, interceptors, refresh flow
-- `config.ts`: config dung chung, hien co `USE_MOCK`
-- `types.ts`: DTO va mobile model chung
+- `api.ts`: Axios instance, SecureStore token helpers, refresh flow, session-expired bridge, sanitized errors
+- `config.ts`: env-based `API_BASE_URL` va `USE_MOCK`
+- `types.ts`: shared DTO va mobile model
 - `mocks/`: mock API va mock data
-- `services/`, `store/`, `adapters/`: compatibility wrappers re-export sang feature implementations
-
-### `src/components/`
-
-- Shared UI theo nhom `button`, `display`, `form`, `states`, `typography`, `ui`
-- Chua cac helper responsive di kem component
-
-### `src/theme/`
-
-- Theme tokens
-- Breakpoints
-- Responsive utilities
-- Hook `useBreakpoint`
+- `services/`, `store/`, `adapters/`: compatibility wrappers
 
 ## Luong auth hien tai
 
-1. App mo len o `app/_layout.tsx`
-2. `useAuthStore().hydrate()` doc user cache tu AsyncStorage
-3. Neu da dang nhap, route trong `(auth)` bi day sang `(tabs)`
-4. Neu chua dang nhap, route ngoai `(auth)` bi redirect ve `/(auth)/login`
-5. Neu API tra `401`, `src/core/api.ts` thu refresh token 1 lan truoc khi clear session
+1. App mo len o `app/_layout.tsx`.
+2. `useAuthStore().hydrate()` doc cached user tu AsyncStorage.
+3. Access/refresh token nam trong SecureStore.
+4. Guest bi redirect ve `/(auth)/login`; logged-in user khong o lai auth screens.
+5. API gap `401` se thu refresh mot lan.
+6. Refresh fail se clear token/cache va goi `expireSession()` de UI logout ngay.
 
-## Trang thai feature hien tai
+## Config va mock
 
-### Hoan chinh tuong doi
-
-- `auth`
-- `mentor`
-- `booking`
-- `profile`
-- `message`
-- `home`
-
-### Skeleton hoac placeholder
-
-- `admin`: protected skeleton screen
-- `marketplace`: placeholder list/detail screens, chua co service/store rieng
+- Env moi: `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_USE_MOCK`.
+- Production fail-fast neu API URL thieu, khong HTTPS, hoac mock dang bat.
+- Mock mode van dung cho local demo, nhung khong duoc coi la security boundary.
 
 ## Diem can chu y khi sua code
 
-- `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
-- `USE_MOCK` hien dang `false`
-- Chat service hien van mock-first
-- `src/core/*` wrappers can duoc giu de tranh gay import cu
-- Co mot so file cu con comment/chuoi bi lech encoding, nen sua co kiem soat
-- Lint script hien tai la `npm run lint` -> `eslint .`
+- Client `ProtectedRoute` chi la UX guard; backend phai enforce role/ownership.
+- Payment checkout can slot id va payment result verification tu backend.
+- Mentor listing backend nen tra mentor card DTO da gom profile fields, tranh N+1.
+- Chat service co backend contract, nhung ownership permission van la trach nhiem backend.
+- Wrappers trong `src/core/*` can duoc giu de tranh gay import cu.
 
-## Vung uu tien khi them hoac sua feature
+## Kiem tra toi thieu
 
-- Route entry: `app/`
-- Logic man hinh: `src/features/<feature>/screens/`
-- Logic goi API: `src/features/<feature>/services/`
-- Chuan hoa du lieu: `src/features/<feature>/adapters/`
-- Shared state cua feature: `src/features/<feature>/store/`
-- UI tai su dung toan app: `src/components/`
-- Ha tang chung va wrappers: `src/core/`
+- `npm run typecheck`
+- `npm run lint`
+- Neu sua auth: smoke guest/logged-in/refresh fail.
+- Neu sua payment: smoke no-slot, checkout, payment result paid/pending/cancelled.
+- Neu sua admin/message: smoke role guard, approve/reject, message send rollback.

@@ -114,11 +114,11 @@ export default function RegisterScreen() {
         >
           <Animated.View style={[styles.branding, { transform: [{ scale: logoScale }] }]}>
             <View style={styles.logoBox}>
-              <Ionicons name="code-slash-outline" size={28} color={C.dark} />
+              <Ionicons name="school-outline" size={28} color={C.dark} />
             </View>
             <Typography variant="h1" style={styles.brandName}>UniShare</Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              Sân tri thức dành cho sinh viên
+              Kết nối mentor dành cho sinh viên
             </Typography>
           </Animated.View>
 
@@ -139,7 +139,7 @@ export default function RegisterScreen() {
 
             <TextInput
               label="HỌ"
-              placeholder="Nguyen"
+              placeholder="Nguyễn"
               value={lastName}
               onChangeText={setLastName}
               autoCapitalize="words"
@@ -147,7 +147,7 @@ export default function RegisterScreen() {
             />
             <TextInput
               label="TÊN"
-              placeholder="Van A"
+              placeholder="Văn A"
               value={firstName}
               onChangeText={setFirstName}
               autoCapitalize="words"
@@ -199,7 +199,7 @@ export default function RegisterScreen() {
             )}
 
             <CustomButton
-              label="Dang ky ngay"
+              label="Đăng ký ngay"
               variant="primary"
               size="lg"
               loading={loading}

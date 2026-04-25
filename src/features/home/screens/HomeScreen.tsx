@@ -28,7 +28,7 @@ const HIGHLIGHTS = [
   {
     icon: 'shield-checkmark-outline' as const,
     title: 'Đã xác minh',
-    desc: 'Mọi mentor đều được hệ thống xác minh năng lực.',
+    desc: 'Mỗi mentor đều được hệ thống xác minh năng lực.',
     color: theme.colors.info,
     bg: '#DBEAFE',
   },
@@ -65,10 +65,11 @@ export default function HomeScreen() {
               <Typography variant="h1" style={{ color: theme.colors.primary, fontWeight: '900' }}>
                 Mentor
               </Typography>
-              {'\nhoàn hảo cho bạn'}
+              {'\nphù hợp cho bạn'}
             </Typography>
             <Typography variant="body" color="secondary" align="center" style={{ marginTop: theme.spacing.md }}>
-              Kết nối với những người đi trước giàu kinh nghiệm để nhận được lời khuyên, định hướng và học hỏi.
+              Kết nối với những người đi trước giàu kinh nghiệm để nhận lời khuyên,
+              định hướng và học hỏi.
             </Typography>
             <CustomButton
               label="Khám phá Mentor"

@@ -21,7 +21,8 @@ export default function WelcomeScreen() {
         UniShare
       </Typography>
       <Typography variant="body" color="secondary" align="center" style={{ marginBottom: theme.spacing.xl }}>
-        Nền tảng chia sẻ tài liệu và kết nối Mentor tốt nhất dành cho sinh viên.
+        Nền tảng kết nối sinh viên với mentor phù hợp để được định hướng,
+        tư vấn và phát triển kỹ năng.
       </Typography>
 
       <CustomButton

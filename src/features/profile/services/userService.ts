@@ -38,11 +38,18 @@ export const userService = {
     bio?: string;
     location?: string;
   }): Promise<void> => {
+    if (USE_MOCK) {
+      await mockUserApi.updateProfile(data);
+      return;
+    }
+
     await api.put(`${BASE}/me/profile`, data);
   },
 
   getEducations: async (): Promise<UserEducationResponseDTO[]> => {
-    const res = await api.get<{ data: UserEducationResponseDTO[] }>(`${BASE}/educations`);
+    const res = USE_MOCK
+      ? await mockUserApi.getEducations()
+      : await api.get<{ data: UserEducationResponseDTO[] }>(`${BASE}/educations`);
     return unwrap(res);
   },
 
@@ -53,7 +60,9 @@ export const userService = {
     startYear: number;
     endYear?: number;
   }): Promise<UserEducationResponseDTO> => {
-    const res = await api.post<{ data: UserEducationResponseDTO }>(`${BASE}/educations`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.addEducation(data)
+      : await api.post<{ data: UserEducationResponseDTO }>(`${BASE}/educations`, data);
     return unwrap(res);
   },
 
@@ -67,16 +76,25 @@ export const userService = {
       endYear: number | null;
     }>
   ): Promise<UserEducationResponseDTO> => {
-    const res = await api.put<{ data: UserEducationResponseDTO }>(`${BASE}/educations/${id}`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.updateEducation(id, data)
+      : await api.put<{ data: UserEducationResponseDTO }>(`${BASE}/educations/${id}`, data);
     return unwrap(res);
   },
 
   deleteEducation: async (id: number): Promise<void> => {
+    if (USE_MOCK) {
+      await mockUserApi.deleteEducation(id);
+      return;
+    }
+
     await api.delete(`${BASE}/educations/${id}`);
   },
 
   getExperiences: async (): Promise<UserExperienceResponseDTO[]> => {
-    const res = await api.get<{ data: UserExperienceResponseDTO[] }>(`${BASE}/experiences`);
+    const res = USE_MOCK
+      ? await mockUserApi.getExperiences()
+      : await api.get<{ data: UserExperienceResponseDTO[] }>(`${BASE}/experiences`);
     return unwrap(res);
   },
 
@@ -87,7 +105,9 @@ export const userService = {
     endDate?: string;
     description?: string;
   }): Promise<UserExperienceResponseDTO> => {
-    const res = await api.post<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.addExperience(data)
+      : await api.post<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences`, data);
     return unwrap(res);
   },
 
@@ -101,16 +121,25 @@ export const userService = {
       description: string | null;
     }>
   ): Promise<UserExperienceResponseDTO> => {
-    const res = await api.put<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences/${id}`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.updateExperience(id, data)
+      : await api.put<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences/${id}`, data);
     return unwrap(res);
   },
 
   deleteExperience: async (id: number): Promise<void> => {
+    if (USE_MOCK) {
+      await mockUserApi.deleteExperience(id);
+      return;
+    }
+
     await api.delete(`${BASE}/experiences/${id}`);
   },
 
   getLanguages: async (): Promise<UserLanguageResponseDTO[]> => {
-    const res = await api.get<{ data: UserLanguageResponseDTO[] }>(`${BASE}/languages`);
+    const res = USE_MOCK
+      ? await mockUserApi.getLanguages()
+      : await api.get<{ data: UserLanguageResponseDTO[] }>(`${BASE}/languages`);
     return unwrap(res);
   },
 
@@ -118,7 +147,9 @@ export const userService = {
     language: string;
     proficiency: string;
   }): Promise<UserLanguageResponseDTO> => {
-    const res = await api.post<{ data: UserLanguageResponseDTO }>(`${BASE}/languages`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.addLanguage(data)
+      : await api.post<{ data: UserLanguageResponseDTO }>(`${BASE}/languages`, data);
     return unwrap(res);
   },
 
@@ -126,16 +157,25 @@ export const userService = {
     id: number,
     data: { language?: string; proficiency?: string }
   ): Promise<UserLanguageResponseDTO> => {
-    const res = await api.put<{ data: UserLanguageResponseDTO }>(`${BASE}/languages/${id}`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.updateLanguage(id, data)
+      : await api.put<{ data: UserLanguageResponseDTO }>(`${BASE}/languages/${id}`, data);
     return unwrap(res);
   },
 
   deleteLanguage: async (id: number): Promise<void> => {
+    if (USE_MOCK) {
+      await mockUserApi.deleteLanguage(id);
+      return;
+    }
+
     await api.delete(`${BASE}/languages/${id}`);
   },
 
   getCertificates: async (): Promise<UserCertificateResponseDTO[]> => {
-    const res = await api.get<{ data: UserCertificateResponseDTO[] }>(`${BASE}/certificates`);
+    const res = USE_MOCK
+      ? await mockUserApi.getCertificates()
+      : await api.get<{ data: UserCertificateResponseDTO[] }>(`${BASE}/certificates`);
     return unwrap(res);
   },
 
@@ -146,7 +186,9 @@ export const userService = {
     expiryDate?: string;
     credentialUrl?: string;
   }): Promise<UserCertificateResponseDTO> => {
-    const res = await api.post<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.addCertificate(data)
+      : await api.post<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates`, data);
     return unwrap(res);
   },
 
@@ -160,11 +202,18 @@ export const userService = {
       credentialUrl: string | null;
     }>
   ): Promise<UserCertificateResponseDTO> => {
-    const res = await api.put<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates/${id}`, data);
+    const res = USE_MOCK
+      ? await mockUserApi.updateCertificate(id, data)
+      : await api.put<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates/${id}`, data);
     return unwrap(res);
   },
 
   deleteCertificate: async (id: number): Promise<void> => {
+    if (USE_MOCK) {
+      await mockUserApi.deleteCertificate(id);
+      return;
+    }
+
     await api.delete(`${BASE}/certificates/${id}`);
   },
 };

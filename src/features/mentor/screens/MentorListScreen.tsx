@@ -22,15 +22,20 @@ import { MentorCard } from '../components/MentorCard';
 import { mentorService } from '../services/mentorService';
 
 const ALL_CATEGORY = 'Tất cả';
+const PAGE_SIZE = 20;
 
 export default function MentorListScreen() {
   const router = useRouter();
   const [mentors, setMentors] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const expertiseTags = useMemo(() => {
     const tags = new Set<string>();
@@ -38,23 +43,49 @@ export default function MentorListScreen() {
     return [ALL_CATEGORY, ...Array.from(tags)];
   }, [mentors]);
 
-  const fetchMentors = useCallback(async (isRefresh = false) => {
-    if (!isRefresh) {
-      setLoading(true);
-    }
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-    setError(null);
+  const fetchMentors = useCallback(
+    async (options?: { isRefresh?: boolean; nextPage?: number }) => {
+      const targetPage = options?.nextPage ?? 1;
+      const isRefresh = options?.isRefresh ?? false;
+      const isLoadingMore = targetPage > 1;
 
-    try {
-      const data = await mentorService.getAll();
-      setMentors(data);
-    } catch {
-      setError('Không thể tải danh sách mentor. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+      if (isLoadingMore) {
+        setLoadingMore(true);
+      } else if (!isRefresh) {
+        setLoading(true);
+      }
+
+      setError(null);
+
+      try {
+        const result = await mentorService.getAll({
+          page: targetPage,
+          pageSize: PAGE_SIZE,
+          search: debouncedSearchTerm,
+          filters: {
+            expertise: selectedCategory === ALL_CATEGORY ? undefined : selectedCategory,
+          },
+          sort: 'rating',
+        });
+
+        setMentors((prev) => (targetPage === 1 ? result.items : [...prev, ...result.items]));
+        setPage(result.page);
+        setHasNextPage(result.hasNextPage);
+      } catch {
+        setError('Không thể tải danh sách mentor. Vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
+      }
+    },
+    [debouncedSearchTerm, selectedCategory]
+  );
 
   useEffect(() => {
     fetchMentors();
@@ -62,25 +93,16 @@ export default function MentorListScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchMentors(true);
+    fetchMentors({ isRefresh: true, nextPage: 1 });
   }, [fetchMentors]);
 
-  const filteredMentors = mentors.filter((mentor) => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch =
-      !term ||
-      mentor.name.toLowerCase().includes(term) ||
-      mentor.mentorInfo?.headline?.toLowerCase().includes(term) ||
-      mentor.mentorInfo?.expertise?.some((item) => item.toLowerCase().includes(term));
+  const loadMore = useCallback(() => {
+    if (!hasNextPage || loadingMore || loading) {
+      return;
+    }
 
-    const matchesCategory =
-      selectedCategory === ALL_CATEGORY ||
-      mentor.mentorInfo?.expertise?.some((item) =>
-        item.toLowerCase().includes(selectedCategory.toLowerCase())
-      );
-
-    return matchesSearch && matchesCategory;
-  });
+    fetchMentors({ nextPage: page + 1 });
+  }, [fetchMentors, hasNextPage, loading, loadingMore, page]);
 
   if (loading) {
     return <LoadingState message="Đang tìm kiếm các chuyên gia..." />;
@@ -204,7 +226,7 @@ export default function MentorListScreen() {
 
       <Section style={{ flex: 1, paddingTop: 0 }}>
         <FlatList
-          data={filteredMentors}
+          data={mentors}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{
             paddingHorizontal: theme.spacing.lg,
@@ -219,6 +241,11 @@ export default function MentorListScreen() {
               tintColor={theme.colors.primary}
             />
           }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            loadingMore ? <LoadingState message="Đang tải thêm mentor..." fullScreen={false} /> : null
+          }
           ListEmptyComponent={
             <EmptyState
               title="Không tìm thấy mentor"
@@ -231,7 +258,7 @@ export default function MentorListScreen() {
             <MentorCard
               mentor={item}
               index={index}
-              onPress={() => router.push(`/mentor/${item.id}` as any)}
+              onPress={() => router.push(`/mentor/${item.id}` as never)}
             />
           )}
         />

@@ -11,9 +11,9 @@ import { theme } from '../../src/theme/theme';
  * Web equivalent mapping:
  *   "/"         -> index    (Home)
  *   "/mentors"  -> mentor   (Mentors)
- *   "/messages" -> messages (Tin nhan)
- *   "/bookings" -> bookings (Lich hen)
- *   n/a         -> profile  (Ho so ca nhan - mobile only)
+ *   "/messages" -> messages (Tin nhắn)
+ *   "/bookings" -> bookings (Lịch hẹn)
+ *   n/a         -> profile  (Hồ sơ cá nhân - mobile only)
  */
 export default function TabsLayout() {
   return (
@@ -49,7 +49,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="mentor"
         options={{
-          title: 'Chuyên gia',
+          title: 'Mentor',
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />

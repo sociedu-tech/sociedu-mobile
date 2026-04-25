@@ -81,7 +81,7 @@ export const mockMentorListDTO: MentorProfileResponseDTO[] = [
   },
   {
     userId: 2,
-    headline: 'Quản lý Marketing & Nhà sáng tạo nội dung',
+    headline: 'Quản lý Marketing và sáng tạo nội dung',
     expertise: 'Digital Marketing, SEO, Copywriting',
     basePrice: 35,
     ratingAvg: 4.7,
@@ -92,7 +92,7 @@ export const mockMentorListDTO: MentorProfileResponseDTO[] = [
         id: 201,
         mentorId: 2,
         name: 'Lộ trình Content từ Zero đến Hero',
-        description: 'Học cách viết lách có chiến lược và tư duy nội dung.',
+        description: 'Học cách viết có chiến lược và tư duy nội dung.',
         isActive: true,
         versions: [
           {

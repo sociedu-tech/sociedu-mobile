@@ -1,78 +1,69 @@
 # Unishare Mobile - System Overview
 
-Tai lieu tong quan he thong cho `sociedu-mobile`. Doc file nay truoc khi lam task neu can hieu bai toan nghiep vu va cac actor chinh.
+Tai lieu tong quan he thong cho `sociedu-mobile`.
 
 ## 1. San pham nay la gi
 
-Ung dung mobile nay phuc vu nen tang ket noi nguoi hoc voi mentor. Tren mobile, nguoi dung co the:
+Ung dung mobile phuc vu nen tang ket noi nguoi hoc voi mentor. Tren mobile, nguoi dung co the:
 
-- dang ky va dang nhap
-- kham pha mentor
-- xem profile cong khai
+- dang ky, dang nhap, khoi phuc mat khau
+- kham pha mentor va goi hoc
+- chon slot, checkout, xem ket qua thanh toan
 - xem bookings va session
 - nhan tin
-- quan ly profile cua minh
+- quan ly profile
 - vao mentor dashboard hoac admin dashboard theo role
 
-Mobile app khong chua business rule backend day du. Trach nhiem chinh cua app la:
-
-- dieu huong dung flow theo auth va role
-- goi API qua service layer
-- map DTO sang UI model qua adapter
-- giu state man hinh va session on dinh
-- render UI bam theme va responsive system
+Mobile app khong thay the backend business rules. App chiu trach nhiem dieu huong, goi API qua service, map DTO qua adapter, giu session/UI state on dinh va render UI theo theme/responsive system.
 
 ## 2. Actor trong app
 
 | Actor | Vai tro trong mobile |
 | --- | --- |
 | `guest` | Chua dang nhap, chi di duoc auth flow |
-| `user` | Mentee mac dinh, xem mentor, dat lich, chat, quan ly profile |
-| `mentor` | Co them mentor dashboard va booking flow cho mentor |
-| `admin` | Duoc vao admin dashboard qua role guard |
+| `user` | Xem mentor, dat lich, chat, quan ly profile |
+| `mentor` | Co them mentor dashboard va service management khi da verified |
+| `admin` | Vao admin moderation dashboard |
 
-Nguon role hien tai di qua `authStore` va `ProtectedRoute`.
+Client role guard chi phuc vu UX navigation. Backend bat buoc enforce role, ownership, payment verification va permission.
 
-## 3. Module hien co trong codebase
+## 3. Module hien co
 
 | Module | Trang thai |
 | --- | --- |
-| `auth` | Hoan chinh co screen, service, adapter, store |
-| `home` | Hero/home tab cho user |
-| `mentor` | List, detail, dashboard, service, adapter, components |
-| `booking` | List, detail, store, service, adapter, components |
-| `profile` | My profile, public profile, edit profile, service, adapter |
-| `message` | Message list, detail, mock-first chat service |
-| `admin` | Skeleton protected screen |
+| `auth` | Auth flow, SecureStore token, cached user hydrate, session expiry |
+| `home` | Home tab |
+| `mentor` | List/detail/dashboard/services, paginated listing contract |
+| `booking` | Booking list/detail, package checkout voi slot, payment result verification |
+| `profile` | My profile, public profile, edit profile |
+| `message` | Message list/detail, backend/mock-aware chat service |
+| `admin` | Protected moderation dashboard, mentor approve/reject, audit fallback |
 
 ## 4. Luong he thong quan trong
 
 ### Auth va route guard
 
-1. App mo len o `app/_layout.tsx`
-2. `useAuthStore().hydrate()` doc user cache tu AsyncStorage
-3. Neu chua dang nhap, route ngoai `(auth)` se bi redirect ve `/(auth)/login`
-4. Neu da dang nhap, route trong `(auth)` se bi redirect ve `/(tabs)`
-5. Route protected hoac role-specific dung `src/components/ProtectedRoute.tsx`
+1. `app/_layout.tsx` hydrate auth state.
+2. User cache doc tu AsyncStorage; token doc tu SecureStore.
+3. Guest bi redirect ve `/(auth)/login`.
+4. Logged-in user bi redirect khoi auth screens.
+5. Role-specific route dung `ProtectedRoute`.
+6. Refresh token fail se clear storage va `expireSession()` de UI logout ngay.
 
-### API va session
+### API va config
 
-- `src/core/api.ts` la noi cau hinh Axios instance
-- Request interceptor tu gan bearer token
-- Response interceptor thu refresh token mot lan khi gap `401`
-- Session expired se clear token va user cache
-- `src/core/config.ts` dieu khien mock mode bang `USE_MOCK`
+- `src/core/config.ts` doc `EXPO_PUBLIC_API_BASE_URL` va `EXPO_PUBLIC_USE_MOCK`.
+- Production fail-fast neu thieu API URL, API URL khong HTTPS, hoac mock dang bat.
+- `src/core/api.ts` cau hinh Axios, bearer token, refresh queue, sanitized error messages.
 
-### Feature flow hien tai
+### Feature flow
 
-- `home` dan nguoi dung sang mentor list
-- `mentor` lay danh sach mentor, ghep profile cong khai qua `userService`
-- `booking` doi hanh vi giua buyer va mentor dua tren `userRole`
-- `profile` load `getMe()`, cho phep logout, edit, vao dashboard theo role
-- `message` hien tai dung mock data va local in-memory updates
-- `admin` hien la skeleton, nhung da o dung kien truc
+- `mentorService.getAll(query)` tra paginated result; backend nen gom profile fields trong mentor card DTO.
+- Package checkout bat buoc co `slotId`; `/booking/payment-result` verify order status tu backend.
+- Admin service co queue approve/reject mentor va audit log fallback.
+- Chat service ho tro mock/backend, pagination, mark-read, optimistic send rollback va report hook.
 
-## 5. Kien truc thu muc thuc te
+## 5. Kien truc thu muc
 
 ```text
 app/
@@ -82,18 +73,12 @@ app/
   booking/
   mentor/
   messages/
+  package/
   profile/
 
 src/
   components/
   core/
-    adapters/
-    mocks/
-    services/
-    store/
-    api.ts
-    config.ts
-    types.ts
   features/
     admin/
     auth/
@@ -105,31 +90,13 @@ src/
   theme/
 ```
 
-## 6. Rule kien truc quan trong
-
-- `app/` la route layer, khong phai noi de dat business logic nang
-- `src/features/` la source of truth theo domain
-- `src/core/` chu yeu cho ha tang chung va compatibility wrappers
-- `src/components/` chi chua UI dung lai toan app
-- `src/theme/` la nguon token va responsive utilities
-- Screen khong goi `axios` truc tiep
-- Bien doi shape du lieu backend nen o adapter, khong o screen
-
-## 7. Thuc trang can ghi nho
-
-- `API_BASE_URL` dang hard-code theo IP LAN trong `src/core/api.ts`
-- `USE_MOCK` hien dang `false`
-- Chat van mock-first
-- Admin dashboard van la skeleton
-- Lint script hien tai la `eslint .`
-
-## 8. Muc tieu cua moi thay doi
+## 6. Muc tieu cua moi thay doi
 
 Mot thay doi duoc xem la dung khi:
 
-- giai quyet dung van de nghiep vu hoac ky thuat
-- giu on dinh auth flow va role guard
-- dat dung layer trong kien truc hien tai
-- khong tao source of truth kep
-- khong bo qua theme va responsive system
-- co cach verify ro rang, toi thieu bang `npm run lint`
+- giai quyet dung yeu cau nghiep vu/ky thuat
+- giu `app/` mong va logic trong feature dung domain
+- khong pha auth flow, role guard, payment verification assumptions
+- khong goi API truc tiep trong screen
+- khong luu token trong AsyncStorage
+- co verify bang `npm run typecheck` va `npm run lint`

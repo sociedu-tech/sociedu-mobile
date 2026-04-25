@@ -24,7 +24,7 @@ import { userService } from '../services/userService';
 export default function MyProfileScreen() {
   const router = useRouter();
   const authUser = useAuthStore((state) => state.user);
-  const userRole = useAuthStore((state) => state.userRole);
+  const activeRole = useAuthStore((state) => state.activeRole);
   const roles = useAuthStore((state) => state.roles);
   const effectiveRoles = useAuthStore((state) => state.effectiveRoles);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
@@ -37,8 +37,8 @@ export default function MyProfileScreen() {
     try {
       const data = await userService.getMe();
       setFullUser(data);
-    } catch (error) {
-      console.log('Failed to fetch full profile', error);
+    } catch {
+      setFullUser(null);
     }
   }, []);
 
@@ -69,12 +69,12 @@ export default function MyProfileScreen() {
   const displayEmail = fullUser?.email || authUser?.email || '';
   const avatarUri = fullUser?.avatar || null;
   const roleLabels: Record<string, string> = {
-    user: 'Nguoi dung',
+    user: 'Người dùng',
     mentor: 'Mentor',
     admin: 'Admin',
-    guest: 'Guest',
+    guest: 'Khách',
   };
-  const activeRoleLabel = roleLabels[userRole] || 'Nguoi dung';
+  const activeRoleLabel = roleLabels[activeRole] || 'Người dùng';
   const hasMentorRole = roles.includes('mentor');
   const hasApprovedMentorRole = effectiveRoles.includes('mentor');
   const hasAdminRole = effectiveRoles.includes('admin');
@@ -176,7 +176,7 @@ export default function MyProfileScreen() {
               }}
             >
               {effectiveRoles.map((role) => {
-                const active = userRole === role;
+                const active = activeRole === role;
 
                 return (
                   <TouchableOpacity
@@ -220,11 +220,11 @@ export default function MyProfileScreen() {
                 variant="bodyMedium"
                 style={{ fontWeight: '700', color: theme.colors.warning }}
               >
-                Tai khoan mentor dang cho admin duyet
+                Tài khoản mentor đang chờ admin duyệt
               </Typography>
               <Typography variant="caption" color="secondary" style={{ marginTop: 6 }}>
-                Trang thai hien tai: {(mentorApprovalStatus || 'pending').toUpperCase()}. Ban
-                van co the dung app voi vai tro nguoi dung thong thuong.
+                Trạng thái hiện tại: {(mentorApprovalStatus || 'pending').toUpperCase()}. Bạn
+                vẫn có thể dùng app với vai trò người dùng thông thường.
               </Typography>
             </Card>
           )}
@@ -288,7 +288,7 @@ export default function MyProfileScreen() {
               {hasAdminRole && (
                 <ListItem
                   title="Admin Panel"
-                  subtitle="Kiểm duyệt user và hệ thống"
+                  subtitle="Kiểm duyệt người dùng và hệ thống"
                   iconName="shield-checkmark-outline"
                   onPress={() => router.push('/admin/index' as any)}
                 />
@@ -314,7 +314,7 @@ export default function MyProfileScreen() {
           </Typography>
           <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
             <ListItem
-              title="Chứng chỉ và Kinh nghiệm"
+              title="Chứng chỉ và kinh nghiệm"
               subtitle="Cập nhật lịch sử làm việc"
               iconName="document-text-outline"
               onPress={() => {}}

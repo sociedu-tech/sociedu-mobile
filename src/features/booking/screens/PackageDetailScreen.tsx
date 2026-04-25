@@ -9,14 +9,31 @@ import { CustomButton } from '@/src/components/button/CustomButton';
 import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
-import { MentorPackage, MentorPackageVersion } from '@/src/core/types';
+import { AvailabilitySlot, MentorPackage, MentorPackageVersion } from '@/src/core/types';
+import { mentorService } from '@/src/features/mentor/services/mentorService';
 import { theme } from '@/src/theme/theme';
-
-import { mentorService } from '@/src/core/services/mentorService';
 
 import { orderService } from '../services/orderService';
 
 WebBrowser.maybeCompleteAuthSession();
+
+function formatSlot(slot: AvailabilitySlot) {
+  const start = new Date(slot.startsAt);
+  const end = new Date(slot.endsAt);
+
+  return `${start.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+  })} ${start.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })} - ${end.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })}`;
+}
 
 export default function PackageDetailScreen() {
   const router = useRouter();
@@ -24,7 +41,10 @@ export default function PackageDetailScreen() {
 
   const [pkg, setPkg] = useState<MentorPackage | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<MentorPackageVersion | null>(null);
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,10 +58,11 @@ export default function PackageDetailScreen() {
       }
 
       const data = await mentorService.getPackageDetail(id, mentorId);
+      const defaultVersion = data.versions.find((item) => item.isDefault) ?? data.versions[0] ?? null;
       setPkg(data);
-      setSelectedVersion(data.versions.find((item) => item.isDefault) ?? data.versions[0] ?? null);
-    } catch (err: any) {
-      setError(err.message || 'Không thể tải chi tiết gói dịch vụ.');
+      setSelectedVersion(defaultVersion);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tải chi tiết gói dịch vụ.');
     } finally {
       setLoading(false);
     }
@@ -51,35 +72,60 @@ export default function PackageDetailScreen() {
     fetchPackage();
   }, [fetchPackage]);
 
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (!mentorId || !selectedVersion) {
+        setSlots([]);
+        setSelectedSlotId(null);
+        return;
+      }
+
+      setSlotsLoading(true);
+      try {
+        const data = await mentorService.getAvailabilitySlots(mentorId, selectedVersion.id);
+        setSlots(data);
+        setSelectedSlotId(data.find((slot) => slot.isAvailable)?.id ?? null);
+      } catch {
+        setSlots([]);
+        setSelectedSlotId(null);
+      } finally {
+        setSlotsLoading(false);
+      }
+    };
+
+    fetchSlots();
+  }, [mentorId, selectedVersion]);
+
   const handleCheckout = async () => {
     if (!selectedVersion) {
       Alert.alert('Lỗi', 'Vui lòng chọn một phiên bản gói dịch vụ.');
       return;
     }
 
+    if (!selectedSlotId) {
+      Alert.alert('Chưa chọn lịch', 'Vui lòng chọn một khung giờ còn trống trước khi thanh toán.');
+      return;
+    }
+
     setCheckoutLoading(true);
 
     try {
-      const order = await orderService.checkout(Number(selectedVersion.id));
+      const order = await orderService.checkout({
+        packageVersionId: Number(selectedVersion.id),
+        slotId: selectedSlotId,
+      });
 
       if (!order.paymentUrl) {
         throw new Error('Không lấy được URL thanh toán.');
       }
 
       await WebBrowser.openBrowserAsync(order.paymentUrl);
-
-      const finalOrder = await orderService.pollUntilPaid(order.id, 5);
-      if (finalOrder.status === 'paid') {
-        Alert.alert('Thành công', 'Thanh toán thành công. Lịch hẹn đã được tạo.', [
-          { text: 'Xem lịch hẹn', onPress: () => router.replace('/(tabs)/bookings') },
-        ]);
-      } else {
-        Alert.alert('Đang chờ xác nhận', 'Vui lòng kiểm tra tab Lịch hẹn sau ít phút.', [
-          { text: 'Đóng', onPress: () => router.replace('/(tabs)/bookings') },
-        ]);
-      }
-    } catch (err: any) {
-      Alert.alert('Lỗi thanh toán', err.message || 'Đã có lỗi xảy ra trong quá trình thanh toán.');
+      router.replace(`/booking/payment-result?orderId=${order.id}` as never);
+    } catch (err) {
+      Alert.alert(
+        'Lỗi thanh toán',
+        err instanceof Error ? err.message : 'Đã có lỗi xảy ra trong quá trình thanh toán.'
+      );
     } finally {
       setCheckoutLoading(false);
     }
@@ -131,9 +177,7 @@ export default function PackageDetailScreen() {
               onPress={() => setSelectedVersion(version)}
               activeOpacity={0.8}
             >
-              <View style={styles.radio}>
-                {isSelected ? <View style={styles.radioInner} /> : null}
-              </View>
+              <View style={styles.radio}>{isSelected ? <View style={styles.radioInner} /> : null}</View>
               <View style={{ flex: 1 }}>
                 <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
                   {version.duration} phút
@@ -148,6 +192,47 @@ export default function PackageDetailScreen() {
             </TouchableOpacity>
           );
         })}
+
+        <Typography variant="h3" style={styles.sectionTitle}>
+          Chọn khung giờ
+        </Typography>
+
+        {slotsLoading ? (
+          <LoadingState message="Đang tải lịch trống..." fullScreen={false} />
+        ) : slots.length === 0 ? (
+          <Typography variant="body" color="secondary">
+            Chưa có khung giờ khả dụng cho phiên bản gói học này.
+          </Typography>
+        ) : (
+          slots.map((slot) => {
+            const isSelected = selectedSlotId === slot.id;
+            return (
+              <TouchableOpacity
+                key={slot.id}
+                style={[
+                  styles.slotCard,
+                  isSelected ? styles.slotCardSelected : null,
+                  !slot.isAvailable ? styles.slotCardDisabled : null,
+                ]}
+                disabled={!slot.isAvailable}
+                onPress={() => setSelectedSlotId(slot.id)}
+              >
+                <Ionicons
+                  name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                  size={18}
+                  color={slot.isAvailable ? theme.colors.primary : theme.colors.text.disabled}
+                />
+                <Typography
+                  variant="bodyMedium"
+                  color={slot.isAvailable ? 'primary' : 'disabled'}
+                  style={{ marginLeft: theme.spacing.sm }}
+                >
+                  {formatSlot(slot)}
+                </Typography>
+              </TouchableOpacity>
+            );
+          })
+        )}
 
         <Typography variant="h3" style={styles.sectionTitle}>
           Lộ trình buổi học
@@ -194,7 +279,7 @@ export default function PackageDetailScreen() {
             label="Thanh toán ngay"
             onPress={handleCheckout}
             loading={checkoutLoading}
-            disabled={checkoutLoading}
+            disabled={checkoutLoading || !selectedSlotId}
             style={{ flex: 1.4 }}
           />
         </View>
@@ -247,6 +332,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontWeight: '700',
     marginBottom: 12,
+    marginTop: 4,
   },
   versionCard: {
     flexDirection: 'row',
@@ -281,6 +367,23 @@ const styles = StyleSheet.create({
   versionPrice: {
     fontWeight: '800',
     color: theme.colors.primary,
+  },
+  slotCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+    marginBottom: 10,
+  },
+  slotCardSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: `${theme.colors.primaryLight}20`,
+  },
+  slotCardDisabled: {
+    opacity: 0.55,
   },
   curriculumRow: {
     flexDirection: 'row',

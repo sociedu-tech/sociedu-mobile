@@ -29,6 +29,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     return <Redirect href="/(auth)/login" />;
   }
 
+  // Client role checks are only navigation UX. Backend endpoints must still enforce role and ownership.
   if (allowedRoles && !allowedRoles.some((role) => effectiveRoles.includes(role))) {
     return <Redirect href="/(tabs)" />;
   }
