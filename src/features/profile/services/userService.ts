@@ -13,6 +13,15 @@ import {
 import { toUserFull } from '../adapters/userAdapter';
 
 const BASE = '/api/v1/users';
+const ME_BASE = '/api/v1/users/me';
+
+function toIsoDateFromYear(year?: number | null, month = 1, day = 1): string | undefined {
+  if (!year) {
+    return undefined;
+  }
+
+  return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
+}
 
 export const userService = {
   getMe: async (): Promise<User> => {
@@ -47,10 +56,11 @@ export const userService = {
   },
 
   getEducations: async (): Promise<UserEducationResponseDTO[]> => {
-    const res = USE_MOCK
-      ? await mockUserApi.getEducations()
-      : await api.get<{ data: UserEducationResponseDTO[] }>(`${BASE}/educations`);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.getEducations());
+    }
+
+    return unwrap(await api.get<{ data: UserEducationResponseDTO[] }>(`${ME_BASE}/educations`));
   },
 
   addEducation: async (data: {
@@ -60,14 +70,25 @@ export const userService = {
     startYear: number;
     endYear?: number;
   }): Promise<UserEducationResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.addEducation(data)
-      : await api.post<{ data: UserEducationResponseDTO }>(`${BASE}/educations`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.addEducation(data));
+    }
+
+    return unwrap(
+      await api.post<{ data: UserEducationResponseDTO }>(`${ME_BASE}/educations`, {
+        universityId: null,
+        majorId: null,
+        degree: data.degree,
+        startDate: toIsoDateFromYear(data.startYear),
+        endDate: toIsoDateFromYear(data.endYear, 12, 31),
+        isCurrent: data.endYear == null,
+        description: [data.institution, data.fieldOfStudy].filter(Boolean).join(' - ') || null,
+      })
+    );
   },
 
   updateEducation: async (
-    id: number,
+    id: string | number,
     data: Partial<{
       institution: string;
       degree: string;
@@ -76,26 +97,38 @@ export const userService = {
       endYear: number | null;
     }>
   ): Promise<UserEducationResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.updateEducation(id, data)
-      : await api.put<{ data: UserEducationResponseDTO }>(`${BASE}/educations/${id}`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.updateEducation(id, data));
+    }
+
+    return unwrap(
+      await api.put<{ data: UserEducationResponseDTO }>(`${ME_BASE}/educations/${id}`, {
+        universityId: null,
+        majorId: null,
+        degree: data.degree ?? '',
+        startDate: toIsoDateFromYear(data.startYear),
+        endDate: data.endYear === null ? null : toIsoDateFromYear(data.endYear, 12, 31),
+        isCurrent: data.endYear == null,
+        description: [data.institution, data.fieldOfStudy].filter(Boolean).join(' - ') || null,
+      })
+    );
   },
 
-  deleteEducation: async (id: number): Promise<void> => {
+  deleteEducation: async (id: string | number): Promise<void> => {
     if (USE_MOCK) {
       await mockUserApi.deleteEducation(id);
       return;
     }
 
-    await api.delete(`${BASE}/educations/${id}`);
+    await api.delete(`${ME_BASE}/educations/${id}`);
   },
 
   getExperiences: async (): Promise<UserExperienceResponseDTO[]> => {
-    const res = USE_MOCK
-      ? await mockUserApi.getExperiences()
-      : await api.get<{ data: UserExperienceResponseDTO[] }>(`${BASE}/experiences`);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.getExperiences());
+    }
+
+    return unwrap(await api.get<{ data: UserExperienceResponseDTO[] }>(`${ME_BASE}/experiences`));
   },
 
   addExperience: async (data: {
@@ -105,14 +138,24 @@ export const userService = {
     endDate?: string;
     description?: string;
   }): Promise<UserExperienceResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.addExperience(data)
-      : await api.post<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.addExperience(data));
+    }
+
+    return unwrap(
+      await api.post<{ data: UserExperienceResponseDTO }>(`${ME_BASE}/experiences`, {
+        company: data.company,
+        position: data.role,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        isCurrent: !data.endDate,
+        description: data.description,
+      })
+    );
   },
 
   updateExperience: async (
-    id: number,
+    id: string | number,
     data: Partial<{
       company: string;
       role: string;
@@ -121,62 +164,86 @@ export const userService = {
       description: string | null;
     }>
   ): Promise<UserExperienceResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.updateExperience(id, data)
-      : await api.put<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences/${id}`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.updateExperience(id, data));
+    }
+
+    return unwrap(
+      await api.put<{ data: UserExperienceResponseDTO }>(`${ME_BASE}/experiences/${id}`, {
+        company: data.company ?? '',
+        position: data.role ?? '',
+        startDate: data.startDate,
+        endDate: data.endDate,
+        isCurrent: !data.endDate,
+        description: data.description,
+      })
+    );
   },
 
-  deleteExperience: async (id: number): Promise<void> => {
+  deleteExperience: async (id: string | number): Promise<void> => {
     if (USE_MOCK) {
       await mockUserApi.deleteExperience(id);
       return;
     }
 
-    await api.delete(`${BASE}/experiences/${id}`);
+    await api.delete(`${ME_BASE}/experiences/${id}`);
   },
 
   getLanguages: async (): Promise<UserLanguageResponseDTO[]> => {
-    const res = USE_MOCK
-      ? await mockUserApi.getLanguages()
-      : await api.get<{ data: UserLanguageResponseDTO[] }>(`${BASE}/languages`);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.getLanguages());
+    }
+
+    return unwrap(await api.get<{ data: UserLanguageResponseDTO[] }>(`${ME_BASE}/languages`));
   },
 
   addLanguage: async (data: {
     language: string;
     proficiency: string;
   }): Promise<UserLanguageResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.addLanguage(data)
-      : await api.post<{ data: UserLanguageResponseDTO }>(`${BASE}/languages`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.addLanguage(data));
+    }
+
+    return unwrap(
+      await api.post<{ data: UserLanguageResponseDTO }>(`${ME_BASE}/languages`, {
+        language: data.language,
+        level: data.proficiency,
+      })
+    );
   },
 
   updateLanguage: async (
-    id: number,
+    id: string | number,
     data: { language?: string; proficiency?: string }
   ): Promise<UserLanguageResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.updateLanguage(id, data)
-      : await api.put<{ data: UserLanguageResponseDTO }>(`${BASE}/languages/${id}`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.updateLanguage(id, data));
+    }
+
+    return unwrap(
+      await api.put<{ data: UserLanguageResponseDTO }>(`${ME_BASE}/languages/${id}`, {
+        language: data.language ?? '',
+        level: data.proficiency ?? '',
+      })
+    );
   },
 
-  deleteLanguage: async (id: number): Promise<void> => {
+  deleteLanguage: async (id: string | number): Promise<void> => {
     if (USE_MOCK) {
       await mockUserApi.deleteLanguage(id);
       return;
     }
 
-    await api.delete(`${BASE}/languages/${id}`);
+    await api.delete(`${ME_BASE}/languages/${id}`);
   },
 
   getCertificates: async (): Promise<UserCertificateResponseDTO[]> => {
-    const res = USE_MOCK
-      ? await mockUserApi.getCertificates()
-      : await api.get<{ data: UserCertificateResponseDTO[] }>(`${BASE}/certificates`);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.getCertificates());
+    }
+
+    return unwrap(await api.get<{ data: UserCertificateResponseDTO[] }>(`${ME_BASE}/certificates`));
   },
 
   addCertificate: async (data: {
@@ -186,14 +253,24 @@ export const userService = {
     expiryDate?: string;
     credentialUrl?: string;
   }): Promise<UserCertificateResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.addCertificate(data)
-      : await api.post<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.addCertificate(data));
+    }
+
+    return unwrap(
+      await api.post<{ data: UserCertificateResponseDTO }>(`${ME_BASE}/certificates`, {
+        name: data.name,
+        organization: data.issuer,
+        issueDate: data.issueDate,
+        expirationDate: data.expiryDate,
+        credentialFileId: null,
+        description: data.credentialUrl ?? null,
+      })
+    );
   },
 
   updateCertificate: async (
-    id: number,
+    id: string | number,
     data: Partial<{
       name: string;
       issuer: string;
@@ -202,18 +279,28 @@ export const userService = {
       credentialUrl: string | null;
     }>
   ): Promise<UserCertificateResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockUserApi.updateCertificate(id, data)
-      : await api.put<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates/${id}`, data);
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockUserApi.updateCertificate(id, data));
+    }
+
+    return unwrap(
+      await api.put<{ data: UserCertificateResponseDTO }>(`${ME_BASE}/certificates/${id}`, {
+        name: data.name ?? '',
+        organization: data.issuer ?? '',
+        issueDate: data.issueDate,
+        expirationDate: data.expiryDate,
+        credentialFileId: null,
+        description: data.credentialUrl ?? null,
+      })
+    );
   },
 
-  deleteCertificate: async (id: number): Promise<void> => {
+  deleteCertificate: async (id: string | number): Promise<void> => {
     if (USE_MOCK) {
       await mockUserApi.deleteCertificate(id);
       return;
     }
 
-    await api.delete(`${BASE}/certificates/${id}`);
+    await api.delete(`${ME_BASE}/certificates/${id}`);
   },
 };

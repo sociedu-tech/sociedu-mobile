@@ -16,7 +16,22 @@ interface PageResult<T> {
   hasNextPage: boolean;
 }
 
-const BASE = '/api/v1/messages';
+interface BackendConversationDTO {
+  id: string;
+  type?: string | null;
+  bookingId?: string | null;
+  createdAt?: string | null;
+}
+
+interface BackendMessageDTO {
+  id: string;
+  senderId?: string | null;
+  content?: string | null;
+  type?: string | null;
+  createdAt?: string | null;
+}
+
+const BASE = '/api/v1/chat';
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -36,6 +51,30 @@ function paginate<T>(items: T[], query: PageQuery = {}): PageResult<T> {
   };
 }
 
+function mapConversation(dto: BackendConversationDTO): Conversation {
+  const createdAt = dto.createdAt ? new Date(dto.createdAt).getTime() : Date.now();
+
+  return {
+    id: dto.id,
+    name: dto.bookingId ? `Conversation ${dto.bookingId.slice(0, 8)}` : 'Conversation',
+    avatar: '',
+    lastMessage: '',
+    lastMessageTime: createdAt,
+    unreadCount: 0,
+    type: dto.bookingId ? 'session' : 'chat',
+    sessionId: dto.bookingId ?? undefined,
+  };
+}
+
+function mapMessage(dto: BackendMessageDTO): ChatMessage {
+  return {
+    id: dto.id,
+    sender: dto.senderId ? 'mentor' : 'mentee',
+    text: dto.content ?? '',
+    createdAt: dto.createdAt ? new Date(dto.createdAt).getTime() : Date.now(),
+  };
+}
+
 class ChatService {
   async getConversationPage(query: PageQuery = {}): Promise<PageResult<Conversation>> {
     if (USE_MOCK) {
@@ -43,10 +82,8 @@ class ChatService {
       return paginate(MOCK_CONVERSATIONS, query);
     }
 
-    const res = await api.get<{ data: PageResult<Conversation> }>(`${BASE}/conversations`, {
-      params: query,
-    });
-    return unwrap(res);
+    const res = await api.get<{ data: BackendConversationDTO[] }>(`${BASE}/conversations`);
+    return paginate(unwrap(res).map(mapConversation), query);
   }
 
   async getConversations(): Promise<Conversation[]> {
@@ -60,11 +97,10 @@ class ChatService {
       return paginate(MOCK_MESSAGES[conversationId] || [], query);
     }
 
-    const res = await api.get<{ data: PageResult<ChatMessage> }>(
-      `${BASE}/conversations/${conversationId}/messages`,
-      { params: query }
+    const res = await api.get<{ data: BackendMessageDTO[] }>(
+      `${BASE}/conversations/${conversationId}/messages`
     );
-    return unwrap(res);
+    return paginate(unwrap(res).map(mapMessage), query);
   }
 
   async getMessages(conversationId: string): Promise<ChatMessage[]> {
@@ -78,8 +114,7 @@ class ChatService {
       return MOCK_SESSIONS[sessionId] || null;
     }
 
-    const res = await api.get<{ data: ChatSession | null }>(`${BASE}/sessions/${sessionId}`);
-    return unwrap(res);
+    return null;
   }
 
   async sendMessage(
@@ -104,32 +139,26 @@ class ChatService {
       return newMessage;
     }
 
-    const res = await api.post<{ data: ChatMessage }>(
+    const res = await api.post<{ data: BackendMessageDTO }>(
       `${BASE}/conversations/${conversationId}/messages`,
-      { text }
+      { content: text }
     );
-    return unwrap(res);
+    return mapMessage(unwrap(res));
   }
 
-  async markConversationRead(conversationId: string): Promise<void> {
+  async markConversationRead(_conversationId: string): Promise<void> {
     if (USE_MOCK) {
-      const conversation = MOCK_CONVERSATIONS.find((item) => item.id === conversationId);
-      if (conversation) {
-        conversation.unreadCount = 0;
-      }
       return;
     }
-
-    await api.post(`${BASE}/conversations/${conversationId}/read`);
   }
 
-  async reportConversation(conversationId: string, reason: string): Promise<void> {
+  async reportConversation(_conversationId: string, _reason: string): Promise<void> {
     if (USE_MOCK) {
       await delay(200);
       return;
     }
 
-    await api.post(`${BASE}/conversations/${conversationId}/report`, { reason });
+    throw new Error('Backend hien tai chua ho tro bao cao conversation tu mobile.');
   }
 }
 

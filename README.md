@@ -46,6 +46,14 @@ npm install
 npm run start
 ```
 
+De noi backend that:
+
+```bash
+copy .env.example .env
+```
+
+Mac dinh file mau dang tro toi `http://localhost:9992`, phu hop voi cau hinh backend local hien tai.
+
 Lenh khac:
 
 ```bash

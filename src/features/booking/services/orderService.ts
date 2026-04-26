@@ -46,7 +46,7 @@ export const orderService = {
   verifyPaymentResult: async (orderId: string): Promise<Order> => {
     const res = USE_MOCK
       ? await mockOrderApi.getById(orderId)
-      : await api.get<{ data: OrderResponseDTO }>(`${BASE}/${orderId}/payment-result`);
+      : await api.get<{ data: OrderResponseDTO }>(`${BASE}/${orderId}`);
 
     return toOrder(unwrap(res));
   },

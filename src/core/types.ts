@@ -65,7 +65,8 @@ export interface CompleteResetPasswordRequestDTO {
 
 // ── Mentor / Service ──────────────────────────────────────────
 export interface MentorProfileResponseDTO {
-  userId: number;                 // Long
+  userId: string;                 // UUID
+  displayName?: string | null;
   headline: string;
   expertise: string;              // comma-separated "React,Node.js"
   basePrice: number;              // BigDecimal
@@ -76,7 +77,7 @@ export interface MentorProfileResponseDTO {
 }
 
 export interface ServicePackageVersionResponseDTO {
-  id: number;
+  id: string;
   price: number;
   duration: number;               // minutes
   deliveryType: string;
@@ -85,8 +86,8 @@ export interface ServicePackageVersionResponseDTO {
 }
 
 export interface ServicePackageResponseDTO {
-  id: number;
-  mentorId: number;
+  id: string;
+  mentorId: string;
   name: string;
   description: string;
   isActive: boolean;
@@ -94,8 +95,8 @@ export interface ServicePackageResponseDTO {
 }
 
 export interface CurriculumItemResponseDTO {
-  id: number;
-  packageVersionId: number;
+  id: string;
+  packageVersionId: string;
   title: string;
   description: string;
   orderIndex: number;
@@ -115,16 +116,17 @@ export interface OrderResponseDTO {
 }
 
 export interface CheckoutRequestDTO {
-  packageVersionId: number;
-  slotId: string;
+  servicePackageVersionId: string;
+  orderInfo?: string;
 }
 
 // ── Booking ───────────────────────────────────────────────────
 export interface EvidenceResponseDTO {
   id: string;
-  type: string;
-  url: string;
-  uploadedAt: string;
+  uploadedBy: string;
+  fileId: string;
+  description: string | null;
+  createdAt: string;
 }
 
 export interface BookingSessionResponseDTO {
@@ -163,36 +165,46 @@ export interface UserProfileResponseDTO {
 }
 
 export interface UserEducationResponseDTO {
-  id: number;
-  institution: string;
+  id: string;
+  userId: string;
+  universityId: string | null;
+  majorId: string | null;
+  universityName: string | null;
+  majorName: string | null;
   degree: string;
-  fieldOfStudy: string;
-  startYear: number;
-  endYear: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  isCurrent: boolean | null;
+  description: string | null;
 }
 
 export interface UserExperienceResponseDTO {
-  id: number;
+  id: string;
+  userId: string;
   company: string;
-  role: string;
-  startDate: string;
+  position: string;
+  startDate: string | null;
   endDate: string | null;
+  isCurrent: boolean | null;
   description: string | null;
 }
 
 export interface UserLanguageResponseDTO {
-  id: number;
+  id: string;
+  userId: string;
   language: string;
-  proficiency: string;
+  level: string;
 }
 
 export interface UserCertificateResponseDTO {
-  id: number;
+  id: string;
+  userId: string;
   name: string;
-  issuer: string;
-  issueDate: string;
-  expiryDate: string | null;
-  credentialUrl: string | null;
+  organization: string;
+  issueDate: string | null;
+  expirationDate: string | null;
+  credentialFileId: string | null;
+  description: string | null;
 }
 
 export interface UserFullProfileResponseDTO {
@@ -249,7 +261,7 @@ export interface MentorInfo {
 }
 
 export interface UserEducation {
-  id: number;
+  id: string;
   institution: string;
   degree: string;
   fieldOfStudy: string;
@@ -258,7 +270,7 @@ export interface UserEducation {
 }
 
 export interface UserExperience {
-  id: number;
+  id: string;
   company: string;
   role: string;
   startDate: string;
@@ -267,13 +279,13 @@ export interface UserExperience {
 }
 
 export interface UserLanguage {
-  id: number;
+  id: string;
   language: string;
   proficiency: string;
 }
 
 export interface UserCertificate {
-  id: number;
+  id: string;
   name: string;
   issuer: string;
   issueDate: string;
@@ -301,8 +313,9 @@ export interface User {
 
 export interface SessionEvidence {
   id: string;
-  type: string;
-  url: string;
+  fileId: string;
+  uploadedBy: string;
+  description: string | null;
   uploadedAt: string;
 }
 

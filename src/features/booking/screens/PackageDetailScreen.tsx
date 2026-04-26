@@ -102,7 +102,7 @@ export default function PackageDetailScreen() {
       return;
     }
 
-    if (!selectedSlotId) {
+    if (slots.length > 0 && !selectedSlotId) {
       Alert.alert('Chưa chọn lịch', 'Vui lòng chọn một khung giờ còn trống trước khi thanh toán.');
       return;
     }
@@ -111,8 +111,11 @@ export default function PackageDetailScreen() {
 
     try {
       const order = await orderService.checkout({
-        packageVersionId: Number(selectedVersion.id),
-        slotId: selectedSlotId,
+        servicePackageVersionId: selectedVersion.id,
+        orderInfo:
+          slots.length > 0 && selectedSlotId
+            ? `${pkg?.title ?? 'Mentor package'} - ${selectedSlotId}`
+            : `${pkg?.title ?? 'Mentor package'}`,
       });
 
       if (!order.paymentUrl) {
@@ -279,7 +282,7 @@ export default function PackageDetailScreen() {
             label="Thanh toán ngay"
             onPress={handleCheckout}
             loading={checkoutLoading}
-            disabled={checkoutLoading || !selectedSlotId}
+            disabled={checkoutLoading || (slots.length > 0 && !selectedSlotId)}
             style={{ flex: 1.4 }}
           />
         </View>

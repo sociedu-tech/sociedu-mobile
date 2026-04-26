@@ -47,9 +47,10 @@ function toOrderStatus(raw: string): OrderStatus {
 function toEvidence(dto: EvidenceResponseDTO): SessionEvidence {
   return {
     id: dto.id,
-    type: dto.type,
-    url: dto.url,
-    uploadedAt: dto.uploadedAt,
+    fileId: dto.fileId,
+    uploadedBy: dto.uploadedBy,
+    description: dto.description ?? null,
+    uploadedAt: dto.createdAt,
   };
 }
 

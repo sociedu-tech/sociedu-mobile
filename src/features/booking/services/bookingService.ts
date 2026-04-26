@@ -60,14 +60,17 @@ export const bookingService = {
   addEvidence: async (
     bookingId: string,
     sessionId: string,
-    data: { type: string; url: string }
+    data: { fileId: string; description?: string }
   ): Promise<EvidenceResponseDTO> => {
-    const res = USE_MOCK
-      ? await mockBookingApi.addEvidence(bookingId, sessionId, data)
-      : await api.post<{ data: EvidenceResponseDTO }>(
-          `${BASE}/${bookingId}/sessions/${sessionId}/evidences`,
-          data
-        );
-    return unwrap(res);
+    if (USE_MOCK) {
+      return unwrap(await mockBookingApi.addEvidence(bookingId, sessionId, data));
+    }
+
+    return unwrap(
+      await api.post<{ data: EvidenceResponseDTO }>(
+        `${BASE}/${bookingId}/sessions/${sessionId}/evidences`,
+        data
+      )
+    );
   },
 };

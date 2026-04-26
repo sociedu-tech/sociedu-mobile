@@ -22,13 +22,16 @@ function buildAvatarUrl(fileId: string | null | undefined): string | null {
 }
 
 function toEducation(dto: UserEducationResponseDTO): UserEducation {
+  const startYear = dto.startDate ? new Date(dto.startDate).getFullYear() : new Date().getFullYear();
+  const endYear = dto.endDate ? new Date(dto.endDate).getFullYear() : null;
+
   return {
     id: dto.id,
-    institution: dto.institution,
+    institution: dto.universityName ?? '',
     degree: dto.degree,
-    fieldOfStudy: dto.fieldOfStudy,
-    startYear: dto.startYear,
-    endYear: dto.endYear ?? null,
+    fieldOfStudy: dto.majorName ?? '',
+    startYear,
+    endYear,
   };
 }
 
@@ -36,8 +39,8 @@ function toExperience(dto: UserExperienceResponseDTO): UserExperience {
   return {
     id: dto.id,
     company: dto.company,
-    role: dto.role,
-    startDate: dto.startDate,
+    role: dto.position,
+    startDate: dto.startDate ?? '',
     endDate: dto.endDate ?? null,
     description: dto.description ?? null,
   };
@@ -47,7 +50,7 @@ function toLanguage(dto: UserLanguageResponseDTO): UserLanguage {
   return {
     id: dto.id,
     language: dto.language,
-    proficiency: dto.proficiency,
+    proficiency: dto.level,
   };
 }
 
@@ -55,10 +58,10 @@ function toCertificate(dto: UserCertificateResponseDTO): UserCertificate {
   return {
     id: dto.id,
     name: dto.name,
-    issuer: dto.issuer,
-    issueDate: dto.issueDate,
-    expiryDate: dto.expiryDate ?? null,
-    credentialUrl: dto.credentialUrl ?? null,
+    issuer: dto.organization,
+    issueDate: dto.issueDate ?? '',
+    expiryDate: dto.expirationDate ?? null,
+    credentialUrl: buildAvatarUrl(dto.credentialFileId),
   };
 }
 

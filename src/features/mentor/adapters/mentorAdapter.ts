@@ -62,7 +62,7 @@ export function toMentorUser(dto: MentorProfileResponseDTO): User {
 
   return {
     id: String(dto.userId),
-    name: '',
+    name: dto.displayName ?? '',
     email: '',
     avatar: null,
     role: 'mentor',

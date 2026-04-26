@@ -20,6 +20,14 @@ export interface AuditLogItem {
   createdAt: string;
 }
 
+interface BackendAdminUser {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  roles?: string[] | null;
+}
+
 const BASE = '/api/v1/admin';
 
 const mockPendingMentors: MentorModerationItem[] = [
@@ -68,8 +76,21 @@ export const adminService = {
       return mockPendingMentors.filter((item) => item.status === 'pending');
     }
 
-    const res = await api.get<{ data: MentorModerationItem[] }>(`${BASE}/mentors/pending`);
-    return unwrap(res);
+    const res = await api.get<{ data: BackendAdminUser[] }>(`${BASE}/users`);
+    const users = unwrap(res);
+
+    return users
+      .filter((user) => !(user.roles ?? []).some((role) => role?.toUpperCase().includes('MENTOR')))
+      .map((user) => ({
+        id: user.id,
+        userId: user.id,
+        name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email || 'Unknown user',
+        email: user.email ?? '',
+        headline: 'Backend hien tai chua cung cap ho so moderation cho mentor.',
+        expertise: [],
+        submittedAt: new Date().toISOString(),
+        status: 'pending' as const,
+      }));
   },
 
   approveMentor: async (moderationId: string): Promise<void> => {
@@ -83,7 +104,7 @@ export const adminService = {
       return;
     }
 
-    await api.post(`${BASE}/mentors/${moderationId}/approve`);
+    await api.patch(`${BASE}/users/${moderationId}/role`, { role: 'MENTOR' });
   },
 
   rejectMentor: async (moderationId: string, reason: string): Promise<void> => {
@@ -97,7 +118,7 @@ export const adminService = {
       return;
     }
 
-    await api.post(`${BASE}/mentors/${moderationId}/reject`, { reason });
+    await api.patch(`${BASE}/users/${moderationId}/role`, { role: 'USER' });
   },
 
   getAuditLogs: async (): Promise<AuditLogItem[]> => {
@@ -106,7 +127,6 @@ export const adminService = {
       return mockAuditLogs;
     }
 
-    const res = await api.get<{ data: AuditLogItem[] }>(`${BASE}/audit-logs`);
-    return unwrap(res);
+    return [];
   },
 };
