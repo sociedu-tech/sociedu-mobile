@@ -19,7 +19,9 @@ export default function RootLayout() {
   }, [hydrate]);
 
   useEffect(() => {
-    if (!hydrated || loading) return;
+    if (!hydrated || loading) {
+      return;
+    }
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -47,6 +49,7 @@ export default function RootLayout() {
       <Stack.Screen name="booking/payment-result" options={{ headerShown: false }} />
       <Stack.Screen name="admin/index" options={{ headerShown: true, title: 'Quản trị' }} />
       <Stack.Screen name="mentor/dashboard" options={{ headerShown: true, title: 'Mentor Dashboard' }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

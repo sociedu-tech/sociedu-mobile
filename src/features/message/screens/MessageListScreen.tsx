@@ -14,12 +14,13 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Typography } from '@/src/components/typography/Typography';
 import { Avatar } from '@/src/components/ui/Avatar';
+import { TEXT } from '@/src/core/constants/strings';
 import { Conversation } from '@/src/core/types';
 import { theme } from '@/src/theme/theme';
 
 import { chatService } from '../services/chatService';
 
-type FilterTab = 'Tất cả' | 'Chưa đọc' | 'Lịch hẹn';
+type FilterTab = typeof TEXT.MESSAGE.ALL | typeof TEXT.MESSAGE.UNREAD | typeof TEXT.MESSAGE.SESSION;
 
 const formatTime = (timestamp: number) => {
   const date = new Date(timestamp);
@@ -38,7 +39,7 @@ export default function MessageListScreen() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<FilterTab>('Tất cả');
+  const [activeTab, setActiveTab] = useState<FilterTab>(TEXT.MESSAGE.ALL);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -64,9 +65,9 @@ export default function MessageListScreen() {
           conversation.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesTab =
-          activeTab === 'Tất cả' ||
-          (activeTab === 'Chưa đọc' && conversation.unreadCount > 0) ||
-          (activeTab === 'Lịch hẹn' && conversation.type === 'session');
+          activeTab === TEXT.MESSAGE.ALL ||
+          (activeTab === TEXT.MESSAGE.UNREAD && conversation.unreadCount > 0) ||
+          (activeTab === TEXT.MESSAGE.SESSION && conversation.type === 'session');
 
         return matchesSearch && matchesTab;
       })
@@ -125,7 +126,7 @@ export default function MessageListScreen() {
           <View style={styles.sessionTag}>
             <Ionicons name="calendar-outline" size={12} color={theme.colors.info} />
             <Typography variant="caption" style={{ color: theme.colors.info, marginLeft: 4, fontWeight: '600' }}>
-              Phiên học
+              {TEXT.MESSAGE.SESSION_TAG}
             </Typography>
           </View>
         )}
@@ -139,13 +140,13 @@ export default function MessageListScreen() {
 
       <View style={styles.headerContainer}>
         <Typography variant="h2" weight="800" style={{ marginBottom: theme.spacing.md }}>
-          Tin nhắn
+          {TEXT.MESSAGE.TITLE}
         </Typography>
 
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={20} color={theme.colors.text.secondary} />
           <TextInput
-            placeholder="Tìm kiếm tin nhắn..."
+            placeholder={TEXT.MESSAGE.SEARCH_PLACEHOLDER}
             style={styles.searchInput}
             value={searchTerm}
             onChangeText={setSearchTerm}
@@ -160,7 +161,7 @@ export default function MessageListScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        {(['Tất cả', 'Chưa đọc', 'Lịch hẹn'] as FilterTab[]).map((tab) => (
+        {[TEXT.MESSAGE.ALL, TEXT.MESSAGE.UNREAD, TEXT.MESSAGE.SESSION].map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -188,7 +189,7 @@ export default function MessageListScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="chatbubble-ellipses-outline" size={64} color={theme.colors.text.disabled} />
               <Typography variant="body" color="secondary" style={{ marginTop: 16 }}>
-                Không tìm thấy cuộc hội thoại nào
+                {TEXT.MESSAGE.EMPTY}
               </Typography>
             </View>
           }

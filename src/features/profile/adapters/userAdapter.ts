@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@/src/core/api';
+import { API_PATHS, buildAbsoluteApiUrl } from '@/src/core/backend';
 import {
   User,
   UserCertificate,
@@ -18,7 +18,7 @@ function buildAvatarUrl(fileId: string | null | undefined): string | null {
     return null;
   }
 
-  return `${API_BASE_URL}/api/v1/files/${fileId}`;
+  return buildAbsoluteApiUrl(API_PATHS.files.publicById(fileId));
 }
 
 function toEducation(dto: UserEducationResponseDTO): UserEducation {

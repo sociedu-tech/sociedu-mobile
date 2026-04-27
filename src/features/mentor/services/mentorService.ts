@@ -1,4 +1,5 @@
 import { api, unwrap } from '@/src/core/api';
+import { API_PATHS } from '@/src/core/backend';
 import { USE_MOCK } from '@/src/core/config';
 import { mockMentorApi } from '@/src/core/mocks/api/mockUserMentorApi';
 import {
@@ -12,9 +13,6 @@ import {
 import { userService } from '@/src/features/profile/services/userService';
 
 import { toMentorList, toMentorPackage, toMentorUser } from '../adapters/mentorAdapter';
-
-const BASE = '/api/v1/mentors';
-const PACKAGE_BASE = '/api/v1/service-packages';
 
 interface SpringPage<T> {
   content: T[];
@@ -174,7 +172,7 @@ export const mentorService = {
 
     const res = await api.get<{
       data: MentorCardDTO[] | SpringPage<MentorCardDTO>;
-    }>(BASE, {
+    }>(API_PATHS.mentors.base, {
       params: {
         page: Math.max(page - 1, 0),
         size: pageSize,
@@ -205,7 +203,7 @@ export const mentorService = {
   getProfile: async (id: string | number): Promise<User> => {
     const rawRes = USE_MOCK
       ? await mockMentorApi.getProfile(id)
-      : await api.get<{ data: MentorProfileResponseDTO }>(`${BASE}/${id}`);
+      : await api.get<{ data: MentorProfileResponseDTO }>(API_PATHS.mentors.byId(id));
 
     const mentor = toMentorUser(unwrap(rawRes));
 
@@ -233,7 +231,7 @@ export const mentorService = {
 
     return normalizeSpringPage(
       unwrap(
-        await api.get<{ data: SpringPage<ServicePackageResponseDTO> }>(`${BASE}/${id}/packages`, {
+        await api.get<{ data: SpringPage<ServicePackageResponseDTO> }>(API_PATHS.mentors.packages(id), {
           params: { page: 0, size: 20 },
         })
       ),
@@ -257,7 +255,7 @@ export const mentorService = {
       const packages = unwrap(await mockMentorApi.getPackageDetail(packageId));
       dto = packages.find((item) => String(item.id) === normalizedId);
     } else {
-      const res = await api.get<{ data: ServicePackageResponseDTO }>(`${PACKAGE_BASE}/${packageId}`);
+      const res = await api.get<{ data: ServicePackageResponseDTO }>(API_PATHS.servicePackages.byId(packageId));
       dto = unwrap(res);
     }
 
@@ -300,7 +298,7 @@ export const mentorService = {
 
     return normalizeSpringPage(
       unwrap(
-        await api.get<{ data: SpringPage<ServicePackageResponseDTO> }>(`${BASE}/me/packages`, {
+        await api.get<{ data: SpringPage<ServicePackageResponseDTO> }>(API_PATHS.mentors.mePackages, {
           params: { page: 0, size: 20 },
         })
       ),
@@ -321,7 +319,7 @@ export const mentorService = {
       return found;
     }
 
-    const res = await api.get<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages/${packageId}`);
+    const res = await api.get<{ data: ServicePackageResponseDTO }>(API_PATHS.mentors.mePackageItem(packageId));
     return toMentorPackage(unwrap(res));
   },
 
@@ -332,7 +330,7 @@ export const mentorService = {
   }): Promise<User> => {
     const res = USE_MOCK
       ? await mockMentorApi.getProfile(1)
-      : await api.put<{ data: MentorProfileResponseDTO }>(`${BASE}/me`, data);
+      : await api.put<{ data: MentorProfileResponseDTO }>(API_PATHS.mentors.me, data);
     return toMentorUser(unwrap(res));
   },
 
@@ -362,7 +360,7 @@ export const mentorService = {
     }
 
     return unwrap(
-      await api.post<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages`, {
+      await api.post<{ data: ServicePackageResponseDTO }>(API_PATHS.mentors.mePackages, {
         name: data.name,
         description: data.description ?? '',
         price: data.price,
@@ -392,14 +390,14 @@ export const mentorService = {
 
     if (!data.id) {
       const created = await api.post<{ data: ServicePackageResponseDTO }>(
-        `${BASE}/me/packages`,
+        API_PATHS.mentors.mePackages,
         buildCreatePayload(data)
       );
       return toMentorPackage(unwrap(created));
     }
 
     let packageDto = unwrap(
-      await api.get<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages/${data.id}`)
+      await api.get<{ data: ServicePackageResponseDTO }>(API_PATHS.mentors.mePackageItem(data.id))
     );
 
     const currentDefault =
@@ -410,7 +408,7 @@ export const mentorService = {
       (packageDto.description ?? '') !== (data.description ?? '')
     ) {
       packageDto = unwrap(
-        await api.put<{ data: ServicePackageResponseDTO }>(`${PACKAGE_BASE}/${data.id}`, {
+        await api.put<{ data: ServicePackageResponseDTO }>(API_PATHS.servicePackages.byId(data.id), {
           name: data.name,
           description: data.description ?? '',
         })
@@ -428,7 +426,7 @@ export const mentorService = {
 
     if (needsNewVersion) {
       packageDto = unwrap(
-        await api.post<{ data: ServicePackageResponseDTO }>(`${PACKAGE_BASE}/${data.id}/versions`, {
+        await api.post<{ data: ServicePackageResponseDTO }>(API_PATHS.servicePackages.versions(data.id), {
           price: primaryVersion.price,
           duration: primaryVersion.duration,
           deliveryType: primaryVersion.deliveryType ?? 'ONLINE',
@@ -445,13 +443,13 @@ export const mentorService = {
 
     for (const curriculum of activeVersion.curriculums ?? []) {
       await api.delete(
-        `${PACKAGE_BASE}/${data.id}/versions/${activeVersion.id}/curriculums/${curriculum.id}`
+        API_PATHS.servicePackages.curriculumItem(data.id, activeVersion.id, curriculum.id)
       );
     }
 
     for (const [index, curriculum] of primaryVersion.curriculums.entries()) {
       await api.post<{ data: CurriculumItemResponseDTO }>(
-        `${PACKAGE_BASE}/${data.id}/versions/${activeVersion.id}/curriculums`,
+        API_PATHS.mentors.curriculum(data.id, activeVersion.id),
         {
           title: curriculum.title,
           description: curriculum.description ?? '',
@@ -462,12 +460,12 @@ export const mentorService = {
     }
 
     let finalPackage = unwrap(
-      await api.get<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages/${data.id}`)
+      await api.get<{ data: ServicePackageResponseDTO }>(API_PATHS.mentors.mePackageItem(data.id))
     );
 
     if ((data.isActive ?? true) !== (finalPackage.isActive ?? true)) {
       finalPackage = unwrap(
-        await api.patch<{ data: ServicePackageResponseDTO }>(`${PACKAGE_BASE}/${data.id}/toggle`)
+        await api.patch<{ data: ServicePackageResponseDTO }>(API_PATHS.servicePackages.toggle(data.id))
       );
     }
 
@@ -483,7 +481,7 @@ export const mentorService = {
     }
 
     return toMentorPackage(
-      unwrap(await api.patch<{ data: ServicePackageResponseDTO }>(`${PACKAGE_BASE}/${packageId}/toggle`))
+      unwrap(await api.patch<{ data: ServicePackageResponseDTO }>(API_PATHS.servicePackages.toggle(packageId)))
     );
   },
 
@@ -493,7 +491,7 @@ export const mentorService = {
       return;
     }
 
-    await api.delete(`${BASE}/me/packages/${pkgId}`);
+    await api.delete(API_PATHS.mentors.mePackageItem(pkgId));
   },
 
   getCurriculum: async (pkgId: string | number, verId: string | number) => {
@@ -504,7 +502,7 @@ export const mentorService = {
     return normalizeSpringPage(
       unwrap(
         await api.get<{ data: SpringPage<CurriculumItemResponseDTO> }>(
-          `${BASE}/me/packages/${pkgId}/versions/${verId}/curriculums`,
+          API_PATHS.mentors.curriculum(pkgId, verId),
           { params: { page: 0, size: 50 } }
         )
       ),
@@ -521,7 +519,7 @@ export const mentorService = {
     const res = USE_MOCK
       ? await mockMentorApi.addCurriculumItem(pkgId, verId, data)
       : await api.post<{ data: CurriculumItemResponseDTO }>(
-          `${BASE}/me/packages/${pkgId}/versions/${verId}/curriculums`,
+          API_PATHS.mentors.curriculum(pkgId, verId),
           data
         );
     return unwrap(res);

@@ -10,6 +10,7 @@ import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
 import { AvailabilitySlot, MentorPackage, MentorPackageVersion } from '@/src/core/types';
+import { TEXT } from '@/src/core/constants/strings';
 import { mentorService } from '@/src/features/mentor/services/mentorService';
 import { theme } from '@/src/theme/theme';
 
@@ -62,7 +63,7 @@ export default function PackageDetailScreen() {
       setPkg(data);
       setSelectedVersion(defaultVersion);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tải chi tiết gói dịch vụ.');
+      setError(err instanceof Error ? err.message : TEXT.PACKAGE.PACKAGE_LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -98,12 +99,12 @@ export default function PackageDetailScreen() {
 
   const handleCheckout = async () => {
     if (!selectedVersion) {
-      Alert.alert('Lỗi', 'Vui lòng chọn một phiên bản gói dịch vụ.');
+      Alert.alert('Lỗi', TEXT.PACKAGE.SELECT_VERSION);
       return;
     }
 
     if (slots.length > 0 && !selectedSlotId) {
-      Alert.alert('Chưa chọn lịch', 'Vui lòng chọn một khung giờ còn trống trước khi thanh toán.');
+      Alert.alert('Chưa chọn lịch', TEXT.PACKAGE.SELECT_SLOT);
       return;
     }
 
@@ -119,7 +120,7 @@ export default function PackageDetailScreen() {
       });
 
       if (!order.paymentUrl) {
-        throw new Error('Không lấy được URL thanh toán.');
+        throw new Error(TEXT.PACKAGE.PAYMENT_URL_ERROR);
       }
 
       await WebBrowser.openBrowserAsync(order.paymentUrl);
@@ -127,7 +128,7 @@ export default function PackageDetailScreen() {
     } catch (err) {
       Alert.alert(
         'Lỗi thanh toán',
-        err instanceof Error ? err.message : 'Đã có lỗi xảy ra trong quá trình thanh toán.'
+        err instanceof Error ? err.message : TEXT.PACKAGE.PAYMENT_ERROR
       );
     } finally {
       setCheckoutLoading(false);
@@ -135,11 +136,11 @@ export default function PackageDetailScreen() {
   };
 
   if (loading) {
-    return <LoadingState message="Đang tải chi tiết gói dịch vụ..." />;
+    return <LoadingState message={TEXT.PACKAGE.PACKAGE_LOAD_LOADING} />;
   }
 
   if (error || !pkg) {
-    return <ErrorState error={error || 'Không tìm thấy gói dịch vụ.'} onRetry={fetchPackage} />;
+    return <ErrorState error={error || TEXT.PACKAGE.PACKAGE_NOT_FOUND} onRetry={fetchPackage} />;
   }
 
   const curriculums = selectedVersion?.curriculums ?? [];
@@ -151,7 +152,7 @@ export default function PackageDetailScreen() {
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
         <Typography variant="bodyMedium" style={styles.headerTitle}>
-          Chi tiết gói dịch vụ
+          {TEXT.PACKAGE.DETAIL_TITLE}
         </Typography>
         <View style={{ width: 24 }} />
       </View>
@@ -162,12 +163,12 @@ export default function PackageDetailScreen() {
             {pkg.title}
           </Typography>
           <Typography variant="body" color="secondary" style={styles.packageDesc}>
-            {pkg.description || 'Mentor sẽ cập nhật mô tả chi tiết cho gói học này sau.'}
+            {pkg.description || TEXT.PACKAGE.DEFAULT_DESCRIPTION}
           </Typography>
         </View>
 
         <Typography variant="h3" style={styles.sectionTitle}>
-          Chọn phiên bản gói học
+          {TEXT.PACKAGE.VERSION_TITLE}
         </Typography>
 
         {pkg.versions.map((version) => {
@@ -197,14 +198,14 @@ export default function PackageDetailScreen() {
         })}
 
         <Typography variant="h3" style={styles.sectionTitle}>
-          Chọn khung giờ
+          {TEXT.PACKAGE.SLOT_TITLE}
         </Typography>
 
         {slotsLoading ? (
-          <LoadingState message="Đang tải lịch trống..." fullScreen={false} />
+          <LoadingState message={TEXT.PACKAGE.SLOT_LOADING} fullScreen={false} />
         ) : slots.length === 0 ? (
           <Typography variant="body" color="secondary">
-            Chưa có khung giờ khả dụng cho phiên bản gói học này.
+            {TEXT.PACKAGE.NO_SLOT}
           </Typography>
         ) : (
           slots.map((slot) => {
@@ -238,12 +239,12 @@ export default function PackageDetailScreen() {
         )}
 
         <Typography variant="h3" style={styles.sectionTitle}>
-          Lộ trình buổi học
+          {TEXT.PACKAGE.CURRICULUM_TITLE}
         </Typography>
 
         {curriculums.length === 0 ? (
           <Typography variant="body" color="secondary">
-            Chưa có lộ trình chi tiết cho phiên bản gói học này.
+            {TEXT.PACKAGE.NO_CURRICULUM}
           </Typography>
         ) : (
           curriculums.map((item, index) => (
@@ -257,7 +258,7 @@ export default function PackageDetailScreen() {
                   {item.title}
                 </Typography>
                 <Typography variant="caption" color="secondary" style={{ marginTop: 4 }}>
-                  {item.description || 'Nội dung sẽ được mentor cập nhật thêm.'}
+                  {item.description || TEXT.PACKAGE.DEFAULT_CURRICULUM_DESCRIPTION}
                 </Typography>
                 <Typography variant="caption" color="secondary" style={{ marginTop: 6 }}>
                   {item.duration} phút
@@ -272,14 +273,14 @@ export default function PackageDetailScreen() {
         <View style={styles.footer}>
           <View style={{ flex: 1 }}>
             <Typography variant="caption" color="secondary">
-              Tổng thanh toán
+              {TEXT.PACKAGE.TOTAL_PAYMENT}
             </Typography>
             <Typography variant="h2" style={styles.footerPrice}>
               ${selectedVersion.price}
             </Typography>
           </View>
           <CustomButton
-            label="Thanh toán ngay"
+            label={TEXT.PACKAGE.PAY_NOW}
             onPress={handleCheckout}
             loading={checkoutLoading}
             disabled={checkoutLoading || (slots.length > 0 && !selectedSlotId)}

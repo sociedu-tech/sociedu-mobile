@@ -15,6 +15,7 @@ import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
 import { Section } from '@/src/components/ui/Section';
+import { TEXT } from '@/src/core/constants/strings';
 import { User } from '@/src/core/types';
 import { theme } from '@/src/theme/theme';
 
@@ -126,17 +127,13 @@ export default function MentorListScreen() {
           }}
         >
           <Typography variant="h2" style={{ color: '#FFF', fontWeight: '800' }}>
-            Kết nối với{' '}
-            <Typography variant="h2" style={{ color: theme.colors.primary, fontWeight: '800' }}>
-              Mentor
-            </Typography>{' '}
-            hàng đầu
+            {TEXT.MENTOR.LIST_HERO_TITLE}
           </Typography>
           <Typography
             variant="body"
             style={{ color: 'rgba(255,255,255,0.6)', marginTop: theme.spacing.sm }}
           >
-            Nhận tư vấn 1-1 để bứt phá trong học tập và sự nghiệp.
+            {TEXT.MENTOR.LIST_HERO_SUBTITLE}
           </Typography>
           <View
             style={{
@@ -160,7 +157,7 @@ export default function MentorListScreen() {
                 padding: 0,
                 marginLeft: theme.spacing.sm,
               }}
-              placeholder="Tìm theo tên, chuyên môn..."
+              placeholder={TEXT.MENTOR.SEARCH_PLACEHOLDER}
               placeholderTextColor={theme.colors.text.disabled}
               value={searchTerm}
               onChangeText={setSearchTerm}
@@ -248,8 +245,8 @@ export default function MentorListScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              title="Không tìm thấy mentor"
-              description="Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc."
+              title={TEXT.MENTOR.EMPTY_TITLE}
+              description={TEXT.MENTOR.EMPTY_DESCRIPTION}
               icon="person-outline"
               fullScreen={false}
             />

@@ -1,17 +1,16 @@
 import { api, unwrap } from '@/src/core/api';
+import { API_PATHS } from '@/src/core/backend';
 import { USE_MOCK } from '@/src/core/config';
 import { mockOrderApi } from '@/src/core/mocks/api/mockBookingApi';
 import { CheckoutRequestDTO, Order, OrderResponseDTO } from '@/src/core/types';
 
 import { toOrder, toOrderList } from '../adapters/bookingAdapter';
 
-const BASE = '/api/v1/orders';
-
 export const orderService = {
   checkout: async (payload: CheckoutRequestDTO): Promise<Order> => {
     const res = USE_MOCK
       ? await mockOrderApi.checkout(payload)
-      : await api.post<{ data: OrderResponseDTO }>(`${BASE}/checkout`, payload);
+      : await api.post<{ data: OrderResponseDTO }>(API_PATHS.orders.checkout, payload);
 
     return toOrder(unwrap(res));
   },
@@ -19,14 +18,14 @@ export const orderService = {
   getMyOrders: async (): Promise<Order[]> => {
     const res = USE_MOCK
       ? await mockOrderApi.getMyOrders()
-      : await api.get<{ data: OrderResponseDTO[] }>(`${BASE}/me`);
+      : await api.get<{ data: OrderResponseDTO[] }>(API_PATHS.orders.mine);
     return toOrderList(unwrap(res));
   },
 
   getById: async (id: string): Promise<Order> => {
     const res = USE_MOCK
       ? await mockOrderApi.getById(id)
-      : await api.get<{ data: OrderResponseDTO }>(`${BASE}/${id}`);
+      : await api.get<{ data: OrderResponseDTO }>(API_PATHS.orders.byId(id));
 
     return toOrder(unwrap(res));
   },
@@ -46,7 +45,7 @@ export const orderService = {
   verifyPaymentResult: async (orderId: string): Promise<Order> => {
     const res = USE_MOCK
       ? await mockOrderApi.getById(orderId)
-      : await api.get<{ data: OrderResponseDTO }>(`${BASE}/${orderId}`);
+      : await api.get<{ data: OrderResponseDTO }>(API_PATHS.orders.byId(orderId));
 
     return toOrder(unwrap(res));
   },

@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { TextInput } from '@/src/components/form/TextInput';
 import { Typography } from '@/src/components/typography/Typography';
+import { Avatar } from '@/src/components/ui/Avatar';
+import { TEXT } from '@/src/core/constants/strings';
 import { scaleFont } from '@/src/theme/responsiveUtils';
 import { theme } from '@/src/theme/theme';
 
@@ -86,11 +88,11 @@ export default function EditProfileScreen() {
         bio: bio.trim() || undefined,
       });
 
-      Alert.alert('Thành công', 'Đã cập nhật hồ sơ.', [
+      Alert.alert(TEXT.COMMON.SUCCESS, TEXT.PROFILE.SAVE_SUCCESS, [
         { text: 'Xong', onPress: () => router.back() },
       ]);
     } catch (err: any) {
-      Alert.alert('Lỗi', err.message || 'Không thể lưu hồ sơ.');
+      Alert.alert('Lỗi', err.message || TEXT.PROFILE.SAVE_ERROR);
     } finally {
       setLoading(false);
     }
@@ -119,29 +121,23 @@ export default function EditProfileScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
-          <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>Chỉnh sửa hồ sơ</Typography>
+          <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>{TEXT.PROFILE.EDIT_TITLE}</Typography>
           <View style={{ width: 24 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.avatarSection}>
-            <View style={styles.avatarBox}>
-              {avatarUri ? (
-                <View style={styles.avatarBoxInner} />
-              ) : (
-                <Typography variant="h1" style={styles.avatarInitials}>{getInitials()}</Typography>
-              )}
-            </View>
+            <Avatar uri={avatarUri || undefined} initials={getInitials()} size={80} />
 
             <TouchableOpacity onPress={handlePickImage} style={styles.avatarChangeBtn}>
               <Typography variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                Thay đổi ảnh
+                {TEXT.PROFILE.CHANGE_AVATAR}
               </Typography>
             </TouchableOpacity>
           </View>
 
           <View style={styles.formSection}>
-            <Typography variant="bodyMedium" style={styles.sectionHeader}>THÔNG TIN CƠ BẢN</Typography>
+            <Typography variant="bodyMedium" style={styles.sectionHeader}>{TEXT.PROFILE.BASIC_INFO}</Typography>
 
             <View style={styles.rowInputs}>
               <View style={{ flex: 1, paddingRight: 8 }}>
@@ -191,7 +187,7 @@ export default function EditProfileScreen() {
 
         <View style={styles.footer}>
           <CustomButton
-            label="Lưu thay đổi"
+            label={TEXT.PROFILE.SAVE_CHANGES}
             size="lg"
             onPress={handleSave}
             loading={loading}
@@ -236,31 +232,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  avatarBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatarBoxInner: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  avatarInitials: {
-    color: theme.colors.primary,
-    fontWeight: '900',
-    fontSize: Math.min(scaleFont(28), 28),
-    textAlign: 'center',
-  },
   avatarChangeBtn: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: `${theme.colors.primaryLight}30`,
     borderRadius: 16,
+    marginTop: 16,
   },
   formSection: {
     marginBottom: 24,

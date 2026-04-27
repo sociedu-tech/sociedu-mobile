@@ -8,6 +8,8 @@ import { CustomButton } from '@/src/components/button/CustomButton';
 import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
+import { Avatar } from '@/src/components/ui/Avatar';
+import { TEXT } from '@/src/core/constants/strings';
 import { User } from '@/src/core/types';
 import { theme } from '@/src/theme/theme';
 
@@ -77,38 +79,38 @@ export default function MentorDetailScreen() {
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
         <Typography variant="bodyMedium" style={styles.headerTitle}>
-          Chi tiết mentor
+          {TEXT.MENTOR.DETAIL_TITLE}
         </Typography>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.profileHeader}>
-          <View style={styles.avatarPlaceholder} />
+          <Avatar uri={mentor.avatar || undefined} initials={mentor.name.slice(0, 2).toUpperCase()} size={88} />
           <Typography variant="h2" style={styles.name}>
             {mentor.name}
           </Typography>
           <Typography variant="body" color="secondary" style={styles.headline}>
-            {info?.headline || 'Chuyên gia'}
+            {info?.headline || TEXT.MENTOR.DEFAULT_HEADLINE}
           </Typography>
           {info?.verificationStatus === 'verified' ? (
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark-circle" size={14} color="#FFF" />
               <Typography variant="caption" style={styles.verifiedText}>
-                Đã xác thực
+                {TEXT.MENTOR.VERIFIED}
               </Typography>
             </View>
           ) : null}
         </View>
 
         <Typography variant="body" style={styles.bio}>
-          {mentor.bio || 'Chưa có thông tin giới thiệu.'}
+          {mentor.bio || TEXT.MENTOR.NO_BIO}
         </Typography>
 
         <View style={styles.divider} />
 
         <Typography variant="h3" style={styles.sectionTitle}>
-          Các gói dịch vụ
+          {TEXT.MENTOR.SERVICES_TITLE}
         </Typography>
 
         {info?.packages?.length ? (
@@ -127,7 +129,7 @@ export default function MentorDetailScreen() {
                   <View style={styles.pkgMeta}>
                     <View>
                       <Typography variant="caption" color="secondary">
-                        Giá từ
+                        {TEXT.MENTOR.PRICE_FROM}
                       </Typography>
                       <Typography variant="h3" style={styles.pkgPrice}>
                         ${firstVersion.price}
@@ -135,7 +137,7 @@ export default function MentorDetailScreen() {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Typography variant="caption" color="secondary">
-                        Thời lượng
+                        {TEXT.MENTOR.DURATION}
                       </Typography>
                       <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
                         {firstVersion.duration} phút
@@ -145,7 +147,7 @@ export default function MentorDetailScreen() {
                 ) : null}
 
                 <CustomButton
-                  label="Xem chi tiết và đặt lịch"
+                  label={TEXT.MENTOR.VIEW_PACKAGE}
                   onPress={() => router.push(`/package/${pkg.id}?mentorId=${mentor.id}` as any)}
                   style={{ marginTop: 16 }}
                 />
@@ -154,7 +156,7 @@ export default function MentorDetailScreen() {
           })
         ) : (
           <Typography variant="bodyMedium" color="secondary">
-            Mentor chưa cung cấp gói dịch vụ nào.
+            {TEXT.MENTOR.NO_SERVICES}
           </Typography>
         )}
       </ScrollView>
@@ -191,15 +193,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.colors.border.default,
-    marginBottom: 12,
-  },
   name: {
     fontWeight: '800',
+    marginTop: 12,
     marginBottom: 4,
   },
   headline: {

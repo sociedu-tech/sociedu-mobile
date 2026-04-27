@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { TextInput } from '@/src/components/form/TextInput';
 import { Typography } from '@/src/components/typography/Typography';
+import { TEXT } from '@/src/core/constants/strings';
 import { theme } from '@/src/theme/theme';
 
 import { authService } from '../services/authService';
@@ -77,7 +78,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      setError('Vui lòng nhập đầy đủ thông tin.');
+      setError(TEXT.AUTH.REGISTER_EMPTY);
       return;
     }
 
@@ -118,7 +119,7 @@ export default function RegisterScreen() {
             </View>
             <Typography variant="h1" style={styles.brandName}>UniShare</Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              Kết nối mentor dành cho sinh viên
+              {TEXT.AUTH.APP_TAGLINE}
             </Typography>
           </Animated.View>
 
@@ -130,10 +131,10 @@ export default function RegisterScreen() {
           >
             <View style={styles.heading}>
               <Typography variant="h2" style={styles.title}>
-                Tạo tài khoản mới
+                {TEXT.AUTH.REGISTER_TITLE}
               </Typography>
               <Typography variant="body" color="secondary">
-                Tham gia cộng đồng UniShare ngay hôm nay.
+                {TEXT.AUTH.REGISTER_SUBTITLE}
               </Typography>
             </View>
 
@@ -193,13 +194,13 @@ export default function RegisterScreen() {
               <View style={styles.successBox}>
                 <Ionicons name="checkmark-circle" size={18} color={C.success} />
                 <Typography variant="label" style={styles.successText}>
-                  Đăng ký thành công! Đang chuyển hướng...
+                  {TEXT.AUTH.REGISTER_SUCCESS}
                 </Typography>
               </View>
             )}
 
             <CustomButton
-              label="Đăng ký ngay"
+              label={TEXT.AUTH.REGISTER_CTA}
               variant="primary"
               size="lg"
               loading={loading}
@@ -230,12 +231,12 @@ export default function RegisterScreen() {
 
             <View style={styles.loginRow}>
               <Typography variant="body" color="secondary">
-                Đã có tài khoản?
+                {TEXT.AUTH.HAVE_ACCOUNT}
               </Typography>
               <Link href="/(auth)/login" asChild>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Typography variant="bodyMedium" weight="700" style={styles.loginLink}>
-                    {' '}Đăng nhập ngay
+                    {' '}{TEXT.AUTH.LOGIN_LINK}
                   </Typography>
                 </TouchableOpacity>
               </Link>

@@ -1,4 +1,5 @@
 import { api, unwrap } from '@/src/core/api';
+import { API_PATHS } from '@/src/core/backend';
 import { USE_MOCK } from '@/src/core/config';
 import { mockUserApi } from '@/src/core/mocks/api/mockUserMentorApi';
 import {
@@ -12,9 +13,6 @@ import {
 
 import { toUserFull } from '../adapters/userAdapter';
 
-const BASE = '/api/v1/users';
-const ME_BASE = '/api/v1/users/me';
-
 function toIsoDateFromYear(year?: number | null, month = 1, day = 1): string | undefined {
   if (!year) {
     return undefined;
@@ -27,7 +25,7 @@ export const userService = {
   getMe: async (): Promise<User> => {
     const res = USE_MOCK
       ? await mockUserApi.getMe()
-      : await api.get<{ data: UserFullProfileResponseDTO }>(`${BASE}/me/profile`);
+      : await api.get<{ data: UserFullProfileResponseDTO }>(API_PATHS.users.meProfile);
 
     return toUserFull(unwrap(res));
   },
@@ -35,7 +33,7 @@ export const userService = {
   getPublicProfile: async (id: string | number): Promise<User> => {
     const res = USE_MOCK
       ? await mockUserApi.getPublicProfile(id)
-      : await api.get<{ data: UserFullProfileResponseDTO }>(`${BASE}/${id}/profile`);
+      : await api.get<{ data: UserFullProfileResponseDTO }>(API_PATHS.users.publicProfile(id));
 
     return toUserFull(unwrap(res));
   },
@@ -52,7 +50,7 @@ export const userService = {
       return;
     }
 
-    await api.put(`${BASE}/me/profile`, data);
+    await api.put(API_PATHS.users.meProfile, data);
   },
 
   getEducations: async (): Promise<UserEducationResponseDTO[]> => {
@@ -60,7 +58,7 @@ export const userService = {
       return unwrap(await mockUserApi.getEducations());
     }
 
-    return unwrap(await api.get<{ data: UserEducationResponseDTO[] }>(`${ME_BASE}/educations`));
+    return unwrap(await api.get<{ data: UserEducationResponseDTO[] }>(API_PATHS.users.meEducations));
   },
 
   addEducation: async (data: {
@@ -75,7 +73,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.post<{ data: UserEducationResponseDTO }>(`${ME_BASE}/educations`, {
+      await api.post<{ data: UserEducationResponseDTO }>(API_PATHS.users.meEducations, {
         universityId: null,
         majorId: null,
         degree: data.degree,
@@ -102,7 +100,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.put<{ data: UserEducationResponseDTO }>(`${ME_BASE}/educations/${id}`, {
+      await api.put<{ data: UserEducationResponseDTO }>(API_PATHS.users.meEducationItem(id), {
         universityId: null,
         majorId: null,
         degree: data.degree ?? '',
@@ -120,7 +118,7 @@ export const userService = {
       return;
     }
 
-    await api.delete(`${ME_BASE}/educations/${id}`);
+    await api.delete(API_PATHS.users.meEducationItem(id));
   },
 
   getExperiences: async (): Promise<UserExperienceResponseDTO[]> => {
@@ -128,7 +126,7 @@ export const userService = {
       return unwrap(await mockUserApi.getExperiences());
     }
 
-    return unwrap(await api.get<{ data: UserExperienceResponseDTO[] }>(`${ME_BASE}/experiences`));
+    return unwrap(await api.get<{ data: UserExperienceResponseDTO[] }>(API_PATHS.users.meExperiences));
   },
 
   addExperience: async (data: {
@@ -143,7 +141,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.post<{ data: UserExperienceResponseDTO }>(`${ME_BASE}/experiences`, {
+      await api.post<{ data: UserExperienceResponseDTO }>(API_PATHS.users.meExperiences, {
         company: data.company,
         position: data.role,
         startDate: data.startDate,
@@ -169,7 +167,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.put<{ data: UserExperienceResponseDTO }>(`${ME_BASE}/experiences/${id}`, {
+      await api.put<{ data: UserExperienceResponseDTO }>(API_PATHS.users.meExperienceItem(id), {
         company: data.company ?? '',
         position: data.role ?? '',
         startDate: data.startDate,
@@ -186,7 +184,7 @@ export const userService = {
       return;
     }
 
-    await api.delete(`${ME_BASE}/experiences/${id}`);
+    await api.delete(API_PATHS.users.meExperienceItem(id));
   },
 
   getLanguages: async (): Promise<UserLanguageResponseDTO[]> => {
@@ -194,7 +192,7 @@ export const userService = {
       return unwrap(await mockUserApi.getLanguages());
     }
 
-    return unwrap(await api.get<{ data: UserLanguageResponseDTO[] }>(`${ME_BASE}/languages`));
+    return unwrap(await api.get<{ data: UserLanguageResponseDTO[] }>(API_PATHS.users.meLanguages));
   },
 
   addLanguage: async (data: {
@@ -206,7 +204,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.post<{ data: UserLanguageResponseDTO }>(`${ME_BASE}/languages`, {
+      await api.post<{ data: UserLanguageResponseDTO }>(API_PATHS.users.meLanguages, {
         language: data.language,
         level: data.proficiency,
       })
@@ -222,7 +220,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.put<{ data: UserLanguageResponseDTO }>(`${ME_BASE}/languages/${id}`, {
+      await api.put<{ data: UserLanguageResponseDTO }>(API_PATHS.users.meLanguageItem(id), {
         language: data.language ?? '',
         level: data.proficiency ?? '',
       })
@@ -235,7 +233,7 @@ export const userService = {
       return;
     }
 
-    await api.delete(`${ME_BASE}/languages/${id}`);
+    await api.delete(API_PATHS.users.meLanguageItem(id));
   },
 
   getCertificates: async (): Promise<UserCertificateResponseDTO[]> => {
@@ -243,7 +241,7 @@ export const userService = {
       return unwrap(await mockUserApi.getCertificates());
     }
 
-    return unwrap(await api.get<{ data: UserCertificateResponseDTO[] }>(`${ME_BASE}/certificates`));
+    return unwrap(await api.get<{ data: UserCertificateResponseDTO[] }>(API_PATHS.users.meCertificates));
   },
 
   addCertificate: async (data: {
@@ -258,7 +256,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.post<{ data: UserCertificateResponseDTO }>(`${ME_BASE}/certificates`, {
+      await api.post<{ data: UserCertificateResponseDTO }>(API_PATHS.users.meCertificates, {
         name: data.name,
         organization: data.issuer,
         issueDate: data.issueDate,
@@ -284,7 +282,7 @@ export const userService = {
     }
 
     return unwrap(
-      await api.put<{ data: UserCertificateResponseDTO }>(`${ME_BASE}/certificates/${id}`, {
+      await api.put<{ data: UserCertificateResponseDTO }>(API_PATHS.users.meCertificateItem(id), {
         name: data.name ?? '',
         organization: data.issuer ?? '',
         issueDate: data.issueDate,
@@ -301,6 +299,6 @@ export const userService = {
       return;
     }
 
-    await api.delete(`${ME_BASE}/certificates/${id}`);
+    await api.delete(API_PATHS.users.meCertificateItem(id));
   },
 };

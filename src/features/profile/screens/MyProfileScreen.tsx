@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,9 +9,10 @@ import { Avatar } from '@/src/components/ui/Avatar';
 import { Card } from '@/src/components/ui/Card';
 import { ListItem } from '@/src/components/ui/ListItem';
 import { Section } from '@/src/components/ui/Section';
-import { useAuthStore } from '@/src/features/auth/store/authStore';
+import { TEXT } from '@/src/core/constants/strings';
 import { User } from '@/src/core/types';
 import { theme } from '@/src/theme/theme';
+import { useAuthStore } from '@/src/features/auth/store/authStore';
 
 import { userService } from '../services/userService';
 
@@ -53,10 +48,10 @@ export default function MyProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn thoát phiên đăng nhập?', [
+    Alert.alert(TEXT.PROFILE.LOGOUT_TITLE, TEXT.PROFILE.LOGOUT_CONFIRM, [
       { text: 'Hủy', style: 'cancel' },
       {
-        text: 'Đăng xuất',
+        text: TEXT.PROFILE.LOGOUT_CTA,
         style: 'destructive',
         onPress: async () => {
           await logout();
@@ -65,20 +60,20 @@ export default function MyProfileScreen() {
     ]);
   };
 
-  const displayName = fullUser?.name || authUser?.fullName || 'Người dùng';
+  const displayName = fullUser?.name || authUser?.fullName || TEXT.PROFILE.USER_LABEL;
   const displayEmail = fullUser?.email || authUser?.email || '';
   const avatarUri = fullUser?.avatar || null;
   const roleLabels: Record<string, string> = {
-    user: 'Người dùng',
+    user: TEXT.PROFILE.USER_LABEL,
     mentor: 'Mentor',
     admin: 'Admin',
-    guest: 'Khách',
+    guest: TEXT.PROFILE.GUEST_LABEL,
   };
-  const activeRoleLabel = roleLabels[activeRole] || 'Người dùng';
+  const activeRoleLabel = roleLabels[activeRole] || TEXT.PROFILE.USER_LABEL;
   const hasMentorRole = roles.includes('mentor');
   const hasApprovedMentorRole = effectiveRoles.includes('mentor');
   const hasAdminRole = effectiveRoles.includes('admin');
-  const mentorApprovalStatus = authUser?.mentorVerificationStatus;
+  const mentorApprovalStatus = (authUser?.mentorVerificationStatus || 'pending').toUpperCase();
 
   const getInitials = () => {
     const parts = displayName.split(' ');
@@ -100,7 +95,7 @@ export default function MyProfileScreen() {
         }}
       >
         <Typography variant="h3" style={{ fontWeight: '800' }}>
-          Hồ sơ cá nhân
+          {TEXT.PROFILE.TITLE}
         </Typography>
       </View>
 
@@ -220,11 +215,10 @@ export default function MyProfileScreen() {
                 variant="bodyMedium"
                 style={{ fontWeight: '700', color: theme.colors.warning }}
               >
-                Tài khoản mentor đang chờ admin duyệt
+                {TEXT.PROFILE.MENTOR_PENDING_TITLE}
               </Typography>
               <Typography variant="caption" color="secondary" style={{ marginTop: 6 }}>
-                Trạng thái hiện tại: {(mentorApprovalStatus || 'pending').toUpperCase()}. Bạn
-                vẫn có thể dùng app với vai trò người dùng thông thường.
+                {TEXT.PROFILE.MENTOR_PENDING_DESCRIPTION.replace('{status}', mentorApprovalStatus)}
               </Typography>
             </Card>
           )}
@@ -247,7 +241,7 @@ export default function MyProfileScreen() {
               variant="bodyMedium"
               style={{ fontWeight: '700', color: theme.colors.primary, fontSize: 14 }}
             >
-              Chỉnh sửa hồ sơ
+              {TEXT.PROFILE.EDIT_CTA}
             </Typography>
           </TouchableOpacity>
         </View>
@@ -266,7 +260,7 @@ export default function MyProfileScreen() {
                 letterSpacing: 0.5,
               }}
             >
-              Bảng điều khiển
+              {TEXT.PROFILE.DASHBOARD}
             </Typography>
             <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
               {hasApprovedMentorRole && (
@@ -310,22 +304,22 @@ export default function MyProfileScreen() {
               letterSpacing: 0.5,
             }}
           >
-            Chung
+            {TEXT.PROFILE.GENERAL}
           </Typography>
           <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
             <ListItem
-              title="Chứng chỉ và kinh nghiệm"
-              subtitle="Cập nhật lịch sử làm việc"
+              title={TEXT.PROFILE.CERTIFICATE_EXP}
+              subtitle={TEXT.PROFILE.CERTIFICATE_EXP_SUB}
               iconName="document-text-outline"
               onPress={() => {}}
             />
             <ListItem
-              title="Cài đặt tài khoản"
+              title={TEXT.PROFILE.ACCOUNT_SETTINGS}
               iconName="settings-outline"
               onPress={() => {}}
             />
             <ListItem
-              title="Trung tâm trợ giúp"
+              title={TEXT.PROFILE.HELP_CENTER}
               iconName="help-circle-outline"
               onPress={() => {}}
             />
@@ -351,7 +345,7 @@ export default function MyProfileScreen() {
           >
             <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
             <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.error }}>
-              Đăng xuất
+              {TEXT.PROFILE.LOGOUT_CTA}
             </Typography>
           </TouchableOpacity>
         </Section>

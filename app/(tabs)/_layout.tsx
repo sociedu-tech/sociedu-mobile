@@ -3,19 +3,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { StyleSheet, View } from 'react-native';
 
-import { theme } from '../../src/theme/theme';
+import { useAuthStore } from '@/src/features/auth/store/authStore';
+import { theme } from '@/src/theme/theme';
 
-/**
- * Tabs Layout
- *
- * Web equivalent mapping:
- *   "/"         -> index    (Home)
- *   "/mentors"  -> mentor   (Mentors)
- *   "/messages" -> messages (Tin nhắn)
- *   "/bookings" -> bookings (Lịch hẹn)
- *   n/a         -> profile  (Hồ sơ cá nhân - mobile only)
- */
 export default function TabsLayout() {
+  const userRole = useAuthStore((state) => state.userRole);
+  const isMentor = userRole === 'mentor';
+  const isGuest = userRole === 'guest';
+
   return (
     <Tabs
       screenOptions={{
@@ -49,7 +44,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="mentor"
         options={{
-          title: 'Mentor',
+          title: 'Chuyên gia',
+          href: isMentor ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
@@ -62,6 +58,7 @@ export default function TabsLayout() {
         name="messages"
         options={{
           title: 'Tin nhắn',
+          href: isGuest ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons
@@ -78,6 +75,7 @@ export default function TabsLayout() {
         name="bookings"
         options={{
           title: 'Lịch hẹn',
+          href: isGuest ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons
@@ -102,6 +100,8 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="marketplace" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -8,6 +8,7 @@ import { CustomButton } from '@/src/components/button/CustomButton';
 import { Typography } from '@/src/components/typography/Typography';
 import { Card } from '@/src/components/ui/Card';
 import { Section } from '@/src/components/ui/Section';
+import { TEXT } from '@/src/core/constants/strings';
 import { theme } from '@/src/theme/theme';
 
 const HIGHLIGHTS = [
@@ -61,18 +62,17 @@ export default function HomeScreen() {
               <Ionicons name="school" size={36} color={theme.colors.primary} />
             </View>
             <Typography variant="h1" align="center">
-              {'Tìm kiếm '}
+              {TEXT.HOME.HERO_TITLE_PREFIX}
               <Typography variant="h1" style={{ color: theme.colors.primary, fontWeight: '900' }}>
-                Mentor
+                {TEXT.HOME.HERO_TITLE_HIGHLIGHT}
               </Typography>
-              {'\nphù hợp cho bạn'}
+              {TEXT.HOME.HERO_TITLE_SUFFIX}
             </Typography>
             <Typography variant="body" color="secondary" align="center" style={{ marginTop: theme.spacing.md }}>
-              Kết nối với những người đi trước giàu kinh nghiệm để nhận lời khuyên,
-              định hướng và học hỏi.
+              {TEXT.HOME.HERO_SUBTITLE}
             </Typography>
             <CustomButton
-              label="Khám phá Mentor"
+              label={TEXT.HOME.HERO_CTA}
               variant="primary"
               size="lg"
               icon={<Ionicons name="arrow-forward" size={18} color="#FFF" />}
@@ -97,7 +97,7 @@ export default function HomeScreen() {
             align="center"
             style={{ fontWeight: '700', color: theme.colors.text.primary, marginBottom: theme.spacing.lg }}
           >
-            Tại sao chọn UniShare?
+            {TEXT.HOME.WHY_US}
           </Typography>
           {HIGHLIGHTS.map((item) => (
             <Card key={item.title} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.md }}>

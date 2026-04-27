@@ -8,6 +8,7 @@ import { CustomButton } from '@/src/components/button/CustomButton';
 import { ErrorState } from '@/src/components/states/ErrorState';
 import { LoadingState } from '@/src/components/states/LoadingState';
 import { Typography } from '@/src/components/typography/Typography';
+import { TEXT } from '@/src/core/constants/strings';
 import { Order } from '@/src/core/types';
 import { theme } from '@/src/theme/theme';
 
@@ -17,25 +18,25 @@ function getResultCopy(order: Order) {
   switch (order.status) {
     case 'paid':
       return {
-        icon: 'checkmark-circle',
+        icon: 'checkmark-circle' as const,
         color: theme.colors.success,
-        title: 'Thanh toán thành công',
-        description: 'Lịch hẹn đã được tạo. Bạn có thể xem chi tiết trong tab Lịch hẹn.',
-      } as const;
+        title: TEXT.BOOKING.PAYMENT_SUCCESS,
+        description: TEXT.BOOKING.PAYMENT_SUCCESS_DESC,
+      };
     case 'cancelled':
       return {
-        icon: 'close-circle',
+        icon: 'close-circle' as const,
         color: theme.colors.error,
-        title: 'Thanh toán đã hủy',
-        description: 'Giao dịch chưa hoàn tất. Bạn có thể quay lại gói học để thử lại.',
-      } as const;
+        title: TEXT.BOOKING.PAYMENT_CANCELLED,
+        description: TEXT.BOOKING.PAYMENT_CANCELLED_DESC,
+      };
     default:
       return {
-        icon: 'time',
+        icon: 'time' as const,
         color: theme.colors.warning,
-        title: 'Đang chờ xác nhận',
-        description: 'Hệ thống đang xác minh kết quả thanh toán. Vui lòng kiểm tra lại sau ít phút.',
-      } as const;
+        title: TEXT.BOOKING.PAYMENT_PENDING,
+        description: TEXT.BOOKING.PAYMENT_PENDING_DESC,
+      };
   }
 }
 
@@ -96,9 +97,9 @@ export default function PaymentResultScreen() {
           {copy.description}
         </Typography>
         <View style={styles.actions}>
-          <CustomButton label="Xem lịch hẹn" onPress={() => router.replace('/(tabs)/bookings')} />
+          <CustomButton label={TEXT.BOOKING.VIEW_BOOKINGS} onPress={() => router.replace('/(tabs)/bookings')} />
           <CustomButton
-            label="Về trang chủ"
+            label={TEXT.COMMON.BACK_HOME}
             variant="outline"
             onPress={() => router.replace('/(tabs)')}
           />

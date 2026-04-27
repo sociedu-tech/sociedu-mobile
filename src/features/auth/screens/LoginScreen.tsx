@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomButton } from '@/src/components/button/CustomButton';
 import { TextInput } from '@/src/components/form/TextInput';
 import { Typography } from '@/src/components/typography/Typography';
+import { TEXT } from '@/src/core/constants/strings';
 import { theme } from '@/src/theme/theme';
 
 import { authService } from '../services/authService';
@@ -73,7 +74,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      setError('Vui lòng nhập đầy đủ email và mật khẩu.');
+      setError(TEXT.AUTH.LOGIN_EMPTY);
       return;
     }
 
@@ -110,7 +111,7 @@ export default function LoginScreen() {
               UniShare
             </Typography>
             <Typography variant="caption" style={styles.brandTagline}>
-              Kết nối mentor dành cho sinh viên
+              {TEXT.AUTH.APP_TAGLINE}
             </Typography>
           </Animated.View>
 
@@ -122,10 +123,10 @@ export default function LoginScreen() {
           >
             <View style={styles.heading}>
               <Typography variant="h2" style={styles.welcomeTitle}>
-                Chào mừng trở lại!
+                {TEXT.AUTH.LOGIN_TITLE}
               </Typography>
               <Typography variant="body" color="secondary">
-                Vui lòng đăng nhập để tiếp tục.
+                {TEXT.AUTH.LOGIN_SUBTITLE}
               </Typography>
             </View>
 
@@ -161,7 +162,7 @@ export default function LoginScreen() {
               onPress={() => router.push('/(auth)/forgot-password')}
             >
               <Typography variant="label" style={styles.forgotText}>
-                Quên mật khẩu?
+                {TEXT.AUTH.FORGOT_PASSWORD}
               </Typography>
             </TouchableOpacity>
 
@@ -175,7 +176,7 @@ export default function LoginScreen() {
             ) : null}
 
             <CustomButton
-              label="Đăng nhập"
+              label={TEXT.AUTH.LOGIN_CTA}
               variant="primary"
               size="lg"
               loading={loading}
@@ -210,13 +211,13 @@ export default function LoginScreen() {
 
             <View style={styles.registerRow}>
               <Typography variant="body" color="secondary">
-                Chưa có tài khoản?
+                {TEXT.AUTH.NO_ACCOUNT}
               </Typography>
               <Link href="/(auth)/register" asChild>
                 <TouchableOpacity activeOpacity={0.7}>
                   <Typography variant="bodyMedium" weight="700" style={styles.registerLink}>
                     {' '}
-                    Đăng ký miễn phí
+                    {TEXT.AUTH.REGISTER_LINK}
                   </Typography>
                 </TouchableOpacity>
               </Link>

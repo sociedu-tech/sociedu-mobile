@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { api, STORAGE_KEYS, tokenStorage, unwrap } from '@/src/core/api';
+import { API_PATHS } from '@/src/core/backend';
 import { USE_MOCK } from '@/src/core/config';
 import { mockAuthApi } from '@/src/core/mocks/api/mockAuthApi';
 import {
@@ -14,8 +15,6 @@ import {
 
 import { AuthUser, hydrateAuthUser, toAuthUser } from '../adapters/authAdapter';
 
-const BASE = '/api/v1/auth';
-
 export const authService = {
   login: async (credentials: LoginRequestDTO): Promise<AuthUser> => {
     let dto: AuthResponseDTO;
@@ -23,7 +22,7 @@ export const authService = {
     if (USE_MOCK) {
       dto = unwrap(await mockAuthApi.login(credentials));
     } else {
-      const res = await api.post<{ data: AuthResponseDTO }>(`${BASE}/login`, credentials);
+      const res = await api.post<{ data: AuthResponseDTO }>(API_PATHS.auth.login, credentials);
       dto = unwrap(res);
     }
 
@@ -41,7 +40,7 @@ export const authService = {
       return mockRes.data;
     }
 
-    const res = await api.post(`${BASE}/register`, data);
+    const res = await api.post(API_PATHS.auth.register, data);
     return {
       message: res.data.message ?? 'Đăng ký thành công. Vui lòng kiểm tra email.',
     };
@@ -54,7 +53,7 @@ export const authService = {
       } else {
         const refreshToken = await tokenStorage.getRefresh();
         if (refreshToken) {
-          await api.post(`${BASE}/logout`, { refreshToken });
+          await api.post(API_PATHS.auth.logout, { refreshToken });
         }
       }
     } finally {
@@ -67,7 +66,7 @@ export const authService = {
       return unwrap(await mockAuthApi.refresh(refreshToken));
     }
 
-    const res = await api.post<{ data: AuthResponseDTO }>(`${BASE}/refresh`, { refreshToken });
+    const res = await api.post<{ data: AuthResponseDTO }>(API_PATHS.auth.refresh, { refreshToken });
     return unwrap(res);
   },
 
@@ -76,7 +75,7 @@ export const authService = {
       return mockAuthApi.forgotPassword(email);
     }
 
-    const res = await api.post(`${BASE}/forgot-password`, { email });
+    const res = await api.post(API_PATHS.auth.forgotPassword, { email });
     return {
       message: res.data.message ?? 'Đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra email.',
     };
@@ -99,7 +98,7 @@ export const authService = {
       return mockAuthApi.completeResetPassword(payload);
     }
 
-    const res = await api.post(`${BASE}/reset-password`, payload);
+    const res = await api.post(API_PATHS.auth.resetPassword, payload);
     return { message: res.data.message ?? 'Đặt lại mật khẩu thành công.' };
   },
 
@@ -113,7 +112,7 @@ export const authService = {
       return;
     }
 
-    await api.post(`${BASE}/verify-email`, { token });
+    await api.post(API_PATHS.auth.verifyEmail, { token });
   },
 
   resendVerification: async (email: string): Promise<void> => {
@@ -122,7 +121,7 @@ export const authService = {
       return;
     }
 
-    await api.post(`${BASE}/resend-verification`, { email });
+    await api.post(API_PATHS.auth.resendVerification, { email });
   },
 
   getCachedUser: async (): Promise<AuthUser | null> => {

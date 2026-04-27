@@ -1,4 +1,5 @@
 import { api, unwrap } from '@/src/core/api';
+import { API_PATHS } from '@/src/core/backend';
 import { USE_MOCK } from '@/src/core/config';
 import { mockBookingApi } from '@/src/core/mocks/api/mockBookingApi';
 import {
@@ -10,13 +11,11 @@ import {
 
 import { toBooking, toBookingList } from '../adapters/bookingAdapter';
 
-const BASE = '/api/v1/bookings';
-
 export const bookingService = {
   getMyBookingsAsBuyer: async (): Promise<Booking[]> => {
     const res = USE_MOCK
       ? await mockBookingApi.getMyBookingsAsBuyer()
-      : await api.get<{ data: BookingResponseDTO[] }>(`${BASE}/me/buyer`);
+      : await api.get<{ data: BookingResponseDTO[] }>(API_PATHS.bookings.mineBuyer);
 
     return toBookingList(unwrap(res));
   },
@@ -24,7 +23,7 @@ export const bookingService = {
   getMyBookingsAsMentor: async (): Promise<Booking[]> => {
     const res = USE_MOCK
       ? await mockBookingApi.getMyBookingsAsMentor()
-      : await api.get<{ data: BookingResponseDTO[] }>(`${BASE}/me/mentor`);
+      : await api.get<{ data: BookingResponseDTO[] }>(API_PATHS.bookings.mineMentor);
 
     return toBookingList(unwrap(res));
   },
@@ -32,7 +31,7 @@ export const bookingService = {
   getById: async (id: string): Promise<Booking> => {
     const res = USE_MOCK
       ? await mockBookingApi.getById(id)
-      : await api.get<{ data: BookingResponseDTO }>(`${BASE}/${id}`);
+      : await api.get<{ data: BookingResponseDTO }>(API_PATHS.bookings.byId(id));
 
     return toBooking(unwrap(res));
   },
@@ -51,7 +50,7 @@ export const bookingService = {
     }
 
     const res = await api.patch<{ data: BookingSessionResponseDTO }>(
-      `${BASE}/${bookingId}/sessions/${sessionId}`,
+      API_PATHS.bookings.session(bookingId, sessionId),
       data
     );
     return unwrap(res);
@@ -68,7 +67,7 @@ export const bookingService = {
 
     return unwrap(
       await api.post<{ data: EvidenceResponseDTO }>(
-        `${BASE}/${bookingId}/sessions/${sessionId}/evidences`,
+        API_PATHS.bookings.evidences(bookingId, sessionId),
         data
       )
     );
