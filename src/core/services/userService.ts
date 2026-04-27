@@ -1,14 +1,7 @@
-/**
- * userService.ts – User profile domain
- *
- * Endpoints:
- *   GET  /api/v1/users/me/profile    → UserFullProfileResponse
- *   PUT  /api/v1/users/me/profile    → cập nhật profile
- *   GET/POST/PUT/DELETE /educations
- *   GET/POST/PUT/DELETE /experiences
- *   GET/POST/PUT/DELETE /languages
- *   GET/POST/PUT/DELETE /certificates
- */
+import { toUserFull } from '../adapters/userAdapter';
+import { API_PATHS } from '../backend';
+import { USE_MOCK } from '../config';
+import { mockUserApi } from '../mocks/api/mockUserMentorApi';
 import { api, unwrap } from '../api';
 import {
   UserFullProfileResponseDTO,
@@ -18,36 +11,24 @@ import {
   UserCertificateResponseDTO,
   User,
 } from '../types';
-import { toUserFull } from '../adapters/userAdapter';
-import { USE_MOCK } from '../config';
-import { mockUserApi } from '../mocks/api/mockUserMentorApi';
-
-const BASE = '/api/v1/users';
 
 export const userService = {
-  /**
-   * Profile đầy đủ của user hiện tại (bao gồm education, experience...)
-   */
   getMe: async (): Promise<User> => {
-    const res = USE_MOCK
+    const response = USE_MOCK
       ? await mockUserApi.getMe()
-      : await api.get<{ data: UserFullProfileResponseDTO }>(`${BASE}/me/profile`);
-    return toUserFull(unwrap(res));
+      : await api.get<{ data: UserFullProfileResponseDTO }>(API_PATHS.users.meProfile);
+
+    return toUserFull(unwrap(response));
   },
 
-  /**
-   * Profile công khai của user/mentor
-   */
   getPublicProfile: async (id: string | number): Promise<User> => {
-    const res = USE_MOCK
+    const response = USE_MOCK
       ? await mockUserApi.getPublicProfile(id)
-      : await api.get<{ data: UserFullProfileResponseDTO }>(`${BASE}/${id}/profile`);
-    return toUserFull(unwrap(res));
+      : await api.get<{ data: UserFullProfileResponseDTO }>(API_PATHS.users.publicProfile(id));
+
+    return toUserFull(unwrap(response));
   },
 
-  /**
-   * Cập nhật thông tin profile cơ bản
-   */
   updateProfile: async (data: {
     firstName?: string;
     lastName?: string;
@@ -55,14 +36,12 @@ export const userService = {
     bio?: string;
     location?: string;
   }): Promise<void> => {
-    await api.put(`${BASE}/me/profile`, data);
+    await api.put(API_PATHS.users.meProfile, data);
   },
 
-  // ── Education ──────────────────────────────────────────────
-
   getEducations: async (): Promise<UserEducationResponseDTO[]> => {
-    const res = await api.get<{ data: UserEducationResponseDTO[] }>(`${BASE}/educations`);
-    return unwrap(res);
+    const response = await api.get<{ data: UserEducationResponseDTO[] }>(API_PATHS.users.educationList);
+    return unwrap(response);
   },
 
   addEducation: async (data: {
@@ -72,30 +51,34 @@ export const userService = {
     startYear: number;
     endYear?: number;
   }): Promise<UserEducationResponseDTO> => {
-    const res = await api.post<{ data: UserEducationResponseDTO }>(`${BASE}/educations`, data);
-    return unwrap(res);
+    const response = await api.post<{ data: UserEducationResponseDTO }>(API_PATHS.users.educationList, data);
+    return unwrap(response);
   },
 
-  updateEducation: async (id: number, data: Partial<{
-    institution: string;
-    degree: string;
-    fieldOfStudy: string;
-    startYear: number;
-    endYear: number | null;
-  }>): Promise<UserEducationResponseDTO> => {
-    const res = await api.put<{ data: UserEducationResponseDTO }>(`${BASE}/educations/${id}`, data);
-    return unwrap(res);
+  updateEducation: async (
+    id: number,
+    data: Partial<{
+      institution: string;
+      degree: string;
+      fieldOfStudy: string;
+      startYear: number;
+      endYear: number | null;
+    }>,
+  ): Promise<UserEducationResponseDTO> => {
+    const response = await api.put<{ data: UserEducationResponseDTO }>(
+      API_PATHS.users.educationItem(id),
+      data,
+    );
+    return unwrap(response);
   },
 
   deleteEducation: async (id: number): Promise<void> => {
-    await api.delete(`${BASE}/educations/${id}`);
+    await api.delete(API_PATHS.users.educationItem(id));
   },
 
-  // ── Experience ─────────────────────────────────────────────
-
   getExperiences: async (): Promise<UserExperienceResponseDTO[]> => {
-    const res = await api.get<{ data: UserExperienceResponseDTO[] }>(`${BASE}/experiences`);
-    return unwrap(res);
+    const response = await api.get<{ data: UserExperienceResponseDTO[] }>(API_PATHS.users.experienceList);
+    return unwrap(response);
   },
 
   addExperience: async (data: {
@@ -105,54 +88,62 @@ export const userService = {
     endDate?: string;
     description?: string;
   }): Promise<UserExperienceResponseDTO> => {
-    const res = await api.post<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences`, data);
-    return unwrap(res);
+    const response = await api.post<{ data: UserExperienceResponseDTO }>(API_PATHS.users.experienceList, data);
+    return unwrap(response);
   },
 
-  updateExperience: async (id: number, data: Partial<{
-    company: string;
-    role: string;
-    startDate: string;
-    endDate: string | null;
-    description: string | null;
-  }>): Promise<UserExperienceResponseDTO> => {
-    const res = await api.put<{ data: UserExperienceResponseDTO }>(`${BASE}/experiences/${id}`, data);
-    return unwrap(res);
+  updateExperience: async (
+    id: number,
+    data: Partial<{
+      company: string;
+      role: string;
+      startDate: string;
+      endDate: string | null;
+      description: string | null;
+    }>,
+  ): Promise<UserExperienceResponseDTO> => {
+    const response = await api.put<{ data: UserExperienceResponseDTO }>(
+      API_PATHS.users.experienceItem(id),
+      data,
+    );
+    return unwrap(response);
   },
 
   deleteExperience: async (id: number): Promise<void> => {
-    await api.delete(`${BASE}/experiences/${id}`);
+    await api.delete(API_PATHS.users.experienceItem(id));
   },
 
-  // ── Language ───────────────────────────────────────────────
-
   getLanguages: async (): Promise<UserLanguageResponseDTO[]> => {
-    const res = await api.get<{ data: UserLanguageResponseDTO[] }>(`${BASE}/languages`);
-    return unwrap(res);
+    const response = await api.get<{ data: UserLanguageResponseDTO[] }>(API_PATHS.users.languageList);
+    return unwrap(response);
   },
 
   addLanguage: async (data: {
     language: string;
     proficiency: string;
   }): Promise<UserLanguageResponseDTO> => {
-    const res = await api.post<{ data: UserLanguageResponseDTO }>(`${BASE}/languages`, data);
-    return unwrap(res);
+    const response = await api.post<{ data: UserLanguageResponseDTO }>(API_PATHS.users.languageList, data);
+    return unwrap(response);
   },
 
-  updateLanguage: async (id: number, data: { language?: string; proficiency?: string }): Promise<UserLanguageResponseDTO> => {
-    const res = await api.put<{ data: UserLanguageResponseDTO }>(`${BASE}/languages/${id}`, data);
-    return unwrap(res);
+  updateLanguage: async (
+    id: number,
+    data: { language?: string; proficiency?: string },
+  ): Promise<UserLanguageResponseDTO> => {
+    const response = await api.put<{ data: UserLanguageResponseDTO }>(
+      API_PATHS.users.languageItem(id),
+      data,
+    );
+    return unwrap(response);
   },
 
   deleteLanguage: async (id: number): Promise<void> => {
-    await api.delete(`${BASE}/languages/${id}`);
+    await api.delete(API_PATHS.users.languageItem(id));
   },
 
-  // ── Certificate ────────────────────────────────────────────
-
   getCertificates: async (): Promise<UserCertificateResponseDTO[]> => {
-    const res = await api.get<{ data: UserCertificateResponseDTO[] }>(`${BASE}/certificates`);
-    return unwrap(res);
+    const response = await api.get<{ data: UserCertificateResponseDTO[] }>(API_PATHS.users.certificateList);
+    return unwrap(response);
   },
 
   addCertificate: async (data: {
@@ -162,22 +153,31 @@ export const userService = {
     expiryDate?: string;
     credentialUrl?: string;
   }): Promise<UserCertificateResponseDTO> => {
-    const res = await api.post<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates`, data);
-    return unwrap(res);
+    const response = await api.post<{ data: UserCertificateResponseDTO }>(
+      API_PATHS.users.certificateList,
+      data,
+    );
+    return unwrap(response);
   },
 
-  updateCertificate: async (id: number, data: Partial<{
-    name: string;
-    issuer: string;
-    issueDate: string;
-    expiryDate: string | null;
-    credentialUrl: string | null;
-  }>): Promise<UserCertificateResponseDTO> => {
-    const res = await api.put<{ data: UserCertificateResponseDTO }>(`${BASE}/certificates/${id}`, data);
-    return unwrap(res);
+  updateCertificate: async (
+    id: number,
+    data: Partial<{
+      name: string;
+      issuer: string;
+      issueDate: string;
+      expiryDate: string | null;
+      credentialUrl: string | null;
+    }>,
+  ): Promise<UserCertificateResponseDTO> => {
+    const response = await api.put<{ data: UserCertificateResponseDTO }>(
+      API_PATHS.users.certificateItem(id),
+      data,
+    );
+    return unwrap(response);
   },
 
   deleteCertificate: async (id: number): Promise<void> => {
-    await api.delete(`${BASE}/certificates/${id}`);
+    await api.delete(API_PATHS.users.certificateItem(id));
   },
 };

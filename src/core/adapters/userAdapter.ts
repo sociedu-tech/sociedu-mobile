@@ -15,7 +15,7 @@ import {
   UserLanguage,
   UserCertificate,
 } from '../types';
-import { API_BASE_URL } from '../api';
+import { API_PATHS, buildAbsoluteApiUrl } from '../backend';
 
 /**
  * Build URL avatar từ fileId UUID.
@@ -24,7 +24,7 @@ import { API_BASE_URL } from '../api';
  */
 function buildAvatarUrl(fileId: string | null | undefined): string | null {
   if (!fileId) return null;
-  return `${API_BASE_URL}/api/v1/files/${fileId}`;
+  return buildAbsoluteApiUrl(API_PATHS.files.publicById(fileId));
 }
 
 function toEducation(dto: UserEducationResponseDTO): UserEducation {
