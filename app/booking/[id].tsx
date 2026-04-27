@@ -19,7 +19,7 @@ import { CustomButton } from '../../src/components/button/CustomButton';
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const role = useAuthStore(s => s.userRole);
+  const role = useAuthStore((s) => s.userRole);
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,7 @@ export default function BookingDetailScreen() {
       const data = await bookingService.getById(id);
       setBooking(data);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải lịch hẹn.');
+      setError(err.message || 'Khong the tai lich hen.');
     } finally {
       setLoading(false);
     }
@@ -47,52 +47,53 @@ export default function BookingDetailScreen() {
     if (!booking) return;
     try {
       await bookingService.updateSession(booking.id, sessionId, { status: newStatus });
-      fetchBooking(); // Refresh
+      fetchBooking();
     } catch (err: any) {
-      Alert.alert('Lỗi', err.message || 'Không thể cập nhật trạng thái.');
+      Alert.alert('Loi', err.message || 'Khong the cap nhat trang thai.');
     }
   };
 
-  if (loading) return <LoadingState message="Đang tải lịch hẹn..." />;
+  if (loading) return <LoadingState message="Dang tai lich hen..." />;
   if (error || !booking) return <ErrorState error={error || 'Booking not found'} onRetry={fetchBooking} />;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header Bar */}
       <View style={styles.headerBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>{TEXT.BOOKING.HEADER_DETAIL}</Typography>
+        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
+          {TEXT.BOOKING.HEADER_DETAIL}
+        </Typography>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: 32 }]}> // Đẩy xuống rõ ràng hơn
-
-        {/* General Info */}
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: 32 }]}>
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Mã đơn:</Typography>
+            <Typography variant="caption" color="secondary">Ma don:</Typography>
             <Typography variant="bodyMedium" style={styles.bold}>{booking.orderId.slice(0, 8)}</Typography>
           </View>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Ngày tạo:</Typography>
+            <Typography variant="caption" color="secondary">Ngay tao:</Typography>
             <Typography variant="bodyMedium" style={styles.bold}>
               {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
             </Typography>
           </View>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Trạng thái chung:</Typography>
+            <Typography variant="caption" color="secondary">Trang thai chung:</Typography>
             <Typography variant="bodyMedium" style={[styles.bold, { color: theme.colors.primary }]}>
               {booking.status.toUpperCase()}
             </Typography>
           </View>
         </View>
 
-        <Typography variant="h3" style={{ marginVertical: 16 }}>{TEXT.BOOKING.TIMELINE_TITLE}</Typography>
+        <Typography variant="h3" style={{ marginVertical: 16 }}>
+          {TEXT.BOOKING.TIMELINE_TITLE}
+        </Typography>
 
         {booking.sessions.length === 0 ? (
-          <Typography variant="bodyMedium" color="secondary">Không có buổi học nào.</Typography>
+          <Typography variant="bodyMedium" color="secondary">Khong co buoi hoc nao.</Typography>
         ) : (
           <View style={styles.timelineContainer}>
             {booking.sessions.map((session, index) => (
@@ -102,68 +103,76 @@ export default function BookingDetailScreen() {
                 index={index}
                 role={role}
                 isLast={index === booking.sessions.length - 1}
-                onUpdateStatus={(st) => updateSessionStatus(session.id, st)}
+                onUpdateStatus={(status) => updateSessionStatus(session.id, status)}
               />
             ))}
           </View>
         )}
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ─── Sub-component: SessionCard ──────────────────────────────
-function SessionCard({ session, index, role, isLast, onUpdateStatus }: {
+function SessionCard({
+  session,
+  index,
+  role,
+  isLast,
+  onUpdateStatus,
+}: {
   session: BookingSession;
   index: number;
   role: string;
   isLast: boolean;
-  onUpdateStatus: (s: string) => void;
+  onUpdateStatus: (status: string) => void;
 }) {
   const [showReview, setShowReview] = useState(false);
   const [reviewText, setReviewText] = useState('');
-  const getStatusColor = (st: string) => {
-    switch (st) {
-      case 'completed': return '#10B981';
-      case 'in_progress': return '#3B82F6';
-      case 'cancelled': return '#EF4444';
-      default: return '#F59E0B'; // pending
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return '#10B981';
+      case 'in_progress':
+        return '#3B82F6';
+      case 'cancelled':
+        return '#EF4444';
+      default:
+        return '#F59E0B';
     }
   };
 
   const handleOpenMeet = () => {
     if (session.meetingUrl) {
       Linking.openURL(session.meetingUrl).catch(() => {
-        Alert.alert('Lỗi', 'Không thể mở Link meeting.');
+        Alert.alert('Loi', 'Khong the mo link meeting.');
       });
     } else {
-      Alert.alert('Chưa có Link', 'Mentor chưa cung cấp link.');
+      Alert.alert('Chua co link', 'Mentor chua cung cap link.');
     }
   };
 
   return (
     <View style={styles.timelineRow}>
-      {/* Timeline Line & Dot */}
       <View style={styles.timelineIndicator}>
         <View style={[styles.timelineDot, { backgroundColor: getStatusColor(session.status) }]} />
         {!isLast && <View style={styles.timelineLine} />}
       </View>
 
-      {/* Content */}
       <View style={styles.sessionCard}>
         <View style={styles.sessionHeader}>
-          <Typography variant="bodyMedium" style={styles.bold}>Buổi {index + 1}: {session.title}</Typography>
+          <Typography variant="bodyMedium" style={styles.bold}>
+            Buoi {index + 1}: {session.title}
+          </Typography>
         </View>
 
         <View style={styles.rowInfo}>
           <Ionicons name="time-outline" size={16} color={theme.colors.text.secondary} />
           <Typography variant="caption" color="secondary" style={{ marginLeft: 6 }}>
-            {session.scheduledAt ? new Date(session.scheduledAt).toLocaleString('vi-VN') : 'Chưa xếp lịch'}
+            {session.scheduledAt ? new Date(session.scheduledAt).toLocaleString('vi-VN') : 'Chua xep lich'}
           </Typography>
         </View>
 
-        {/* Action Buttons */}
         <View style={styles.actionRow}>
           {session.status !== 'completed' ? (
             <TouchableOpacity
@@ -197,11 +206,12 @@ function SessionCard({ session, index, role, isLast, onUpdateStatus }: {
             </TouchableOpacity>
           )}
         </View>
-        
-        {/* Fake Review Input inline */}
+
         {showReview && (
           <View style={styles.reviewBox}>
-            <Typography variant="label" style={{ marginBottom: 8, fontWeight: '700' }}>{TEXT.BOOKING.REVIEW_MODAL_TITLE}</Typography>
+            <Typography variant="label" style={{ marginBottom: 8, fontWeight: '700' }}>
+              {TEXT.BOOKING.REVIEW_MODAL_TITLE}
+            </Typography>
             <TextInput
               placeholder={TEXT.BOOKING.REVIEW_PLACEHOLDER}
               value={reviewText}
@@ -209,12 +219,12 @@ function SessionCard({ session, index, role, isLast, onUpdateStatus }: {
               multiline
               numberOfLines={3}
             />
-            <CustomButton 
-              label={TEXT.BOOKING.REVIEW_SUBMIT} 
+            <CustomButton
+              label={TEXT.BOOKING.REVIEW_SUBMIT}
               onPress={() => {
-                Alert.alert(TEXT.COMMON.SUCCESS, 'Cảm ơn bạn đã đánh giá!');
+                Alert.alert(TEXT.COMMON.SUCCESS, 'Cam on ban da danh gia!');
                 setShowReview(false);
-              }} 
+              }}
               style={{ marginTop: 8 }}
             />
           </View>
@@ -327,5 +337,5 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
-  }
+  },
 });

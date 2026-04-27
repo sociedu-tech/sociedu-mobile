@@ -86,6 +86,8 @@ export const TextInput: React.FC<TextInputProps> = React.memo(({
   );
 });
 
+TextInput.displayName = 'TextInput';
+
 const styles = StyleSheet.create({
   container: {
     marginBottom: theme.spacing.md,
