@@ -1,22 +1,24 @@
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import * as SecureStore from "expo-secure-store";
 
-import { API_BASE_URL } from './config';
+import { API_BASE_URL } from "./config";
 
 export { API_BASE_URL };
 
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'access_token',
-  REFRESH_TOKEN: 'refresh_token',
-  USER: 'user',
+  ACCESS_TOKEN: "access_token",
+  REFRESH_TOKEN: "refresh_token",
+  USER: "user",
 } as const;
 
 type SessionExpiredHandler = () => void | Promise<void>;
 
 let sessionExpiredHandler: SessionExpiredHandler | null = null;
 
-export function setSessionExpiredHandler(handler: SessionExpiredHandler | null) {
+export function setSessionExpiredHandler(
+  handler: SessionExpiredHandler | null,
+) {
   sessionExpiredHandler = handler;
 }
 
@@ -28,14 +30,16 @@ async function notifySessionExpired() {
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
 export const tokenStorage = {
   getAccess: () => SecureStore.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
   getRefresh: () => SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
-  setAccess: (token: string) => SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, token),
-  setRefresh: (token: string) => SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, token),
+  setAccess: (token: string) =>
+    SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, token),
+  setRefresh: (token: string) =>
+    SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, token),
   setTokens: async (access: string, refresh: string) => {
     await Promise.all([
       SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, access),
@@ -64,31 +68,31 @@ function processQueue(error: unknown, token: string | null = null) {
       return;
     }
 
-    prom.resolve(token ?? '');
+    prom.resolve(token ?? "");
   });
   failedQueue = [];
 }
 
 function getSafeErrorMessage(error: AxiosError): string {
   if (!error.response) {
-    return 'Khong the ket noi den server.';
+    return "Khong the ket noi den server.";
   }
 
   switch (error.response.status) {
     case 400:
-      return 'Yeu cau khong hop le. Vui long kiem tra lai thong tin.';
+      return "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.";
     case 401:
-      return 'Phien dang nhap da het han. Vui long dang nhap lai.';
+      return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
     case 403:
-      return 'Ban khong co quyen thuc hien thao tac nay.';
+      return "Bạn không có quyền thực hiện thao tác này .";
     case 404:
-      return 'Khong tim thay du lieu.';
+      return "Không tìm thấy dữ liệu. Vui lòng thử lại sau.";
     case 409:
-      return 'Du lieu da thay doi. Vui long tai lai va thu lai.';
+      return "Dữ liệu đã thay đổi hoặc xung đột. Vui lòng làm mới và thử lại.";
     case 422:
-      return 'Thong tin chua hop le. Vui long kiem tra lai.';
+      return "Thông tin gửi lên không hợp lệ. Vui lòng kiểm tra lại.";
     default:
-      return 'Co loi xay ra, vui long thu lai.';
+      return "Có lỗi xảy ra, vui lòng thử lại.";
   }
 }
 
@@ -103,12 +107,14 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url?.includes('/auth/refresh')) {
+      if (originalRequest.url?.includes("/auth/refresh")) {
         await notifySessionExpired();
-        return Promise.reject(new Error('SESSION_EXPIRED'));
+        return Promise.reject(new Error("SESSION_EXPIRED"));
       }
 
       if (isRefreshing) {
@@ -129,7 +135,7 @@ api.interceptors.response.use(
       try {
         const refreshToken = await tokenStorage.getRefresh();
         if (!refreshToken) {
-          throw new Error('NO_REFRESH_TOKEN');
+          throw new Error("NO_REFRESH_TOKEN");
         }
 
         const res = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, {
@@ -150,14 +156,14 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         await notifySessionExpired();
-        return Promise.reject(new Error('SESSION_EXPIRED'));
+        return Promise.reject(new Error("SESSION_EXPIRED"));
       } finally {
         isRefreshing = false;
       }
     }
 
     return Promise.reject(new Error(getSafeErrorMessage(error)));
-  }
+  },
 );
 
 export function unwrap<T>(response: { data: { data: T } }): T {
