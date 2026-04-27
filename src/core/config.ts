@@ -26,7 +26,7 @@ function isProductionRuntime() {
 
 const rawApiBaseUrl = getEnvValue('EXPO_PUBLIC_API_BASE_URL');
 
-export const API_BASE_URL = rawApiBaseUrl ?? 'http://localhost:9999';
+export const API_BASE_URL = rawApiBaseUrl ?? 'http://localhost:8080';
 export const USE_MOCK = parseBoolean(getEnvValue('EXPO_PUBLIC_USE_MOCK')) || !rawApiBaseUrl;
 
 if (isProductionRuntime()) {
