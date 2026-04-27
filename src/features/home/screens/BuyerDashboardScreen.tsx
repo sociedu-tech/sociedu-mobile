@@ -4,16 +4,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ProtectedRoute } from '@/src/components/ProtectedRoute';
 import { Typography } from '@/src/components/typography/Typography';
 import { Card } from '@/src/components/ui/Card';
 import { Section } from '@/src/components/ui/Section';
 import { TEXT } from '@/src/core/constants/strings';
-import { Booking, BookingSession, User } from '@/src/core/types';
+import { Booking, BookingSession } from '@/src/core/types';
+import { useAuthStore } from '@/src/features/auth/store/authStore';
 import { bookingService } from '@/src/features/booking/services/bookingService';
 import { theme } from '@/src/theme/theme';
-
-import { mentorService } from '../services/mentorService';
 
 interface UpcomingSession {
   bookingId: string;
@@ -50,45 +48,25 @@ function extractUpcomingSessions(bookings: Booking[]): UpcomingSession[] {
   return upcoming.slice(0, 5);
 }
 
-function getVerificationBadge(status: string | undefined) {
-  switch (status) {
-    case 'verified':
-      return { label: TEXT.MENTOR_DASHBOARD.VERIFICATION_VERIFIED, color: theme.colors.success, icon: 'checkmark-circle' as const };
-    case 'rejected':
-      return { label: TEXT.MENTOR_DASHBOARD.VERIFICATION_REJECTED, color: theme.colors.error, icon: 'close-circle' as const };
-    default:
-      return { label: TEXT.MENTOR_DASHBOARD.VERIFICATION_PENDING, color: theme.colors.warning, icon: 'time' as const };
-  }
-}
-
-function MentorDashboardContent() {
+export default function BuyerDashboardScreen() {
   const router = useRouter();
-
-  const [profile, setProfile] = useState<User | null>(null);
+  const user = useAuthStore((state) => state.user);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [dataLoaded, setDataLoaded] = useState(false);
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (!isRefresh) {
-      setDataLoaded(false);
+      setLoading(true);
     }
 
     try {
-      const [mentorProfile, mentorBookings] = await Promise.allSettled([
-        mentorService.getProfile('me'),
-        bookingService.getMyBookingsAsMentor(),
-      ]);
-
-      if (mentorProfile.status === 'fulfilled') {
-        setProfile(mentorProfile.value);
-      }
-
-      if (mentorBookings.status === 'fulfilled') {
-        setBookings(mentorBookings.value);
-      }
+      const data = await bookingService.getMyBookingsAsBuyer();
+      setBookings(data);
+    } catch {
+      // Fail silently on dashboard — data is supplementary
     } finally {
-      setDataLoaded(true);
+      setLoading(false);
       setRefreshing(false);
     }
   }, []);
@@ -97,15 +75,10 @@ function MentorDashboardContent() {
     loadData();
   }, [loadData]);
 
-  const info = profile?.mentorInfo;
   const activeBookings = bookings.filter((booking) => booking.status === 'active');
-  const completedSessions = bookings.reduce(
-    (sum, booking) => sum + booking.sessions.filter((session) => session.status === 'completed').length,
-    0
-  );
-  const totalPackages = info?.packages?.length ?? 0;
+  const completedBookings = bookings.filter((booking) => booking.status === 'completed');
   const upcomingSessions = extractUpcomingSessions(bookings);
-  const verBadge = getVerificationBadge(info?.verificationStatus);
+  const firstName = user?.firstName ?? '';
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -123,21 +96,15 @@ function MentorDashboardContent() {
           />
         }
       >
-        {/* Header with verification badge */}
+        {/* Welcome header */}
         <Section>
           <View style={styles.welcomeRow}>
             <View style={{ flex: 1 }}>
               <Typography variant="h2" style={styles.welcomeTitle}>
-                {TEXT.MENTOR_DASHBOARD.TITLE}
+                {TEXT.DASHBOARD.WELCOME}, {firstName || 'bạn'} 👋
               </Typography>
               <Typography variant="body" color="secondary">
-                {TEXT.MENTOR_DASHBOARD.SUBTITLE}
-              </Typography>
-            </View>
-            <View style={[styles.verBadge, { backgroundColor: `${verBadge.color}15` }]}>
-              <Ionicons name={verBadge.icon} size={16} color={verBadge.color} />
-              <Typography variant="caption" style={{ color: verBadge.color, fontWeight: '700', marginLeft: 4 }}>
-                {verBadge.label}
+                Cùng theo dõi tiến trình học tập hôm nay.
               </Typography>
             </View>
           </View>
@@ -147,44 +114,38 @@ function MentorDashboardContent() {
         <Section>
           <View style={styles.statsRow}>
             <Card style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: '#D1FAE5' }]}>
-                <Ionicons name="checkmark-done" size={20} color={theme.colors.success} />
-              </View>
-              <Typography variant="h3" style={styles.statNumber}>{completedSessions}</Typography>
-              <Typography variant="caption" color="secondary" style={styles.statLabel}>
-                {TEXT.MENTOR_DASHBOARD.SESSIONS_COMPLETED}
-              </Typography>
-            </Card>
-
-            <Card style={styles.statCard}>
               <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryLight }]}>
                 <Ionicons name="calendar" size={20} color={theme.colors.primary} />
               </View>
-              <Typography variant="h3" style={styles.statNumber}>{activeBookings.length}</Typography>
-              <Typography variant="caption" color="secondary" style={styles.statLabel}>
-                {TEXT.MENTOR_DASHBOARD.ACTIVE_BOOKINGS}
+              <Typography variant="h2" style={styles.statNumber}>
+                {activeBookings.length}
+              </Typography>
+              <Typography variant="caption" color="secondary">
+                {TEXT.DASHBOARD.ACTIVE_BOOKINGS}
               </Typography>
             </Card>
 
             <Card style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="star" size={20} color={theme.colors.warning} />
+              <View style={[styles.statIcon, { backgroundColor: '#D1FAE5' }]}>
+                <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
               </View>
-              <Typography variant="h3" style={styles.statNumber}>
-                {info?.rating ? info.rating.toFixed(1) : '—'}
+              <Typography variant="h2" style={styles.statNumber}>
+                {completedBookings.length}
               </Typography>
-              <Typography variant="caption" color="secondary" style={styles.statLabel}>
-                {TEXT.MENTOR_DASHBOARD.AVG_RATING}
+              <Typography variant="caption" color="secondary">
+                Đã hoàn thành
               </Typography>
             </Card>
 
             <Card style={styles.statCard}>
               <View style={[styles.statIcon, { backgroundColor: '#DBEAFE' }]}>
-                <Ionicons name="cube" size={20} color={theme.colors.info} />
+                <Ionicons name="book" size={20} color={theme.colors.info} />
               </View>
-              <Typography variant="h3" style={styles.statNumber}>{totalPackages}</Typography>
-              <Typography variant="caption" color="secondary" style={styles.statLabel}>
-                {TEXT.MENTOR_DASHBOARD.TOTAL_PACKAGES}
+              <Typography variant="h2" style={styles.statNumber}>
+                {bookings.reduce((sum, booking) => sum + booking.sessions.length, 0)}
+              </Typography>
+              <Typography variant="caption" color="secondary">
+                Tổng buổi học
               </Typography>
             </Card>
           </View>
@@ -193,18 +154,18 @@ function MentorDashboardContent() {
         {/* Upcoming sessions */}
         <Section>
           <Typography variant="h3" style={styles.sectionTitle}>
-            {TEXT.MENTOR_DASHBOARD.UPCOMING_SESSIONS}
+            {TEXT.DASHBOARD.UPCOMING_SESSIONS}
           </Typography>
 
-          {!dataLoaded ? (
-            <Card style={styles.emptyCard}>
+          {loading ? (
+            <Card style={styles.placeholderCard}>
               <Typography variant="body" color="secondary">Đang tải...</Typography>
             </Card>
           ) : upcomingSessions.length === 0 ? (
             <Card style={styles.emptyCard}>
               <Ionicons name="calendar-outline" size={28} color={theme.colors.text.disabled} />
               <Typography variant="body" color="disabled" style={{ marginTop: theme.spacing.sm }}>
-                {TEXT.MENTOR_DASHBOARD.NO_UPCOMING}
+                {TEXT.DASHBOARD.NO_UPCOMING}
               </Typography>
             </Card>
           ) : (
@@ -226,7 +187,10 @@ function MentorDashboardContent() {
                         <Typography variant="caption" color="secondary" style={{ marginLeft: 4 }}>
                           {item.session.scheduledAt
                             ? new Date(item.session.scheduledAt).toLocaleString('vi-VN', {
-                                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
                               })
                             : 'Chưa xếp lịch'}
                         </Typography>
@@ -249,39 +213,26 @@ function MentorDashboardContent() {
             <TouchableOpacity
               style={styles.actionCard}
               activeOpacity={0.8}
-              onPress={() => router.push('/mentor/services' as any)}
+              onPress={() => router.push('/(tabs)/mentor' as any)}
             >
               <View style={[styles.actionIcon, { backgroundColor: theme.colors.primaryLight }]}>
-                <Ionicons name="cube" size={22} color={theme.colors.primary} />
+                <Ionicons name="search" size={22} color={theme.colors.primary} />
               </View>
               <Typography variant="caption" style={styles.actionLabel}>
-                {TEXT.MENTOR_DASHBOARD.MANAGE_PACKAGES}
+                {TEXT.DASHBOARD.FIND_MENTOR}
               </Typography>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionCard}
               activeOpacity={0.8}
-              onPress={() => router.push('/mentor/bookings' as any)}
+              onPress={() => router.push('/(tabs)/bookings' as any)}
             >
               <View style={[styles.actionIcon, { backgroundColor: '#D1FAE5' }]}>
                 <Ionicons name="calendar" size={22} color={theme.colors.success} />
               </View>
               <Typography variant="caption" style={styles.actionLabel}>
-                {TEXT.MENTOR_DASHBOARD.VIEW_BOOKINGS}
-              </Typography>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionCard}
-              activeOpacity={0.8}
-              onPress={() => router.push('/mentor/profile/edit' as any)}
-            >
-              <View style={[styles.actionIcon, { backgroundColor: '#DBEAFE' }]}>
-                <Ionicons name="create" size={22} color={theme.colors.info} />
-              </View>
-              <Typography variant="caption" style={styles.actionLabel}>
-                {TEXT.MENTOR_DASHBOARD.EDIT_PROFILE}
+                {TEXT.DASHBOARD.VIEW_BOOKINGS}
               </Typography>
             </TouchableOpacity>
 
@@ -290,11 +241,24 @@ function MentorDashboardContent() {
               activeOpacity={0.8}
               onPress={() => router.push('/(tabs)/messages' as any)}
             >
-              <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="chatbubbles" size={22} color={theme.colors.warning} />
+              <View style={[styles.actionIcon, { backgroundColor: '#DBEAFE' }]}>
+                <Ionicons name="chatbubbles" size={22} color={theme.colors.info} />
               </View>
               <Typography variant="caption" style={styles.actionLabel}>
                 {TEXT.DASHBOARD.VIEW_MESSAGES}
+              </Typography>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              activeOpacity={0.8}
+              onPress={() => router.push('/progress' as any)}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="trending-up" size={22} color={theme.colors.warning} />
+              </View>
+              <Typography variant="caption" style={styles.actionLabel}>
+                Tiến độ
               </Typography>
             </TouchableOpacity>
           </View>
@@ -304,27 +268,12 @@ function MentorDashboardContent() {
   );
 }
 
-export default function MentorDashboardScreen() {
-  return (
-    <ProtectedRoute allowedRoles={['mentor']}>
-      <MentorDashboardContent />
-    </ProtectedRoute>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  welcomeRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  welcomeRow: { flexDirection: 'row', alignItems: 'center' },
   welcomeTitle: { fontWeight: '800', color: theme.colors.text.primary, marginBottom: 4 },
-  verBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: theme.borderRadius.full,
-  },
-  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-  statCard: { width: '48%', alignItems: 'center', padding: theme.spacing.md },
+  statsRow: { flexDirection: 'row', gap: theme.spacing.sm },
+  statCard: { flex: 1, alignItems: 'center', padding: theme.spacing.md },
   statIcon: {
     width: 40,
     height: 40,
@@ -334,8 +283,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   statNumber: { fontWeight: '800', color: theme.colors.text.primary, marginBottom: 2 },
-  statLabel: { textAlign: 'center' },
   sectionTitle: { fontWeight: '700', marginBottom: theme.spacing.md },
+  placeholderCard: { padding: theme.spacing.lg, alignItems: 'center' },
   emptyCard: { padding: theme.spacing.xl, alignItems: 'center' },
   sessionCard: { marginBottom: theme.spacing.sm, padding: theme.spacing.md },
   sessionRow: { flexDirection: 'row', alignItems: 'center' },
@@ -365,5 +314,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },
-  actionLabel: { fontWeight: '700', color: theme.colors.text.primary, textAlign: 'center' },
+  actionLabel: { fontWeight: '700', color: theme.colors.text.primary },
 });

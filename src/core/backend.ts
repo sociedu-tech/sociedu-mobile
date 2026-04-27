@@ -73,6 +73,23 @@ export const API_PATHS = {
     upload: `${API_PREFIX}/files/upload`,
     uploadFieldName: BACKEND_CONFIG.uploadFieldName,
   },
+  reports: {
+    base: `${API_PREFIX}/reports`,
+    mine: `${API_PREFIX}/reports/me`,
+    byId: (id: string) => `${API_PREFIX}/reports/${id}`,
+    evidences: (id: string) => `${API_PREFIX}/reports/${id}/evidences`,
+  },
+  disputes: {
+    base: `${API_PREFIX}/disputes`,
+    mine: `${API_PREFIX}/disputes/me`,
+    byId: (id: string) => `${API_PREFIX}/disputes/${id}`,
+  },
+  progressReports: {
+    base: `${API_PREFIX}/progress-reports`,
+    mine: `${API_PREFIX}/progress-reports/me`,
+    byId: (id: string) => `${API_PREFIX}/progress-reports/${id}`,
+    feedback: (id: string) => `${API_PREFIX}/progress-reports/${id}/mentor-feedback`,
+  },
 } as const;
 
 export function buildAbsoluteApiUrl(path: string): string {

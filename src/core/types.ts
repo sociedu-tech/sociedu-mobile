@@ -390,3 +390,138 @@ export interface Conversation {
   sessionId?: string;
   isPinned?: boolean;
 }
+
+// ── Report & Dispute DTOs ─────────────────────────────────────
+export type ReportEntityType = 'user' | 'message' | 'booking' | 'session' | 'review' | 'comment';
+export type ReportStatus = 'open' | 'under_review' | 'resolved' | 'rejected';
+export type DisputeStatus =
+  | 'open'
+  | 'under_review'
+  | 'resolved_buyer'
+  | 'resolved_mentor'
+  | 'partial_refund'
+  | 'closed';
+
+export interface ReportRequestDTO {
+  entityType: string;
+  entityId: string;
+  reason: string;
+  description: string;
+}
+
+export interface ReportEvidenceResponseDTO {
+  id: string;
+  reportId: string;
+  fileId: string;
+  createdAt: string;
+}
+
+export interface ReportResponseDTO {
+  id: string;
+  reporterId: string;
+  entityType: string;
+  entityId: string;
+  reason: string;
+  description: string;
+  status: string;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  evidences: ReportEvidenceResponseDTO[];
+}
+
+export interface DisputeRequestDTO {
+  reportId?: string;
+  bookingId?: string;
+  sessionId?: string;
+  reason: string;
+  description: string;
+}
+
+export interface DisputeResponseDTO {
+  id: string;
+  reportId: string | null;
+  bookingId: string | null;
+  sessionId: string | null;
+  openedBy: string;
+  reason: string;
+  description: string;
+  status: string;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Progress Report DTOs ──────────────────────────────────────
+export type ProgressReportStatus = 'draft' | 'submitted' | 'reviewed';
+
+export interface ProgressReportResponseDTO {
+  id: string;
+  menteeId: string;
+  mentorId: string;
+  bookingId: string | null;
+  title: string;
+  content: string;
+  attachmentUrl: string | null;
+  status: string;
+  mentorFeedback: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProgressReportDTO {
+  bookingId?: string;
+  title: string;
+  content: string;
+}
+
+// ── Mobile types for Report/Dispute/Progress ──────────────────
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  entityType: ReportEntityType;
+  entityId: string;
+  reason: string;
+  description: string;
+  status: ReportStatus;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  evidences: ReportEvidence[];
+}
+
+export interface ReportEvidence {
+  id: string;
+  reportId: string;
+  fileId: string;
+  createdAt: string;
+}
+
+export interface Dispute {
+  id: string;
+  reportId: string | null;
+  bookingId: string | null;
+  sessionId: string | null;
+  openedBy: string;
+  reason: string;
+  description: string;
+  status: DisputeStatus;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProgressReport {
+  id: string;
+  menteeId: string;
+  mentorId: string;
+  bookingId: string | null;
+  title: string;
+  content: string;
+  attachmentUrl: string | null;
+  status: ProgressReportStatus;
+  mentorFeedback: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

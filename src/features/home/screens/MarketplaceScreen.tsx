@@ -24,7 +24,7 @@ export default function MarketplaceScreen() {
 
       <CustomButton
         label="Xem Document ID: 123"
-        onPress={() => router.push('/(tabs)/marketplace/123')}
+        onPress={() => router.push('/(tabs)/marketplace/123' as any)}
       />
     </View>
   );

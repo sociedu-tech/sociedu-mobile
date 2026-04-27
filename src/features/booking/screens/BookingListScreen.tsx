@@ -38,7 +38,7 @@ export default function BookingListScreen() {
   }, [loadData]);
 
   if (loading && bookings.length === 0) {
-    return <LoadingState message="Dang tai lich hen..." />;
+    return <LoadingState message="Đang tải lịch hẹn..." />;
   }
 
   if (error) {
@@ -51,7 +51,7 @@ export default function BookingListScreen() {
         <Typography variant="h2" style={styles.headerTitle}>
           {role === 'mentor' ? 'Lịch hẹn mentor' : 'Lịch hẹn của tôi'}
         </Typography>
-        {contextRoles.length > 1 && (
+        {contextRoles.length > 1 ? (
           <View style={styles.roleSwitchRow}>
             {contextRoles.map((item) => {
               const active = role === item;
@@ -73,14 +73,16 @@ export default function BookingListScreen() {
               );
             })}
           </View>
-        )}
+        ) : null}
       </View>
 
       <FlatList
         data={bookings}
         keyExtractor={(booking) => booking.id}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadData} tintColor={theme.colors.primary} />}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadData} tintColor={theme.colors.primary} />
+        }
         renderItem={({ item }) => (
           <BookingCard booking={item} onPress={() => router.push(`/booking/${item.id}` as any)} />
         )}

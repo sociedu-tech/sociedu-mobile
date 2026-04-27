@@ -39,8 +39,14 @@ export default function HomeScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xl }} showsVerticalScrollIndicator={false}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      edges={['top', 'bottom']}
+    >
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
+        showsVerticalScrollIndicator={false}
+      >
         <Section>
           <Animated.View style={{ alignItems: 'center', paddingTop: 24, paddingBottom: 28 }}>
             <View
@@ -68,7 +74,12 @@ export default function HomeScreen() {
               </Typography>
               {TEXT.HOME.HERO_TITLE_SUFFIX}
             </Typography>
-            <Typography variant="body" color="secondary" align="center" style={{ marginTop: theme.spacing.md }}>
+            <Typography
+              variant="body"
+              color="secondary"
+              align="center"
+              style={{ marginTop: theme.spacing.md }}
+            >
               {TEXT.HOME.HERO_SUBTITLE}
             </Typography>
             <CustomButton
@@ -95,12 +106,19 @@ export default function HomeScreen() {
           <Typography
             variant="h3"
             align="center"
-            style={{ fontWeight: '700', color: theme.colors.text.primary, marginBottom: theme.spacing.lg }}
+            style={{
+              fontWeight: '700',
+              color: theme.colors.text.primary,
+              marginBottom: theme.spacing.lg,
+            }}
           >
             {TEXT.HOME.WHY_US}
           </Typography>
           {HIGHLIGHTS.map((item) => (
-            <Card key={item.title} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.md }}>
+            <Card
+              key={item.title}
+              style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.md }}
+            >
               <View
                 style={{
                   width: 44,
@@ -115,10 +133,19 @@ export default function HomeScreen() {
                 <Ionicons name={item.icon} size={22} color={item.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.text.primary, marginBottom: 2 }}>
+                <Typography
+                  variant="bodyMedium"
+                  style={{
+                    fontWeight: '700',
+                    color: theme.colors.text.primary,
+                    marginBottom: 2,
+                  }}
+                >
                   {item.title}
                 </Typography>
-                <Typography variant="caption" color="secondary">{item.desc}</Typography>
+                <Typography variant="caption" color="secondary">
+                  {item.desc}
+                </Typography>
               </View>
             </Card>
           ))}
@@ -128,18 +155,39 @@ export default function HomeScreen() {
           <Card>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View style={{ alignItems: 'center', flex: 1 }}>
-                <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>500+</Typography>
-                <Typography variant="caption" color="secondary">Mentor</Typography>
+                <Typography
+                  variant="h2"
+                  style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}
+                >
+                  500+
+                </Typography>
+                <Typography variant="caption" color="secondary">
+                  Mentor
+                </Typography>
               </View>
               <View style={{ width: 1, backgroundColor: theme.colors.border.default, marginVertical: 4 }} />
               <View style={{ alignItems: 'center', flex: 1 }}>
-                <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>2K+</Typography>
-                <Typography variant="caption" color="secondary">Buổi học</Typography>
+                <Typography
+                  variant="h2"
+                  style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}
+                >
+                  2K+
+                </Typography>
+                <Typography variant="caption" color="secondary">
+                  Buổi học
+                </Typography>
               </View>
               <View style={{ width: 1, backgroundColor: theme.colors.border.default, marginVertical: 4 }} />
               <View style={{ alignItems: 'center', flex: 1 }}>
-                <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>4.8</Typography>
-                <Typography variant="caption" color="secondary">Đánh giá</Typography>
+                <Typography
+                  variant="h2"
+                  style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}
+                >
+                  4.8
+                </Typography>
+                <Typography variant="caption" color="secondary">
+                  Đánh giá
+                </Typography>
               </View>
             </View>
           </Card>

@@ -1,8 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 import { Typography } from '@/src/components/typography/Typography';
 import { Avatar } from '@/src/components/ui/Avatar';
@@ -11,8 +11,8 @@ import { ListItem } from '@/src/components/ui/ListItem';
 import { Section } from '@/src/components/ui/Section';
 import { TEXT } from '@/src/core/constants/strings';
 import { User } from '@/src/core/types';
-import { theme } from '@/src/theme/theme';
 import { useAuthStore } from '@/src/features/auth/store/authStore';
+import { theme } from '@/src/theme/theme';
 
 import { userService } from '../services/userService';
 
@@ -160,7 +160,7 @@ export default function MyProfileScreen() {
             {displayEmail}
           </Typography>
 
-          {effectiveRoles.length > 1 && (
+          {effectiveRoles.length > 1 ? (
             <View
               style={{
                 flexDirection: 'row',
@@ -200,9 +200,9 @@ export default function MyProfileScreen() {
                 );
               })}
             </View>
-          )}
+          ) : null}
 
-          {hasMentorRole && !hasApprovedMentorRole && (
+          {hasMentorRole && !hasApprovedMentorRole ? (
             <Card
               style={{
                 width: '100%',
@@ -221,7 +221,7 @@ export default function MyProfileScreen() {
                 {TEXT.PROFILE.MENTOR_PENDING_DESCRIPTION.replace('{status}', mentorApprovalStatus)}
               </Typography>
             </Card>
-          )}
+          ) : null}
 
           <TouchableOpacity
             style={{
@@ -246,7 +246,7 @@ export default function MyProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {(hasApprovedMentorRole || hasAdminRole) && (
+        {hasApprovedMentorRole || hasAdminRole ? (
           <Section style={{ marginBottom: theme.spacing.xl }}>
             <Typography
               variant="label"
@@ -263,7 +263,7 @@ export default function MyProfileScreen() {
               {TEXT.PROFILE.DASHBOARD}
             </Typography>
             <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
-              {hasApprovedMentorRole && (
+              {hasApprovedMentorRole ? (
                 <>
                   <ListItem
                     title="Mentor Dashboard"
@@ -278,18 +278,18 @@ export default function MyProfileScreen() {
                     onPress={() => router.push('/mentor/services' as any)}
                   />
                 </>
-              )}
-              {hasAdminRole && (
+              ) : null}
+              {hasAdminRole ? (
                 <ListItem
                   title="Admin Panel"
                   subtitle="Kiểm duyệt người dùng và hệ thống"
                   iconName="shield-checkmark-outline"
                   onPress={() => router.push('/admin/index' as any)}
                 />
-              )}
+              ) : null}
             </Card>
           </Section>
-        )}
+        ) : null}
 
         <Section style={{ marginBottom: theme.spacing.xl }}>
           <Typography

@@ -1,6 +1,6 @@
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { useAuthStore } from '@/src/features/auth/store/authStore';
@@ -36,7 +36,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+              {focused ? <View style={[styles.dot, { backgroundColor: color }]} /> : null}
             </View>
           ),
         }}
@@ -49,7 +49,7 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+              {focused ? <View style={[styles.dot, { backgroundColor: color }]} /> : null}
             </View>
           ),
         }}
@@ -66,7 +66,7 @@ export default function TabsLayout() {
                 size={size}
                 color={color}
               />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+              {focused ? <View style={[styles.dot, { backgroundColor: color }]} /> : null}
             </View>
           ),
         }}
@@ -83,7 +83,7 @@ export default function TabsLayout() {
                 size={size}
                 color={color}
               />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+              {focused ? <View style={[styles.dot, { backgroundColor: color }]} /> : null}
             </View>
           ),
         }}
@@ -95,13 +95,11 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size, focused }) => (
             <View style={{ alignItems: 'center' }}>
               <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
+              {focused ? <View style={[styles.dot, { backgroundColor: color }]} /> : null}
             </View>
           ),
         }}
       />
-      <Tabs.Screen name="marketplace" options={{ href: null }} />
-      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }
