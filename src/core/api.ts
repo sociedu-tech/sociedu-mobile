@@ -7,25 +7,25 @@
  *   'access_token'  – JWT access token
  *   'refresh_token' – JWT refresh token
  */
-import axios, { AxiosRequestConfig, AxiosError } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 // ─── Config ──────────────────────────────────────────────────
-export const API_BASE_URL = 'http://192.168.102.4:9999'; // Mobile LAN IP
+export const API_BASE_URL = "https://vietdemo.com/api_mentor"; // Mobile LAN IP
 // iOS Simulator: dùng 'http://localhost:9999'
 // Device thật: dùng IP LAN 'http://192.168.x.x:9999'
 
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'access_token',
-  REFRESH_TOKEN: 'refresh_token',
-  USER: 'user',
+  ACCESS_TOKEN: "access_token",
+  REFRESH_TOKEN: "refresh_token",
+  USER: "user",
 } as const;
 
 // ─── Axios instance ───────────────────────────────────────────
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
 // ─── Token helpers ────────────────────────────────────────────
@@ -33,7 +33,8 @@ export const tokenStorage = {
   getAccess: () => AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN),
   getRefresh: () => AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN),
   setAccess: (t: string) => AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, t),
-  setRefresh: (t: string) => AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, t),
+  setRefresh: (t: string) =>
+    AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, t),
   setTokens: (access: string, refresh: string) =>
     AsyncStorage.multiSet([
       [STORAGE_KEYS.ACCESS_TOKEN, access],
@@ -78,15 +79,17 @@ api.interceptors.response.use(
 
   // Error handler
   async (error: AxiosError) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // ── 401 → thử refresh ──────────────────────────────────
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Nếu chính request /auth/refresh bị 401 → logout hẳn
-      if (originalRequest.url?.includes('/auth/refresh')) {
+      if (originalRequest.url?.includes("/auth/refresh")) {
         await tokenStorage.clearAll();
         // authStore.logout() sẽ được gọi từ subscriber ở _layout.tsx
-        return Promise.reject(new Error('SESSION_EXPIRED'));
+        return Promise.reject(new Error("SESSION_EXPIRED"));
       }
 
       if (isRefreshing) {
@@ -107,7 +110,7 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = await tokenStorage.getRefresh();
-        if (!refreshToken) throw new Error('NO_REFRESH_TOKEN');
+        if (!refreshToken) throw new Error("NO_REFRESH_TOKEN");
 
         const res = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, {
           refreshToken,
@@ -127,7 +130,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         await tokenStorage.clearAll();
-        return Promise.reject(new Error('SESSION_EXPIRED'));
+        return Promise.reject(new Error("SESSION_EXPIRED"));
       } finally {
         isRefreshing = false;
       }
@@ -136,14 +139,14 @@ api.interceptors.response.use(
     // ── Lỗi khác ──────────────────────────────────────────
     const serverMessage =
       (error.response?.data as any)?.message ||
-      'Có lỗi xảy ra, vui lòng thử lại.';
+      "Có lỗi xảy ra, vui lòng thử lại.";
 
     if (!error.response) {
-      return Promise.reject(new Error('Không thể kết nối đến server.'));
+      return Promise.reject(new Error("Không thể kết nối đến server."));
     }
 
     return Promise.reject(new Error(serverMessage));
-  }
+  },
 );
 
 /**
