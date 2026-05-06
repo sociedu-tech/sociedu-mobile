@@ -1,3 +1,4 @@
+// DEV ONLY: Không bao gồm trong production build.
 import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet, SafeAreaView } from 'react-native';
 import { theme } from '../src/theme/theme';

@@ -1,54 +1,83 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  StyleSheet,
+  Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity,
+  StyleSheet,
   TextInput,
-  Keyboard,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Typography } from '../../src/components/typography/Typography';
+
 import { CustomButton } from '../../src/components/button/CustomButton';
+import { Typography } from '../../src/components/typography/Typography';
+import { TEXT } from '../../src/core/constants/strings';
+import { authService } from '../../src/core/services/authService';
 import { theme } from '../../src/theme/theme';
+
+const OTP_LENGTH = 6;
 
 export default function OTPScreen() {
   const router = useRouter();
+  const { email } = useLocalSearchParams<{ email?: string }>();
+  const normalizedEmail = typeof email === 'string' ? email.trim() : '';
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [timer, setTimer] = useState(59);
-  
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+
+  const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
-  const handleChange = (text: string, index: number) => {
-    if (text.length > 1) {
-      // Handle paste
-      const newOtp = text.slice(0, 6).split('');
-      setOtp([...newOtp, ...Array(6 - newOtp.length).fill('')]);
+  const focusNextAvailable = (nextOtp: string[]) => {
+    const nextEmptyIndex = nextOtp.findIndex((digit) => digit === '');
+    if (nextEmptyIndex >= 0) {
+      inputRefs.current[nextEmptyIndex]?.focus();
+    } else {
+      inputRefs.current[OTP_LENGTH - 1]?.focus();
+    }
+  };
+
+  const handlePasteOrChange = (text: string, index: number) => {
+    const sanitized = text.replace(/\D/g, '');
+    if (!sanitized && text.length > 0) {
       return;
     }
 
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
+    if (sanitized.length > 1) {
+      const nextOtp = Array(OTP_LENGTH).fill('');
+      sanitized
+        .slice(0, OTP_LENGTH)
+        .split('')
+        .forEach((digit, digitIndex) => {
+          nextOtp[digitIndex] = digit;
+        });
+      setOtp(nextOtp);
+      focusNextAvailable(nextOtp);
+      return;
+    }
 
-    // Auto focus next
-    if (text !== '' && index < 5) {
+    const nextOtp = [...otp];
+    nextOtp[index] = sanitized;
+    setOtp(nextOtp);
+
+    if (sanitized && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyPress = (e: any, index: number) => {
+  const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
     if (e.nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -57,21 +86,64 @@ export default function OTPScreen() {
   const handleVerify = async () => {
     Keyboard.dismiss();
     const code = otp.join('');
-    if (code.length < 6) return;
+    if (code.length < OTP_LENGTH) {
+      Alert.alert(
+        TEXT.AUTH_OTP.VERIFY_ERROR_TITLE,
+        TEXT.AUTH_OTP.INVALID_CODE_MESSAGE,
+      );
+      return;
+    }
 
     setLoading(true);
-    // Giả lập verify OTP
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await authService.verifyEmail(code);
+      Alert.alert(
+        TEXT.AUTH_OTP.VERIFY_SUCCESS_TITLE,
+        TEXT.AUTH_OTP.VERIFY_SUCCESS_MESSAGE,
+      );
       router.replace('/(auth)/login');
-    }, 1500);
+    } catch (error: any) {
+      Alert.alert(
+        TEXT.AUTH_OTP.VERIFY_ERROR_TITLE,
+        error?.message || TEXT.AUTH_OTP.VERIFY_ERROR_MESSAGE,
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!normalizedEmail) {
+      Alert.alert(
+        TEXT.AUTH_OTP.RESEND_ERROR_TITLE,
+        TEXT.AUTH_OTP.EMAIL_REQUIRED_MESSAGE,
+      );
+      return;
+    }
+
+    setResending(true);
+    try {
+      await authService.resendVerification(normalizedEmail);
+      setTimer(59);
+      Alert.alert(
+        TEXT.AUTH_OTP.RESEND_SUCCESS_TITLE,
+        TEXT.AUTH_OTP.RESEND_SUCCESS_MESSAGE,
+      );
+    } catch (error: any) {
+      Alert.alert(
+        TEXT.AUTH_OTP.RESEND_ERROR_TITLE,
+        error?.message || TEXT.AUTH_OTP.RESEND_ERROR_MESSAGE,
+      );
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={styles.container}
       >
         <View style={styles.content}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -79,9 +151,11 @@ export default function OTPScreen() {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Typography variant="h1" style={styles.title}>Xác thực OTP</Typography>
+            <Typography variant="h1" style={styles.title}>
+              {TEXT.AUTH_OTP.TITLE}
+            </Typography>
             <Typography variant="body" color="secondary" style={styles.subtitle}>
-              Mã xác thực đã được gửi đến email của bạn. Vui lòng nhập mã để tiếp tục.
+              {TEXT.AUTH_OTP.SUBTITLE}
             </Typography>
           </View>
 
@@ -89,15 +163,14 @@ export default function OTPScreen() {
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(el) => { inputRefs.current[index] = el; }}
-                style={[
-                  styles.otpInput,
-                  digit !== '' && styles.otpInputActive
-                ]}
+                ref={(element) => {
+                  inputRefs.current[index] = element;
+                }}
+                style={[styles.otpInput, digit !== '' && styles.otpInputActive]}
                 keyboardType="number-pad"
-                maxLength={1}
+                maxLength={index === 0 ? OTP_LENGTH : 1}
                 value={digit}
-                onChangeText={(text) => handleChange(text, index)}
+                onChangeText={(text) => handlePasteOrChange(text, index)}
                 onKeyPress={(e) => handleKeyPress(e, index)}
                 textAlign="center"
               />
@@ -105,25 +178,27 @@ export default function OTPScreen() {
           </View>
 
           <View style={styles.timerRow}>
-            <Typography variant="body" color="secondary">Không nhận được mã? </Typography>
+            <Typography variant="body" color="secondary">
+              {TEXT.AUTH_OTP.RESEND_PROMPT}
+            </Typography>
             {timer > 0 ? (
-              <Typography variant="body" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                Gửi lại sau {timer}s
+              <Typography variant="body" style={styles.timerText}>
+                {TEXT.AUTH_OTP.RESEND_COUNTDOWN.replace('{seconds}', String(timer))}
               </Typography>
             ) : (
-              <TouchableOpacity onPress={() => setTimer(59)}>
-                <Typography variant="body" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                  Gửi lại ngay
+              <TouchableOpacity onPress={handleResend} disabled={resending}>
+                <Typography variant="body" style={styles.timerText}>
+                  {TEXT.AUTH_OTP.RESEND_NOW}
                 </Typography>
               </TouchableOpacity>
             )}
           </View>
 
           <CustomButton
-            label="Xác nhận"
+            label={TEXT.AUTH_OTP.VERIFY_BUTTON}
             onPress={handleVerify}
-            loading={loading}
-            disabled={otp.join('').length < 6 || loading}
+            loading={loading || resending}
+            disabled={otp.join('').length < OTP_LENGTH || loading || resending}
             style={styles.verifyBtn}
           />
         </View>
@@ -188,6 +263,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 40,
+  },
+  timerText: {
+    color: theme.colors.primary,
+    fontWeight: '700',
   },
   verifyBtn: {
     marginTop: 'auto',

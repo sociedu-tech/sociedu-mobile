@@ -1,271 +1,214 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  StyleSheet,
+  Alert,
   FlatList,
-  TouchableOpacity,
-  TextInput,
+  Image,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
-  Image,
-  Animated,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Typography } from '../../src/components/typography/Typography';
-import { theme } from '../../src/theme/theme';
-import { Avatar } from '../../src/components/ui/Avatar';
+
 import { Card } from '../../src/components/ui/Card';
-import { chatService } from '../../src/core/services/chatService';
-import { ChatMessage, ChatSession, Conversation } from '../../src/core/types';
+import { Avatar } from '../../src/components/ui/Avatar';
+import { ErrorState } from '../../src/components/states/ErrorState';
+import { LoadingState } from '../../src/components/states/LoadingState';
+import { Typography } from '../../src/components/typography/Typography';
+import { TEXT } from '../../src/core/constants/strings';
+import { bookingService } from '../../src/core/services/bookingService';
+import { conversationService } from '../../src/core/services/conversationService';
+import { useAuthStore } from '../../src/core/store/authStore';
+import { Booking, Conversation, Message } from '../../src/core/types';
+import { theme } from '../../src/theme/theme';
 
-// ─── UTILS ───────────────────────────────────────────────────────
+function formatMessageTime(value: Date) {
+  return value.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+}
 
-const formatDateTime = (timestamp: number) => {
-  const date = new Date(timestamp);
-  return date.toLocaleString('vi-VN', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    day: '2-digit', 
-    month: '2-digit' 
-  });
-};
+function getMessageLabel(message: Message) {
+  if (message.type === 'image') return TEXT.MESSAGES.SENT_IMAGE;
+  if (message.type === 'file') return TEXT.MESSAGES.SENT_FILE;
+  return message.content;
+}
 
-const formatCurrency = (amount: number) => {
-  return amount.toLocaleString('vi-VN') + ' đ';
-};
-
-// ─── COMPONENT ───────────────────────────────────────────────────
+function getBookingStatusLabel(status: Booking['status']) {
+  if (status === 'active') return TEXT.MESSAGES.STATUS_ONLINE;
+  return TEXT.MESSAGES.STATUS_OFFLINE;
+}
 
 export default function ConversationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
-  
+  const flatListRef = useRef<FlatList<Message>>(null);
+  const currentUserId = useAuthStore((state) => state.user?.id);
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [session, setSession] = useState<ChatSession | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [inputText, setInputText] = useState('');
-  const [isSessionPinned, setIsSessionPinned] = useState(true);
-  
-  // Load dữ liệu ban đầu
-  useEffect(() => {
-    if (id) {
-      loadData();
-    }
-  }, [id]);
 
-  const loadData = async () => {
+  const loadConversation = useCallback(async () => {
+    if (!id) return;
     setLoading(true);
-    try {
-      const allConvs = await chatService.getConversations();
-      const currentConv = allConvs.find(c => c.id === id);
-      
-      if (currentConv) {
-        setConversation(currentConv);
-        const msgs = await chatService.getMessages(currentConv.id);
-        setMessages(msgs);
+    setError(null);
 
-        if (currentConv.sessionId) {
-          const sess = await chatService.getChatSession(currentConv.sessionId);
-          setSession(sess);
+    try {
+      const [conversationData, messageData] = await Promise.all([
+        conversationService.getConversationById(id),
+        conversationService.getMessages(id),
+      ]);
+
+      setConversation(conversationData);
+      setMessages(messageData);
+
+      if (conversationData.type === 'booking' && conversationData.bookingId) {
+        try {
+          setBooking(await bookingService.getById(conversationData.bookingId));
+        } catch {
+          setBooking(null);
         }
+      } else {
+        setBooking(null);
       }
-    } catch (error) {
-      console.error('Failed to load chat data:', error);
+    } catch (loadError: any) {
+      setError(loadError?.message || TEXT.MESSAGES.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleSend = async () => {
-    if (inputText.trim().length === 0 || !id) return;
+  useEffect(() => {
+    void loadConversation();
+  }, [loadConversation]);
+
+  const handleSend = useCallback(async () => {
+    if (!id || !inputText.trim() || sending) return;
     const text = inputText.trim();
     setInputText('');
+    setSending(true);
+
     try {
-      const newMessage = await chatService.sendMessage(id, text, 'mentee');
-      setMessages(prev => [...prev, newMessage]);
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-    } catch (error) {
-      console.error('Failed to send message:', error);
+      const createdMessage = await conversationService.sendMessage(id, text);
+      setMessages((currentMessages) => [...currentMessages, createdMessage]);
+      requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
+    } catch (sendError: any) {
+      Alert.alert(TEXT.COMMON.ERROR, sendError?.message || TEXT.MESSAGES.SEND_ERROR);
+      setInputText(text);
+    } finally {
+      setSending(false);
     }
-  };
+  }, [id, inputText, sending]);
 
-  const handleImagePick = async () => {
-    const result = await require('expo-image-picker').launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
+  const messageList = useMemo(
+    () => messages.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime()),
+    [messages],
+  );
 
-    if (!result.canceled && id) {
-      // Giả lập gửi ảnh
-      const imageMsg: ChatMessage = {
-        id: Math.random().toString(),
-        conversationId: id,
-        sender: 'mentee',
-        text: 'Đã gửi một ảnh',
-        type: 'image',
-        imageUrl: result.assets[0].uri,
-        createdAt: Date.now(),
-      };
-      setMessages(prev => [...prev, imageMsg]);
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-    }
-  };
-
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isMentee = item.sender === 'mentee';
-    return (
-      <View style={[styles.messageBubbleContainer, isMentee ? styles.menteeAlign : styles.mentorAlign]}>
-        {!isMentee && conversation && (
-          <Avatar uri={conversation.avatar} size={32} style={styles.bubbleAvatar} />
-        )}
-        <View style={[
-          styles.bubble, 
-          isMentee ? styles.menteeBubble : styles.mentorBubble,
-          item.type === 'image' && styles.imageBubble
-        ]}>
-          {item.type === 'image' && item.imageUrl ? (
-            <Image 
-               source={{ uri: item.imageUrl }} 
-               style={styles.messageImage} 
-               resizeMode="cover" 
-            />
-          ) : (
-            <Typography 
-              variant="body" 
-              style={{ color: isMentee ? '#FFF' : theme.colors.text.primary }}
-            >
-              {item.text}
-            </Typography>
-          )}
-          <Typography 
-            variant="caption" 
-            style={[
-              styles.messageTime, 
-              { color: isMentee ? 'rgba(255,255,255,0.7)' : theme.colors.text.secondary }
-            ]}
+  const renderMessage = ({ item }: { item: Message }) => (
+    <View style={[styles.messageRow, item.isMine ? styles.mineRow : styles.peerRow]}>
+      {!item.isMine ? <Avatar uri={conversation?.avatar ?? undefined} size={32} /> : null}
+      <View style={[styles.messageBubble, item.isMine ? styles.mineBubble : styles.peerBubble]}>
+        {item.type === 'image' && item.attachments[0]?.url ? (
+          <Image resizeMode="cover" source={{ uri: item.attachments[0].url }} style={styles.messageImage} />
+        ) : (
+          <Typography
+            style={{ color: item.isMine ? theme.colors.text.inverse : theme.colors.text.primary }}
+            variant="body"
           >
-            {formatDateTime(item.createdAt).split(' ')[0]}
+            {getMessageLabel(item)}
           </Typography>
-        </View>
+        )}
+        <Typography
+          style={[styles.messageTime, { color: item.isMine ? theme.colors.primaryLight : theme.colors.text.secondary }]}
+          variant="caption"
+        >
+          {formatMessageTime(item.createdAt)}
+        </Typography>
       </View>
-    );
-  };
+    </View>
+  );
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator color={theme.colors.primary} size="large" />
-        </View>
-      </SafeAreaView>
-    );
+    return <LoadingState message={TEXT.COMMON.LOADING} />;
   }
 
-  if (!conversation) return null;
+  if (error || !conversation) {
+    return <ErrorState error={error || TEXT.MESSAGES.LOAD_ERROR} onRetry={() => loadConversation()} />;
+  }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* HEADER */}
+    <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
+        <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+          <Ionicons color={theme.colors.text.primary} name="arrow-back" size={24} />
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.headerInfo}>
-          <Avatar uri={conversation.avatar} size={40} />
-          <View style={styles.headerTextWrapper}>
-            <Typography variant="bodyMedium" weight="700">
+        <View style={styles.headerInfo}>
+          <Avatar uri={conversation.avatar ?? undefined} size={40} />
+          <View style={styles.headerText}>
+            <Typography style={styles.headerName} variant="bodyMedium">
               {conversation.name}
             </Typography>
-            <Typography variant="caption" color="secondary">
-              Đang hoạt động
+            <Typography color="secondary" variant="caption">
+              {currentUserId === conversation.peer?.id ? TEXT.MESSAGES.STATUS_OFFLINE : TEXT.MESSAGES.STATUS_ONLINE}
             </Typography>
           </View>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.headerAction}
-          onPress={() => session && setIsSessionPinned(!isSessionPinned)}
-        >
-          <Ionicons 
-            name={session ? "calendar" : "ellipsis-vertical"} 
-            size={20} 
-            color={session ? theme.colors.primary : theme.colors.text.secondary} 
-          />
-        </TouchableOpacity>
+        </View>
       </View>
 
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={{ flex: 1 }}>
-          {/* PINNED SESSION CARD */}
-          {session && isSessionPinned && (
-            <Animated.View style={styles.pinnedSession}>
-               <Card style={styles.sessionCardMini}>
-                  <View style={styles.sessionHeaderMini}>
-                    <Ionicons name="school" size={20} color={theme.colors.primary} />
-                    <Typography variant="bodyMedium" weight="700" style={{ flex: 1, marginLeft: 8 }}>
-                       {session.subject}
-                    </Typography>
-                    <TouchableOpacity onPress={() => setIsSessionPinned(false)}>
-                       <Ionicons name="close" size={20} color={theme.colors.text.disabled} />
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.sessionFooterMini}>
-                    <Typography variant="caption" color="secondary">
-                       {formatDateTime(session.startTime)}
-                    </Typography>
-                    <TouchableOpacity style={styles.joinBtnMini} onPress={() => router.push(`/booking/${id}`)}>
-                       <Typography variant="caption" style={{ color: '#FFF', fontWeight: '700' }}>Chi tiết</Typography>
-                    </TouchableOpacity>
-                  </View>
-               </Card>
-            </Animated.View>
-          )}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+        {conversation.type === 'booking' && booking ? (
+          <Card style={styles.bookingCard}>
+            <Typography style={styles.bookingTitle} variant="bodyMedium">
+              {TEXT.MESSAGES.BOOKING_INFO_TITLE}
+            </Typography>
+            <Typography color="secondary" variant="caption">
+              {getBookingStatusLabel(booking.status)}
+            </Typography>
+            <Typography style={styles.bookingMeta} variant="caption">
+              {`${booking.sessions.length} buổi học`}
+            </Typography>
+            <TouchableOpacity onPress={() => router.push(`/booking/${booking.id}` as any)} style={styles.bookingLink}>
+              <Typography style={styles.bookingLinkText} variant="caption">
+                {TEXT.MESSAGES.VIEW_BOOKING}
+              </Typography>
+              <Ionicons color={theme.colors.primary} name="chevron-forward" size={16} />
+            </TouchableOpacity>
+          </Card>
+        ) : null}
 
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => item.id}
-            renderItem={renderMessage}
-            contentContainerStyle={[styles.messageList, session && isSessionPinned && { paddingTop: 100 }]}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
-          />
-        </View>
+        <FlatList
+          ref={flatListRef}
+          contentContainerStyle={styles.messageList}
+          data={messageList}
+          keyExtractor={(item) => item.id}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          renderItem={renderMessage}
+        />
 
-        {/* INPUT AREA */}
-        <View style={styles.inputArea}>
-          <TouchableOpacity style={styles.attachmentButton} onPress={handleImagePick}>
-            <Ionicons name="image-outline" size={26} color={theme.colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.attachmentButton}>
-            <Ionicons name="document-attach-outline" size={26} color={theme.colors.primary} />
-          </TouchableOpacity>
-          
+        <View style={styles.inputBar}>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.textInput}
-              placeholder="Nhập tin nhắn..."
-              placeholderTextColor={theme.colors.text.disabled}
-              value={inputText}
-              onChangeText={setInputText}
               multiline
+              onChangeText={setInputText}
+              placeholder={TEXT.MESSAGES.INPUT_PLACEHOLDER}
+              placeholderTextColor={theme.colors.text.disabled}
+              style={styles.input}
+              value={inputText}
             />
           </View>
-          
-          <TouchableOpacity 
-            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]} 
+          <TouchableOpacity
+            disabled={!inputText.trim() || sending}
             onPress={handleSend}
-            disabled={!inputText.trim()}
+            style={[styles.sendButton, (!inputText.trim() || sending) && styles.sendButtonDisabled]}
           >
-            <Ionicons name="send" size={20} color="#FFF" />
+            <Ionicons color={theme.colors.text.inverse} name="send" size={18} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -274,214 +217,65 @@ export default function ConversationDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  flex: { flex: 1 },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
     borderBottomColor: theme.colors.border.default,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerInfo: {
-    flex: 1,
+    borderBottomWidth: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 12,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
   },
-  headerTextWrapper: {
-    marginLeft: 12,
-  },
-  headerAction: {
-    padding: 4,
-  },
-  messageList: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  messageBubbleContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    maxWidth: '85%',
-  },
-  mentorAlign: {
-    alignSelf: 'flex-start',
-  },
-  menteeAlign: {
-    alignSelf: 'flex-end',
-  },
-  bubbleAvatar: {
-    marginRight: 8,
-    alignSelf: 'flex-end',
-  },
-  bubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  mentorBubble: {
+  iconButton: { padding: theme.spacing.xs },
+  headerInfo: { alignItems: 'center', flex: 1, flexDirection: 'row', marginLeft: theme.spacing.sm },
+  headerText: { marginLeft: theme.spacing.sm },
+  headerName: { fontWeight: '700' },
+  bookingCard: { borderRadius: theme.borderRadius.lg, margin: theme.spacing.md, padding: theme.spacing.md },
+  bookingTitle: { fontWeight: '700', marginBottom: theme.spacing.xs },
+  bookingMeta: { color: theme.colors.text.secondary, marginTop: theme.spacing.xs },
+  bookingLink: { alignItems: 'center', flexDirection: 'row', marginTop: theme.spacing.sm },
+  bookingLinkText: { color: theme.colors.primary, fontWeight: '700', marginRight: theme.spacing.xs },
+  messageList: { padding: theme.spacing.md },
+  messageRow: { alignItems: 'flex-end', flexDirection: 'row', marginBottom: theme.spacing.md, maxWidth: '85%' },
+  peerRow: { alignSelf: 'flex-start' },
+  mineRow: { alignSelf: 'flex-end' },
+  messageBubble: { borderRadius: theme.borderRadius.lg, paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm },
+  peerBubble: {
     backgroundColor: theme.colors.surface,
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
     borderColor: theme.colors.border.default,
-  },
-  menteeBubble: {
-    backgroundColor: theme.colors.primary,
-    borderBottomRightRadius: 4,
-  },
-  messageTime: {
-    fontSize: 10,
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  sessionCard: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 24,
-  },
-  sessionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sessionIconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: theme.colors.primaryLighter,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  sessionInfoGrid: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  sessionInfoItem: {
-    flex: 1,
-  },
-  sessionActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.default,
-    paddingTop: 16,
-  },
-  actionButton: {
-    flex: 1,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: theme.colors.error,
+    marginLeft: theme.spacing.sm,
   },
-  confirmButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  pinnedSession: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    padding: 12,
-  },
-  sessionCardMini: {
-    padding: 12,
-    borderRadius: 12,
+  mineBubble: { backgroundColor: theme.colors.primary },
+  messageImage: { borderRadius: theme.borderRadius.md, height: 150, width: 220 },
+  messageTime: { alignSelf: 'flex-end', marginTop: theme.spacing.xs },
+  inputBar: {
+    alignItems: 'center',
     backgroundColor: theme.colors.surface,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.primaryLight,
-  },
-  sessionHeaderMini: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  sessionFooterMini: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  joinBtnMini: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  imageBubble: {
-    padding: 4,
-    borderRadius: 12,
-  },
-  messageImage: {
-    width: 200,
-    height: 150,
-    borderRadius: 8,
-  },
-  inputArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
-  },
-  attachmentButton: {
-    padding: 8,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    padding: theme.spacing.sm,
   },
   inputContainer: {
-    flex: 1,
     backgroundColor: theme.colors.background,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 4,
-    maxHeight: 100,
-    borderWidth: 1,
     borderColor: theme.colors.border.default,
-  },
-  textInput: {
-    fontSize: 15,
-    color: theme.colors.text.primary,
-    paddingTop: 0,
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: theme.colors.text.disabled,
-  },
-  centerContainer: {
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginRight: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
   },
+  input: { color: theme.colors.text.primary, maxHeight: 100, minHeight: 40, paddingVertical: theme.spacing.sm },
+  sendButton: {
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  sendButtonDisabled: { backgroundColor: theme.colors.text.disabled },
 });

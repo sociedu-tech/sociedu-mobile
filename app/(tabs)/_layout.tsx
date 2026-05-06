@@ -15,7 +15,7 @@ import { useAuthStore } from '../../src/core/store/authStore';
  *   "/bookings"→ bookings (Lịch hẹn)
  *   n/a        → profile  (Hồ sơ cá nhân – mobile only)
  *
- * Các tab cũ (marketplace, explore) bị ẩn bằng href: null
+ * Các tab cũ (marketplace) bị ẩn bằng href: null
  * để tránh crash nếu file vẫn tồn tại trong thư mục.
  */
 export default function TabsLayout() {
@@ -108,10 +108,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      {/* ── Ẩn các tab cũ nếu file vẫn tồn tại ── */}
       <Tabs.Screen name="marketplace" options={{ href: null }} />
-      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }

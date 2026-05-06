@@ -1,23 +1,16 @@
 /**
  * mentorAdapter.ts
- * Chuyển đổi MentorProfileResponseDTO (backend) → User (mobile UI)
- *
- * Các transform chính:
- *   - expertise: "React,Node.js" → ["React", "Node.js"]
- *   - userId: number → id: string
- *   - ratingAvg: Float|null → rating: number
- *   - verificationStatus: "VERIFIED" → "verified"
- *   - packages: ServicePackageResponseDTO[] → MentorPackage[]
+ * Chuyển đổi MentorProfileResponseDTO (backend) -> User (mobile UI)
  */
 import {
+  CurriculumItem,
+  CurriculumItemResponseDTO,
+  MentorPackage,
+  MentorPackageVersion,
   MentorProfileResponseDTO,
   ServicePackageResponseDTO,
   ServicePackageVersionResponseDTO,
-  CurriculumItemResponseDTO,
   User,
-  MentorPackage,
-  MentorPackageVersion,
-  CurriculumItem,
   VerificationStatus,
 } from '../types';
 
@@ -38,6 +31,9 @@ function toPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageV
     duration: dto.duration,
     deliveryType: dto.deliveryType ?? 'ONLINE',
     isDefault: dto.isDefault ?? false,
+    isActive: dto.isActive ?? true,
+    hasOrders: dto.hasOrders ?? false,
+    isEditable: dto.isEditable ?? !(dto.hasOrders ?? false),
     curriculums: (dto.curriculums ?? []).map(toCurriculumItem),
   };
 }
@@ -58,27 +54,24 @@ function toVerificationStatus(raw: string): VerificationStatus {
     PENDING: 'pending',
     REJECTED: 'rejected',
   };
+
   return map[raw?.toUpperCase()] ?? 'pending';
 }
 
-/**
- * Chuyển MentorProfileResponseDTO → User (mobile type)
- */
 export function toMentorUser(dto: MentorProfileResponseDTO): User {
   const expertiseArr = dto.expertise
-    ? dto.expertise.split(',').map((s) => s.trim()).filter(Boolean)
+    ? dto.expertise
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
     : [];
 
   const packages = (dto.packages ?? []).map(toPackage);
-  // Giá thấp nhất trong tất cả các version
-  const allPrices = packages
-    .flatMap((p) => p.versions.map((v) => v.price))
-    .filter((p) => p > 0);
-  const basePrice = allPrices.length > 0 ? Math.min(...allPrices) : Number(dto.basePrice ?? 0);
+  const basePrice = Number(dto.basePrice ?? 0);
 
   return {
     id: String(dto.userId),
-    name: '',                  // Không có tên trong MentorProfileResponse → cần public user API
+    name: '',
     email: '',
     avatar: null,
     role: 'mentor',
@@ -96,9 +89,6 @@ export function toMentorUser(dto: MentorProfileResponseDTO): User {
   };
 }
 
-/**
- * Chuyển danh sách
- */
 export function toMentorList(dtos: MentorProfileResponseDTO[]): User[] {
   return (dtos ?? []).map(toMentorUser);
 }
