@@ -65,6 +65,9 @@ export interface ServicePackageVersionResponseDTO {
   duration: number;               // minutes
   deliveryType: string;
   isDefault: boolean;
+  isActive?: boolean;
+  hasOrders?: boolean;
+  isEditable?: boolean;
   curriculums?: CurriculumItemResponseDTO[]; // Null-safe array
 }
 
@@ -104,6 +107,29 @@ export interface CreateServiceRequest {
     isDefault: boolean;
     curriculums: CreateCurriculumRequest[];
   }[];
+}
+
+export interface UpdateServiceRequest {
+  name: string;
+  description: string;
+  isActive: boolean;
+}
+
+export interface CreatePackageVersionRequest {
+  price: number;
+  duration: number;
+  deliveryType: string;
+  isDefault: boolean;
+  isActive: boolean;
+  curriculums: CreateCurriculumRequest[];
+}
+
+export interface UpdatePackageVersionRequest extends CreatePackageVersionRequest {}
+
+export interface UpdateMentorProfileRequest {
+  headline: string;
+  expertise: string;
+  basePrice: number;
 }
 
 // ── Order ─────────────────────────────────────────────────────
@@ -206,6 +232,65 @@ export interface UserFullProfileResponseDTO {
   certificates: UserCertificateResponseDTO[];
 }
 
+export type ConversationApiType = 'general' | 'booking' | 'support';
+export type MessageApiType = 'text' | 'image' | 'file' | 'system';
+
+export interface ConversationParticipantResponseDTO {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+export interface ConversationLastMessageResponseDTO {
+  text: string;
+  createdAt: string;
+  senderId: string;
+}
+
+export interface ConversationResponseDTO {
+  id: string;
+  type: ConversationApiType;
+  bookingId: string | null;
+  participants: ConversationParticipantResponseDTO[];
+  lastMessage: ConversationLastMessageResponseDTO | null;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MessageAttachmentResponseDTO {
+  id: string;
+  url: string;
+  type: string;
+}
+
+export interface MessageResponseDTO {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  type: MessageApiType;
+  content: string;
+  attachments: MessageAttachmentResponseDTO[];
+  isEdited: boolean;
+  createdAt: string;
+}
+
+export interface ProgressReportResponseDTO {
+  id: string;
+  menteeId: string;
+  menteeName: string;
+  mentorId: string;
+  bookingId: string;
+  title: string;
+  content: string;
+  attachmentUrl: string | null;
+  status: 'submitted' | 'reviewed' | 'needs_revision';
+  mentorFeedback: string | null;
+  feedbackAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─────────────────────────────────────────────────────────────
 // MOBILE TYPES  (dùng trong UI, sau khi qua adapter)
 // ─────────────────────────────────────────────────────────────
@@ -238,6 +323,9 @@ export interface MentorPackageVersion {
   duration: number;
   deliveryType: string;
   isDefault: boolean;
+  isActive?: boolean;
+  hasOrders?: boolean;
+  isEditable?: boolean;
   curriculums: CurriculumItem[];
 }
 
@@ -343,36 +431,79 @@ export interface Order {
 }
 
 // ── Chat ──────────────────────────────────────────────────────
-export type ConversationType = 'chat' | 'session' | 'follow-up';
+export type ConversationType = ConversationApiType;
 
-export interface ChatMessage {
+export interface ConversationParticipant {
   id: string;
-  conversationId: string;
-  sender: 'mentee' | 'mentor';
-  text: string;
-  createdAt: number;
-  type?: 'text' | 'image' | 'file';
-  imageUrl?: string;
+  name: string;
+  avatarUrl: string | null;
+  isCurrentUser: boolean;
 }
 
-export interface ChatSession {
-  id: string;
-  status: 'pending' | 'confirmed' | 'completed';
-  mentorName: string;
-  subject: string;
-  startTime: number;
-  endTime: number;
-  price: number;
+export interface ConversationPreview {
+  text: string;
+  createdAt: Date | null;
+  senderId: string | null;
 }
 
 export interface Conversation {
   id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  lastMessageTime: number;
-  unreadCount: number;
   type: ConversationType;
-  sessionId?: string;
-  isPinned?: boolean;
+  bookingId: string | null;
+  participants: ConversationParticipant[];
+  peer: ConversationParticipant | null;
+  name: string;
+  avatar: string | null;
+  lastMessage: ConversationPreview | null;
+  lastMessageText: string;
+  lastMessageAt: Date | null;
+  unreadCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MessageAttachment {
+  id: string;
+  url: string;
+  type: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  type: MessageApiType;
+  content: string;
+  attachments: MessageAttachment[];
+  isEdited: boolean;
+  createdAt: Date;
+  isMine: boolean;
+}
+
+export interface SubmitFeedbackRequest {
+  feedback: string;
+  status: 'reviewed' | 'needs_revision';
+}
+
+export interface CreateProgressReportRequest {
+  bookingId: string;
+  title: string;
+  content: string;
+  attachmentUrl?: string | null;
+}
+
+export interface ProgressReport {
+  id: string;
+  menteeId: string;
+  menteeName: string;
+  mentorId: string;
+  bookingId: string;
+  title: string;
+  content: string;
+  attachmentUrl: string | null;
+  status: 'submitted' | 'reviewed' | 'needs_revision';
+  mentorFeedback: string | null;
+  feedbackAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

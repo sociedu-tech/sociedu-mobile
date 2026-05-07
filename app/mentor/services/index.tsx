@@ -33,7 +33,13 @@ export default function MentorServicesScreen() {
       const data = await mentorService.getMyServices();
       setServices(data);
     } catch (err: any) {
-      setError(err.message || TEXT.COMMON.ERROR);
+      // 404/403 → mentor chưa có gói nào, hiện danh sách rỗng
+      const statusCode = err?.statusCode;
+      if (statusCode === 404 || statusCode === 403) {
+        setServices([]);
+      } else {
+        setError(err.message || TEXT.COMMON.ERROR);
+      }
     } finally {
       setLoading(false);
     }

@@ -1,342 +1,289 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  StyleSheet,
   FlatList,
-  TouchableOpacity,
+  RefreshControl,
+  StyleSheet,
   TextInput,
-  StatusBar,
-  ActivityIndicator,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+
+import { EmptyState } from '../../src/components/states/EmptyState';
+import { ErrorState } from '../../src/components/states/ErrorState';
+import { LoadingState } from '../../src/components/states/LoadingState';
 import { Typography } from '../../src/components/typography/Typography';
-import { theme } from '../../src/theme/theme';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { chatService } from '../../src/core/services/chatService';
+import { TEXT } from '../../src/core/constants/strings';
+import { conversationService } from '../../src/core/services/conversationService';
+import { useAuthStore } from '../../src/core/store/authStore';
 import { Conversation } from '../../src/core/types';
+import { theme } from '../../src/theme/theme';
 
-// ─── UTILS ───────────────────────────────────────────────────────
+type FilterTab = 'all' | 'unread' | 'booking';
 
-const formatTime = (timestamp: number) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  
+function formatConversationTime(value: Date | null) {
+  if (!value) return '';
+  const diff = Date.now() - value.getTime();
   if (diff < 1000 * 60 * 60 * 24) {
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return value.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   }
-  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-};
+  return value.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+}
 
-// ─── SCREEN COMPONENT ─────────────────────────────────────────────
-
-type FilterTab = 'Tất cả' | 'Chưa đọc' | 'Lịch hẹn';
+function getBadgeMeta(type: Conversation['type']) {
+  if (type === 'booking') return { icon: 'bookmark-outline' as const, label: TEXT.MESSAGES.BADGE_BOOKING };
+  if (type === 'support') return { icon: 'help-buoy-outline' as const, label: TEXT.MESSAGES.BADGE_SUPPORT };
+  return { icon: 'chatbubble-ellipses-outline' as const, label: TEXT.MESSAGES.BADGE_GENERAL };
+}
 
 export default function InboxScreen() {
   const router = useRouter();
+  const authLoading = useAuthStore((state) => state.loading);
+  const currentUserId = useAuthStore((state) => state.user?.id);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<FilterTab>('Tất cả');
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [error, setError] = useState<string | null>(null);
 
-  // Lấy dữ liệu qua Service
-  useEffect(() => {
-    loadConversations();
-  }, []);
+  const loadConversations = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
 
-  const loadConversations = async () => {
-    setLoading(true);
     try {
-      const data = await chatService.getConversations();
+      const data = await conversationService.getMyConversations();
       setConversations(data);
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
+    } catch (loadError: any) {
+      setError(loadError?.message || TEXT.MESSAGES.LOAD_ERROR);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
-  // Logic lọc dữ liệu
+  useEffect(() => {
+    if (!authLoading && currentUserId) {
+      void loadConversations();
+    }
+  }, [authLoading, currentUserId, loadConversations]);
+
   const filteredConversations = useMemo(() => {
-    return conversations.filter((conv) => {
-      const matchesSearch = conv.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesTab = activeTab === 'Tất cả' || 
-                         (activeTab === 'Chưa đọc' && conv.unreadCount > 0) ||
-                         (activeTab === 'Lịch hẹn' && conv.type === 'session');
-      
-      return matchesSearch && matchesTab;
-    }).sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return b.lastMessageTime - a.lastMessageTime;
-    });
-  }, [conversations, searchTerm, activeTab]);
+    const keyword = searchTerm.trim().toLowerCase();
 
-  const renderItem = ({ item }: { item: Conversation }) => (
-    <TouchableOpacity 
-      style={styles.conversationItem}
-      onPress={() => router.push(`/messages/${item.id}` as any)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.avatarWrapper}>
-        <Avatar uri={item.avatar} size={56} />
-        {item.isPinned && (
-          <View style={styles.pinBadge}>
-            <Ionicons name="pin" size={10} color="#FFF" />
-          </View>
-        )}
-      </View>
-      
-      <View style={styles.contentWrapper}>
-        <View style={styles.headerRow}>
-          <Typography variant="bodyMedium" weight="700" color="primary" numberOfLines={1} style={{ flex: 1 }}>
-            {item.name}
-          </Typography>
-          <Typography variant="caption" color="secondary">
-            {formatTime(item.lastMessageTime)}
-          </Typography>
-        </View>
-        
-        <View style={styles.messageRow}>
-          <Typography 
-            variant="caption" 
-            color={item.unreadCount > 0 ? 'primary' : 'secondary'}
-            numberOfLines={1}
-            style={[styles.lastMessage, item.unreadCount > 0 && styles.unreadText]}
-          >
-            {item.lastMessage}
-          </Typography>
-          
-          {item.unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Typography variant="caption" color="inverse" weight="700" style={{ fontSize: 10 }}>
-                {item.unreadCount}
-              </Typography>
-            </View>
-          )}
-        </View>
+    return conversations
+      .filter((conversation) => {
+        const matchesSearch =
+          keyword.length === 0 ||
+          conversation.name.toLowerCase().includes(keyword) ||
+          conversation.lastMessageText.toLowerCase().includes(keyword);
+        const matchesTab =
+          activeTab === 'all' ||
+          (activeTab === 'unread' && conversation.unreadCount > 0) ||
+          (activeTab === 'booking' && conversation.type === 'booking');
 
-        {item.type === 'session' && (
-          <View style={styles.sessionTag}>
-            <Ionicons name="calendar-outline" size={12} color={theme.colors.info} />
-            <Typography variant="caption" style={{ color: theme.colors.info, marginLeft: 4, fontWeight: '600' }}>
-              Phiên học
+        return matchesSearch && matchesTab;
+      })
+      .sort((left, right) => {
+        const leftTime = left.lastMessageAt?.getTime() ?? left.updatedAt.getTime();
+        const rightTime = right.lastMessageAt?.getTime() ?? right.updatedAt.getTime();
+        return rightTime - leftTime;
+      });
+  }, [activeTab, conversations, searchTerm]);
+
+  const renderConversation = ({ item }: { item: Conversation }) => {
+    const badge = getBadgeMeta(item.type);
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => router.push(`/messages/${item.id}` as any)}
+        style={styles.conversationItem}
+      >
+        <Avatar uri={item.avatar ?? undefined} size={56} />
+        <View style={styles.conversationContent}>
+          <View style={styles.conversationHeader}>
+            <Typography numberOfLines={1} style={styles.nameText} variant="bodyMedium">
+              {item.name}
+            </Typography>
+            <Typography color="secondary" variant="caption">
+              {formatConversationTime(item.lastMessageAt)}
             </Typography>
           </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+
+          <View style={styles.messageRow}>
+            <Typography
+              color={item.unreadCount > 0 ? 'primary' : 'secondary'}
+              numberOfLines={1}
+              style={styles.previewText}
+              variant="caption"
+            >
+              {item.lastMessageText || TEXT.MESSAGES.EMPTY_STATE}
+            </Typography>
+            {item.unreadCount > 0 ? (
+              <View style={styles.unreadBadge}>
+                <Typography color="inverse" style={styles.unreadValue} variant="caption">
+                  {item.unreadCount}
+                </Typography>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.typeBadge}>
+              <Ionicons color={theme.colors.primary} name={badge.icon} size={12} />
+              <Typography style={styles.typeLabel} variant="caption">
+                {badge.label}
+              </Typography>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  if (loading) {
+    return <LoadingState message={TEXT.COMMON.LOADING} />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} onRetry={() => loadConversations()} />;
+  }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" />
-      
-      {/* HEADER & SEARCH */}
-      <View style={styles.headerContainer}>
-        <Typography variant="h2" weight="800" style={{ marginBottom: theme.spacing.md }}>
-          Tin nhắn
+    <SafeAreaView edges={['top', 'bottom']} style={styles.container}>
+      <View style={styles.header}>
+        <Typography style={styles.screenTitle} variant="h2">
+          {TEXT.MESSAGES.SCREEN_TITLE}
         </Typography>
-        
         <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={theme.colors.text.secondary} />
+          <Ionicons color={theme.colors.text.secondary} name="search-outline" size={20} />
           <TextInput
-            placeholder="Tìm kiếm tin nhắn..."
+            onChangeText={setSearchTerm}
+            placeholder={TEXT.MESSAGES.SEARCH_PLACEHOLDER}
+            placeholderTextColor={theme.colors.text.disabled}
             style={styles.searchInput}
             value={searchTerm}
-            onChangeText={setSearchTerm}
-            placeholderTextColor={theme.colors.text.disabled}
           />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchTerm('')}>
-              <Ionicons name="close-circle" size={18} color={theme.colors.text.disabled} />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
 
-      {/* FILTER TABS */}
-      <View style={styles.tabsContainer}>
-        {(['Tất cả', 'Chưa đọc', 'Lịch hẹn'] as FilterTab[]).map((tab) => (
+      <View style={styles.tabsRow}>
+        {[
+          { key: 'all' as const, label: TEXT.MESSAGES.TAB_ALL },
+          { key: 'unread' as const, label: TEXT.MESSAGES.TAB_UNREAD },
+          { key: 'booking' as const, label: TEXT.MESSAGES.TAB_BOOKING },
+        ].map((tab) => (
           <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab)}
+            key={tab.key}
+            onPress={() => setActiveTab(tab.key)}
+            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
           >
-            <Typography 
-              variant="caption" 
-              weight="600"
-              style={[styles.tabText, activeTab === tab && styles.activeTabText]}
+            <Typography
+              style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
+              variant="caption"
             >
-              {tab}
+              {tab.label}
             </Typography>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* LIST */}
-      {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator color={theme.colors.primary} size="large" />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredConversations}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons name="chatbubble-ellipses-outline" size={64} color={theme.colors.text.disabled} />
-              <Typography variant="body" color="secondary" style={{ marginTop: 16 }}>
-                Không tìm thấy cuộc hội thoại nào
-              </Typography>
-            </View>
-          }
-        />
-      )}
+      <FlatList
+        contentContainerStyle={filteredConversations.length === 0 ? styles.emptyList : styles.listContent}
+        data={filteredConversations}
+        keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl
+            onRefresh={() => loadConversations(true)}
+            refreshing={refreshing}
+            tintColor={theme.colors.primary}
+          />
+        }
+        renderItem={renderConversation}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          <EmptyState
+            description={searchTerm.trim() ? undefined : TEXT.MESSAGES.EMPTY_STATE}
+            fullScreen={false}
+            icon="chatbubble-ellipses-outline"
+            title={searchTerm.trim() ? TEXT.MESSAGES.EMPTY_SEARCH : TEXT.MESSAGES.EMPTY_STATE}
+          />
+        }
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  headerContainer: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.sm,
-    backgroundColor: theme.colors.background,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  header: { paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.md },
+  screenTitle: { fontWeight: '800', marginBottom: theme.spacing.md },
   searchBar: {
-    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
+    borderColor: theme.colors.border.default,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    height: 48,
+    flexDirection: 'row',
     marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
   },
   searchInput: {
+    color: theme.colors.text.primary,
     flex: 1,
     marginLeft: theme.spacing.sm,
-    fontSize: 15,
-    color: theme.colors.text.primary,
+    minHeight: 48,
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-    gap: 8,
-  },
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+  tabsRow: { flexDirection: 'row', gap: theme.spacing.sm, paddingHorizontal: theme.spacing.lg },
+  tabButton: {
     backgroundColor: theme.colors.surface,
-    borderWidth: 1,
     borderColor: theme.colors.border.default,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
   },
-  activeTab: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  tabText: {
-    color: theme.colors.text.secondary,
-  },
-  activeTabText: {
-    color: '#FFF',
-  },
-  listContent: {
-    paddingBottom: 100,
-  },
+  tabButtonActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  tabLabel: { color: theme.colors.text.secondary, fontWeight: '600' },
+  tabLabelActive: { color: theme.colors.text.inverse },
+  listContent: { paddingBottom: theme.spacing.xxl, paddingTop: theme.spacing.md },
+  emptyList: { flexGrow: 1, justifyContent: 'center', padding: theme.spacing.lg },
   conversationItem: {
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
     flexDirection: 'row',
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: 16,
-    backgroundColor: theme.colors.surface,
-    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
   },
-  avatarWrapper: {
-    position: 'relative',
-  },
-  pinBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 10,
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.surface,
-  },
-  contentWrapper: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  lastMessage: {
-    flex: 1,
-    marginRight: 8,
-  },
-  unreadText: {
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
+  conversationContent: { flex: 1, marginLeft: theme.spacing.md },
+  conversationHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  nameText: { flex: 1, fontWeight: '700', marginRight: theme.spacing.sm },
+  messageRow: { alignItems: 'center', flexDirection: 'row', marginTop: theme.spacing.xs },
+  previewText: { flex: 1, marginRight: theme.spacing.sm },
   unreadBadge: {
+    alignItems: 'center',
     backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+    justifyContent: 'center',
     minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: theme.spacing.xs,
   },
-  separator: {
-    height: 1,
-    backgroundColor: theme.colors.border.default,
-    marginLeft: 88,
-  },
-  sessionTag: {
-    flexDirection: 'row',
+  unreadValue: { fontSize: 10, fontWeight: '700' },
+  badgeRow: { marginTop: theme.spacing.sm },
+  typeBadge: {
     alignItems: 'center',
-    marginTop: 6,
-    backgroundColor: theme.colors.primaryLighter,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
     alignSelf: 'flex-start',
+    backgroundColor: theme.colors.primaryLight,
+    borderRadius: theme.borderRadius.md,
+    flexDirection: 'row',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
-  emptyState: {
-    marginTop: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  typeLabel: { color: theme.colors.primary, fontWeight: '600', marginLeft: theme.spacing.xs },
+  separator: { backgroundColor: theme.colors.border.default, height: 1, marginLeft: 96 },
 });

@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -153,7 +152,6 @@ export default function BookingsTab() {
   const canceledList = getCanceledBookings(bookingStoreState);
 
   const [activeTab, setActiveTab] = useState<BookingTab>('upcoming');
-  const indicatorAnim = useRef(new Animated.Value(0)).current;
 
   const loadData = async () => {
     if (role === 'mentor') {
@@ -167,15 +165,8 @@ export default function BookingsTab() {
     loadData();
   }, [role]);
 
-  // Animated tab indicator
-  const handleTabPress = (tab: BookingTab, index: number) => {
+  const handleTabPress = (tab: BookingTab) => {
     setActiveTab(tab);
-    Animated.spring(indicatorAnim, {
-      toValue: index,
-      useNativeDriver: false,
-      tension: 70,
-      friction: 10,
-    }).start();
   };
 
   const currentTabConfig = TABS.find((t) => t.key === activeTab)!;
@@ -186,8 +177,6 @@ export default function BookingsTab() {
   if (error) {
     return <ErrorState error={error} onRetry={loadData} />;
   }
-
-  const tabCount = TABS.length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -212,7 +201,7 @@ export default function BookingsTab() {
               key={tab.key}
               style={styles.tabItem}
               activeOpacity={0.7}
-              onPress={() => handleTabPress(tab.key, index)}
+              onPress={() => handleTabPress(tab.key)}
             >
               <View style={styles.tabContent}>
                 <Ionicons

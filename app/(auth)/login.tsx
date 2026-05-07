@@ -136,7 +136,14 @@ export default function LoginScreen() {
                 error={fieldErrors.password}
               />
 
-              <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push('/(auth)/otp')}>
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(auth)/otp',
+                    params: email.trim() ? { email: email.trim() } : undefined,
+                  })
+                }>
                 <Typography variant="label" weight="700" color="primary">Quên mật khẩu?</Typography>
               </TouchableOpacity>
             </View>

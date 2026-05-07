@@ -37,7 +37,7 @@ export default function BookingDetailScreen() {
       const data = await bookingService.getById(id);
       setBooking(data);
     } catch (err: any) {
-      setError(err.message || 'Khong the tai lich hen.');
+      setError(err.message || TEXT.BOOKING.LOAD_ERROR);
     } finally {
       setLoading(false);
     }
@@ -49,11 +49,11 @@ export default function BookingDetailScreen() {
       await bookingService.updateSession(booking.id, sessionId, { status: newStatus });
       fetchBooking();
     } catch (err: any) {
-      Alert.alert('Loi', err.message || 'Khong the cap nhat trang thai.');
+      Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.UPDATE_STATUS_ERROR);
     }
   };
 
-  if (loading) return <LoadingState message="Dang tai lich hen..." />;
+  if (loading) return <LoadingState message={TEXT.BOOKING.LOADING_DETAIL} />;
   if (error || !booking) return <ErrorState error={error || 'Booking not found'} onRetry={fetchBooking} />;
 
   return (
@@ -71,17 +71,17 @@ export default function BookingDetailScreen() {
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: 32 }]}>
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Ma don:</Typography>
+            <Typography variant="caption" color="secondary">{TEXT.BOOKING.ORDER_CODE_LABEL}</Typography>
             <Typography variant="bodyMedium" style={styles.bold}>{booking.orderId.slice(0, 8)}</Typography>
           </View>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Ngay tao:</Typography>
+            <Typography variant="caption" color="secondary">{TEXT.BOOKING.CREATED_AT_LABEL}</Typography>
             <Typography variant="bodyMedium" style={styles.bold}>
               {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
             </Typography>
           </View>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">Trang thai chung:</Typography>
+            <Typography variant="caption" color="secondary">{TEXT.BOOKING.OVERALL_STATUS_LABEL}</Typography>
             <Typography variant="bodyMedium" style={[styles.bold, { color: theme.colors.primary }]}>
               {booking.status.toUpperCase()}
             </Typography>
@@ -93,7 +93,7 @@ export default function BookingDetailScreen() {
         </Typography>
 
         {booking.sessions.length === 0 ? (
-          <Typography variant="bodyMedium" color="secondary">Khong co buoi hoc nao.</Typography>
+          <Typography variant="bodyMedium" color="secondary">{TEXT.BOOKING.EMPTY_SESSIONS}</Typography>
         ) : (
           <View style={styles.timelineContainer}>
             {booking.sessions.map((session, index) => (
@@ -145,10 +145,10 @@ function SessionCard({
   const handleOpenMeet = () => {
     if (session.meetingUrl) {
       Linking.openURL(session.meetingUrl).catch(() => {
-        Alert.alert('Loi', 'Khong the mo link meeting.');
+        Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, TEXT.BOOKING.OPEN_MEETING_ERROR);
       });
     } else {
-      Alert.alert('Chua co link', 'Mentor chua cung cap link.');
+      Alert.alert(TEXT.BOOKING.NO_MEETING_LINK_TITLE, TEXT.BOOKING.NO_MEETING_LINK_MESSAGE);
     }
   };
 
@@ -162,14 +162,16 @@ function SessionCard({
       <View style={styles.sessionCard}>
         <View style={styles.sessionHeader}>
           <Typography variant="bodyMedium" style={styles.bold}>
-            Buoi {index + 1}: {session.title}
+            {TEXT.BOOKING.SESSION_PREFIX}{index + 1}: {session.title}
           </Typography>
         </View>
 
         <View style={styles.rowInfo}>
           <Ionicons name="time-outline" size={16} color={theme.colors.text.secondary} />
           <Typography variant="caption" color="secondary" style={{ marginLeft: 6 }}>
-            {session.scheduledAt ? new Date(session.scheduledAt).toLocaleString('vi-VN') : 'Chua xep lich'}
+            {session.scheduledAt
+              ? new Date(session.scheduledAt).toLocaleString('vi-VN')
+              : TEXT.BOOKING.UNSCHEDULED}
           </Typography>
         </View>
 
@@ -222,7 +224,7 @@ function SessionCard({
             <CustomButton
               label={TEXT.BOOKING.REVIEW_SUBMIT}
               onPress={() => {
-                Alert.alert(TEXT.COMMON.SUCCESS, 'Cam on ban da danh gia!');
+                Alert.alert(TEXT.COMMON.SUCCESS, TEXT.BOOKING.REVIEW_SUCCESS);
                 setShowReview(false);
               }}
               style={{ marginTop: 8 }}

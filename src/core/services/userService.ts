@@ -5,6 +5,7 @@ import { mockUserApi } from '../mocks/api/mockUserMentorApi';
 import { api, unwrap } from '../api';
 import {
   UserFullProfileResponseDTO,
+  UserProfileResponseDTO,
   UserEducationResponseDTO,
   UserExperienceResponseDTO,
   UserLanguageResponseDTO,
@@ -12,13 +13,54 @@ import {
   User,
 } from '../types';
 
+function isProfileShape(value: unknown): value is UserProfileResponseDTO {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      'userId' in value &&
+      'firstName' in value &&
+      'lastName' in value,
+  );
+}
+
+function normalizeUserFullProfile(payload: unknown): UserFullProfileResponseDTO {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Phan hoi ho so nguoi dung khong hop le.');
+  }
+
+  if ('profile' in payload) {
+    const fullProfile = payload as UserFullProfileResponseDTO;
+    if (isProfileShape(fullProfile.profile)) {
+      return {
+        profile: fullProfile.profile,
+        educations: fullProfile.educations ?? [],
+        experiences: fullProfile.experiences ?? [],
+        languages: fullProfile.languages ?? [],
+        certificates: fullProfile.certificates ?? [],
+      };
+    }
+  }
+
+  if (isProfileShape(payload)) {
+    return {
+      profile: payload,
+      educations: [],
+      experiences: [],
+      languages: [],
+      certificates: [],
+    };
+  }
+
+  throw new Error('Phan hoi ho so nguoi dung thieu du lieu profile.');
+}
+
 export const userService = {
   getMe: async (): Promise<User> => {
     const response = USE_MOCK
       ? await mockUserApi.getMe()
       : await api.get<{ data: UserFullProfileResponseDTO }>(API_PATHS.users.meProfile);
 
-    return toUserFull(unwrap(response));
+    return toUserFull(normalizeUserFullProfile(unwrap(response)));
   },
 
   getPublicProfile: async (id: string | number): Promise<User> => {
@@ -26,7 +68,7 @@ export const userService = {
       ? await mockUserApi.getPublicProfile(id)
       : await api.get<{ data: UserFullProfileResponseDTO }>(API_PATHS.users.publicProfile(id));
 
-    return toUserFull(unwrap(response));
+    return toUserFull(normalizeUserFullProfile(unwrap(response)));
   },
 
   updateProfile: async (data: {

@@ -1,25 +1,15 @@
-/**
- * mentorService.ts – Mentor & Service Package domain
- *
- * Public endpoints (không cần auth):
- *   GET /api/v1/mentors                                  → danh sách mentor verified
- *   GET /api/v1/mentors/:id                              → chi tiết mentor
- *   GET /api/v1/mentors/:id/packages                     → gói dịch vụ của mentor
- *
- * Protected (ROLE_MENTOR):
- *   PUT /api/v1/mentors/me                               → cập nhật profile
- *   POST /api/v1/mentors/me/packages                     → tạo gói
- *   DELETE /api/v1/mentors/me/packages/:pkgId            → xóa gói
- *   GET/POST /api/v1/mentors/me/packages/:id/versions/:vid/curriculums
- */
 import { api, unwrap } from '../api';
 import {
+  CreatePackageVersionRequest,
+  MentorPackage,
+  MentorPackageVersion,
   MentorProfileResponseDTO,
   ServicePackageResponseDTO,
-  MentorPackage,
+  UpdateMentorProfileRequest,
+  UpdateServiceRequest,
+  User,
 } from '../types';
 import { toMentorList, toMentorUser, toPackage } from '../adapters/mentorAdapter';
-import { User } from '../types';
 import { userService } from './userService';
 import { USE_MOCK } from '../config';
 import { mockMentorApi } from '../mocks/api/mockUserMentorApi';
@@ -27,72 +17,228 @@ import { mockMentorApi } from '../mocks/api/mockUserMentorApi';
 const BASE = '/api/v1/mentors';
 
 export const mentorService = {
-  /**
-   * Danh sách tất cả mentor đã được verified (Public)
-   */
+  getMyProfile: async (): Promise<User> => {
+    const rawRes = USE_MOCK
+      ? await mockMentorApi.getProfile('me')
+      : await api.get<{ data: MentorProfileResponseDTO }>(`${BASE}/me/profile`);
+
+    return toMentorUser(unwrap(rawRes));
+  },
+
   getAll: async (): Promise<User[]> => {
-    const rawRes = USE_MOCK 
-       ? await mockMentorApi.getAll()
-       : await api.get<{ data: MentorProfileResponseDTO[] }>(BASE);
+    const rawRes = USE_MOCK
+      ? await mockMentorApi.getAll()
+      : await api.get<{ data: MentorProfileResponseDTO[] }>(BASE);
     const mentors = toMentorList(unwrap(rawRes));
-    
-    // N+1 để lấy tên và avatar
+
     const profiles = await Promise.allSettled(
-      mentors.map((m) => userService.getPublicProfile(m.id))
+      mentors.map((mentor) => userService.getPublicProfile(mentor.id)),
     );
 
-    return mentors.map((m, i) => {
-      const pResult = profiles[i];
-      if (pResult.status === 'fulfilled') {
-        const p = pResult.value;
-        return { ...m, name: p.name, email: p.email, avatar: p.avatar, bio: p.bio };
+    return mentors.map((mentor, index) => {
+      const profileResult = profiles[index];
+      if (profileResult.status === 'fulfilled') {
+        const profile = profileResult.value;
+        return {
+          ...mentor,
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.avatar,
+          bio: profile.bio,
+        };
       }
-      return m;
+      return mentor;
     });
   },
 
-  /**
-   * Chi tiết 1 mentor theo ID (Public)
-   */
   getProfile: async (id: string | number): Promise<User> => {
     const rawRes = USE_MOCK
-       ? await mockMentorApi.getProfile(id)
-       : await api.get<{ data: MentorProfileResponseDTO }>(`${BASE}/${id}`);
-       
+      ? await mockMentorApi.getProfile(id)
+      : await api.get<{ data: MentorProfileResponseDTO }>(`${BASE}/${id}`);
+
     const mentor = toMentorUser(unwrap(rawRes));
     try {
-      const p = await userService.getPublicProfile(id);
-      return { ...mentor, name: p.name, email: p.email, avatar: p.avatar, bio: p.bio, educations: p.educations, experiences: p.experiences, certificates: p.certificates };
+      const profile = await userService.getPublicProfile(id);
+      return {
+        ...mentor,
+        name: profile.name,
+        email: profile.email,
+        avatar: profile.avatar,
+        bio: profile.bio,
+        educations: profile.educations,
+        experiences: profile.experiences,
+        certificates: profile.certificates,
+      };
     } catch {
       return mentor;
     }
   },
 
-  /**
-   * Danh sách gói dịch vụ của mentor (Public)
-   */
   getPackages: async (id: string | number): Promise<ServicePackageResponseDTO[]> => {
-    const res = USE_MOCK 
+    const res = USE_MOCK
       ? await mockMentorApi.getPackages(id)
       : await api.get<{ data: ServicePackageResponseDTO[] }>(`${BASE}/${id}/packages`);
     return unwrap(res);
   },
 
-  /**
-   * Cập nhật profile mentor của mình (ROLE_MENTOR)
-   */
-  updateMyProfile: async (data: {
-    headline?: string;
-    expertise?: string;       // comma-separated
-    basePrice?: number;
-  }): Promise<User> => {
+  getMyPackageById: async (pkgId: string | number): Promise<MentorPackage> => {
+    const res = USE_MOCK
+      ? await mockMentorApi.getMyPackageById(pkgId)
+      : await api.get<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages/${pkgId}`);
+    return toPackage(unwrap(res));
+  },
+
+  getPackageById: async (pkgId: string | number): Promise<MentorPackage> => {
+    return mentorService.getMyPackageById(pkgId);
+  },
+
+  createPackage: async (data: UpdateServiceRequest): Promise<MentorPackage> => {
+    const res = USE_MOCK
+      ? await mockMentorApi.createPackage(data)
+      : await api.post<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages`, data);
+    return toPackage(unwrap(res));
+  },
+
+  updatePackage: async (
+    pkgId: string | number,
+    data: UpdateServiceRequest,
+  ): Promise<MentorPackage> => {
+    const res = USE_MOCK
+      ? await mockMentorApi.updatePackage(pkgId, data)
+      : await api.patch<{ data: ServicePackageResponseDTO }>(`${BASE}/me/packages/${pkgId}`, data);
+    return toPackage(unwrap(res));
+  },
+
+  updateService: async (
+    pkgId: string | number,
+    data: UpdateServiceRequest,
+  ): Promise<MentorPackage> => {
+    return mentorService.updatePackage(pkgId, data);
+  },
+
+  getPackageVersions: async (pkgId: string | number): Promise<MentorPackageVersion[]> => {
+    const pkg = await mentorService.getMyPackageById(pkgId);
+    return pkg.versions;
+  },
+
+  getPackageVersionById: async (
+    pkgId: string | number,
+    versionId: string | number,
+  ): Promise<MentorPackageVersion> => {
+    if (USE_MOCK) {
+      const res = await mockMentorApi.getPackageVersionById(pkgId, versionId);
+      const pkg = toPackage({
+        id: Number(pkgId),
+        mentorId: 0,
+        name: '',
+        description: '',
+        isActive: true,
+        versions: [unwrap(res)],
+      });
+      return pkg.versions[0];
+    }
+    const res = await api.get<{ data: ServicePackageResponseDTO }>(
+      `${BASE}/me/packages/${pkgId}/versions/${versionId}`,
+    );
+    const pkg = toPackage(unwrap(res));
+    return pkg.versions[0];
+  },
+
+  createPackageVersion: async (
+    pkgId: string | number,
+    data: CreatePackageVersionRequest,
+  ): Promise<MentorPackageVersion> => {
+    if (USE_MOCK) {
+      const res = await mockMentorApi.createPackageVersion(pkgId, data);
+      const pkg = toPackage({
+        id: Number(pkgId),
+        mentorId: 0,
+        name: '',
+        description: '',
+        isActive: true,
+        versions: [unwrap(res)],
+      });
+      return pkg.versions[0];
+    }
+
+    const res = await api.post<{ data: ServicePackageResponseDTO }>(
+      `${BASE}/me/packages/${pkgId}/versions`,
+      data,
+    );
+    const pkg = toPackage(unwrap(res));
+    return pkg.versions[0];
+  },
+
+  updatePackageVersion: async (
+    pkgId: string | number,
+    versionId: string | number,
+    data: CreatePackageVersionRequest,
+  ): Promise<MentorPackageVersion> => {
+    if (USE_MOCK) {
+      const res = await mockMentorApi.updatePackageVersion(pkgId, versionId, data);
+      const pkg = toPackage({
+        id: Number(pkgId),
+        mentorId: 0,
+        name: '',
+        description: '',
+        isActive: true,
+        versions: [unwrap(res)],
+      });
+      return pkg.versions[0];
+    }
+
+    const res = await api.patch<{ data: ServicePackageResponseDTO }>(
+      `${BASE}/me/packages/${pkgId}/versions/${versionId}`,
+      data,
+    );
+    const pkg = toPackage(unwrap(res));
+    return pkg.versions[0];
+  },
+
+  deletePackageVersion: async (pkgId: string | number, versionId: string | number): Promise<void> => {
+    if (USE_MOCK) {
+      await mockMentorApi.deletePackageVersion(pkgId, versionId);
+    } else {
+      await api.delete(`${BASE}/me/packages/${pkgId}/versions/${versionId}`);
+    }
+  },
+
+  setDefaultPackageVersion: async (
+    pkgId: string | number,
+    versionId: string | number,
+  ): Promise<MentorPackageVersion | null> => {
+    if (USE_MOCK) {
+      const res = await mockMentorApi.setDefaultPackageVersion(pkgId, versionId);
+      const dto = unwrap(res);
+      if (!dto) return null;
+      const pkg = toPackage({
+        id: Number(pkgId),
+        mentorId: 0,
+        name: '',
+        description: '',
+        isActive: true,
+        versions: [dto],
+      });
+      return pkg.versions[0];
+    }
+
+    const res = await api.post<{ data: ServicePackageResponseDTO }>(
+      `${BASE}/me/packages/${pkgId}/versions/${versionId}/set-default`,
+    );
+    const pkg = toPackage(unwrap(res));
+    return pkg.versions[0] ?? null;
+  },
+
+  updateMyProfile: async (data: UpdateMentorProfileRequest): Promise<User> => {
     const res = await api.put<{ data: MentorProfileResponseDTO }>(`${BASE}/me`, data);
     return toMentorUser(unwrap(res));
   },
 
-  /**
-   * Tạo gói dịch vụ mới (ROLE_MENTOR)
-   */
+  submitMyProfile: async (): Promise<User> => {
+    const res = await api.post<{ data: MentorProfileResponseDTO }>(`${BASE}/me/profile/submit`);
+    return toMentorUser(unwrap(res));
+  },
+
   addPackage: async (data: {
     name: string;
     description?: string;
@@ -104,9 +250,6 @@ export const mentorService = {
     return unwrap(res);
   },
 
-  /**
-   * Xóa gói dịch vụ (ROLE_MENTOR)
-   */
   deletePackage: async (pkgId: string | number): Promise<void> => {
     await api.delete(`${BASE}/me/packages/${pkgId}`);
   },
@@ -116,27 +259,22 @@ export const mentorService = {
     return unwrap(res);
   },
 
-  /**
-   * Thêm curriculum item (ROLE_MENTOR)
-   */
   addCurriculumItem: async (
     pkgId: string | number,
     verId: string | number,
-    data: { title: string; description?: string; orderIndex: number; duration?: number }
+    data: { title: string; description?: string; orderIndex: number; duration?: number },
   ) => {
     const res = await api.post(
       `${BASE}/me/packages/${pkgId}/versions/${verId}/curriculums`,
-      data
+      data,
     );
     return unwrap(res);
   },
 
-  // ─── NEW MOCK METHODS FOR PRODUCTION UI ─────────────────────────
-
   getMyServices: async (): Promise<MentorPackage[]> => {
-    const res = USE_MOCK 
+    const res = USE_MOCK
       ? await mockMentorApi.getMyServices()
-      : await api.get<{ data: ServicePackageResponseDTO[] }>(`${BASE}/me/packages`); // Thực tế API GET /me/packages
+      : await api.get<{ data: ServicePackageResponseDTO[] }>(`${BASE}/me/packages`);
     return (unwrap(res) ?? []).map(toPackage);
   },
 
@@ -147,12 +285,4 @@ export const mentorService = {
       await api.patch(`${BASE}/me/packages/${pkgId}/status`, { isActive });
     }
   },
-
-  saveService: async (data: any): Promise<void> => {
-    if (USE_MOCK) {
-      await mockMentorApi.saveService(data);
-    } else {
-      await api.post(`${BASE}/me/packages`, data);
-    }
-  }
 };

@@ -112,18 +112,20 @@ api.interceptors.response.use(
       }
     }
 
-    const serverMessage =
-      (error.response?.data as { message?: string } | undefined)?.message ||
-      'Co loi xay ra, vui long thu lai.';
-
     if (!error.response) {
-      return Promise.reject(new Error('Khong the ket noi den server.'));
+      return Promise.reject(new Error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.'));
     }
 
-    return Promise.reject(new Error(serverMessage));
+    const serverMessage =
+      (error.response?.data as { message?: string } | undefined)?.message ||
+      'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.';
+
+    const apiError = new Error(serverMessage) as Error & { statusCode?: number };
+    apiError.statusCode = error.response.status;
+    return Promise.reject(apiError);
   },
 );
 
 export function unwrap<T>(response: { data: { data: T } }): T {
-  return response.data.data;
+  return response?.data?.data;
 }

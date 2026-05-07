@@ -28,6 +28,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const breakpoint = useBreakpoint();
   const authUser = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const authLoading = useAuthStore((s) => s.loading);
   const userRole = useAuthStore((s) => s.userRole);
   const logout = useAuthStore((s) => s.logout);
   const [fullUser, setFullUser] = useState<User | null>(null);
@@ -43,8 +45,12 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
+    if (authLoading || !isAuthenticated || !authUser) {
+      return;
+    }
+
     fetchProfile();
-  }, []);
+  }, [authLoading, isAuthenticated, authUser]);
 
   const onRefresh = async () => {
     setRefreshing(true);
