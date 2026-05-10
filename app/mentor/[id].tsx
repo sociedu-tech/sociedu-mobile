@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Avatar } from '../../src/components/ui/Avatar';
 import { ErrorState } from '../../src/components/states/ErrorState';
@@ -12,6 +13,9 @@ import { TEXT } from '../../src/core/constants/strings';
 import { mentorService } from '../../src/core/services/mentorService';
 import { User } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
+import { Card } from '../../src/components/ui/Card';
+
+const { width } = Dimensions.get('window');
 
 export default function MentorDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,7 +28,6 @@ export default function MentorDetailScreen() {
   const fetchMentor = useCallback(async () => {
     setLoading(true);
     setError(null);
-
     try {
       if (!id) throw new Error('Missing Mentor ID');
       const data = await mentorService.getProfile(id);
@@ -42,401 +45,167 @@ export default function MentorDetailScreen() {
 
   const initials = useMemo(() => {
     if (!mentor?.name) return 'CG';
-    return mentor.name
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join('');
+    return mentor.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase()).join('');
   }, [mentor?.name]);
 
   if (loading) return <LoadingState message={TEXT.MENTOR_DETAIL.LOADING} />;
-  if (error || !mentor) {
-    return (
-      <ErrorState
-        error={error || TEXT.MENTOR_DETAIL.NOT_FOUND}
-        onRetry={fetchMentor}
-      />
-    );
-  }
+  if (error || !mentor) return <ErrorState error={error || TEXT.MENTOR_DETAIL.NOT_FOUND} onRetry={fetchMentor} />;
 
   const info = mentor.mentorInfo;
   const packages = info?.packages ?? [];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
-        </TouchableOpacity>
-        <Typography variant="bodyMedium" style={styles.headerTitle}>
-          {TEXT.MENTOR_DETAIL.HEADER_TITLE}
-        </Typography>
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={styles.container}>
+      {/* HEADER WITH GRADIENT */}
+      <LinearGradient colors={[theme.colors.primary, theme.colors.primaryDark]} style={styles.topGradient}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.topNav}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+              <Ionicons name="arrow-back" size={22} color="#FFF" />
+            </TouchableOpacity>
+            <Typography variant="bodyMedium" style={{ color: '#FFF', fontWeight: '700' }}>Hồ sơ Chuyên gia</Typography>
+            <TouchableOpacity style={styles.iconBtn}>
+              <Ionicons name="share-outline" size={22} color="#FFF" />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.profileHeader}>
-          <Avatar uri={mentor.avatar} initials={initials} size={88} />
-          <Typography variant="h2" style={styles.name}>
-            {mentor.name}
-          </Typography>
-          <Typography variant="body" color="secondary" style={styles.headline}>
-            {info?.headline || TEXT.MENTOR_DETAIL.DEFAULT_HEADLINE}
-          </Typography>
-          {info?.verificationStatus === 'verified' && (
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={14} color="#FFF" />
-              <Typography variant="caption" style={styles.verifiedText}>
-                {TEXT.MENTOR_DETAIL.VERIFIED}
-              </Typography>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* PROFILE INFO CARD */}
+        <View style={styles.profileCardWrapper}>
+          <Card variant="premium" style={styles.profileCard}>
+            <View style={styles.avatarRow}>
+              <View style={styles.avatarBorder}>
+                <Avatar uri={mentor.avatar} initials={initials} size={96} />
+                {info?.verificationStatus === 'verified' && (
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
+                  </View>
+                )}
+              </View>
+              <View style={styles.nameSection}>
+                <Typography variant="h2" style={{ fontWeight: '900', color: theme.colors.text.primary }}>{mentor.name}</Typography>
+                <Typography variant="body" color="muted" numberOfLines={1}>{info?.headline || 'Chuyên gia Mentor'}</Typography>
+                <View style={styles.ratingRow}>
+                  <Ionicons name="star" size={16} color={theme.colors.warning} />
+                  <Typography variant="label" style={{ marginLeft: 4, fontWeight: '800' }}>{(info?.rating ?? 5.0).toFixed(1)}</Typography>
+                  <Typography variant="caption" color="muted" style={{ marginLeft: 8 }}>({info?.sessionsCompleted || 0} buổi học)</Typography>
+                </View>
+              </View>
             </View>
-          )}
-        </View>
 
-        <Typography variant="body" style={styles.bio}>
-          {mentor.bio || TEXT.MENTOR_DETAIL.DEFAULT_BIO}
-        </Typography>
-
-        <View style={styles.statsRow}>
-          <TrustCard
-            icon="star-outline"
-            label={TEXT.MENTOR_DETAIL.RATING}
-            value={(info?.rating ?? 0).toFixed(1)}
-          />
-          <TrustCard
-            icon="time-outline"
-            label={TEXT.MENTOR_DETAIL.COMPLETED_SESSIONS}
-            value={String(info?.sessionsCompleted ?? 0)}
-          />
-        </View>
-
-        <SectionBlock title={TEXT.MENTOR_DETAIL.EXPERTISE}>
-          {info?.expertise?.length ? (
+            <View style={styles.divider} />
+            
+            <Typography variant="body" color="secondary" style={styles.bio}>
+              {mentor.bio || TEXT.MENTOR_DETAIL.DEFAULT_BIO}
+            </Typography>
+            
             <View style={styles.chipsWrap}>
-              {info.expertise.map((item) => (
+              {(info?.expertise || ['Kỹ năng mềm', 'Phát triển bản thân']).map((item) => (
                 <View key={item} style={styles.chip}>
-                  <Typography variant="caption" style={styles.chipText}>
-                    {item}
-                  </Typography>
+                  <Typography variant="caption" style={styles.chipText}>{item}</Typography>
                 </View>
               ))}
             </View>
-          ) : (
-            <Typography variant="body" color="secondary">
-              {TEXT.MENTOR_DETAIL.NO_ADDITIONAL_INFO}
-            </Typography>
-          )}
-        </SectionBlock>
+          </Card>
+        </View>
 
-        <SectionBlock title={TEXT.MENTOR_DETAIL.EDUCATION}>
-          {mentor.educations?.length ? (
-            mentor.educations.map((education) => (
-              <InfoItem
-                key={education.id}
-                title={`${education.degree} - ${education.institution}`}
-                description={`${education.fieldOfStudy} • ${education.startYear}${education.endYear ? ` - ${education.endYear}` : ''}`}
-              />
+        {/* EXPERIENCE SECTIONS */}
+        <View style={styles.section}>
+          <Typography variant="label" style={styles.sectionLabel}>Lịch sử học vấn & làm việc</Typography>
+          <Card style={styles.contentCard}>
+            {mentor.educations?.map((edu) => (
+              <InfoItem key={edu.id} icon="school" title={edu.institution} subtitle={edu.degree} />
+            ))}
+            {mentor.experiences?.map((exp) => (
+              <InfoItem key={exp.id} icon="briefcase" title={exp.company} subtitle={exp.role} />
+            ))}
+            {(!mentor.educations?.length && !mentor.experiences?.length) && (
+              <Typography variant="caption" color="muted">Chưa cập nhật thông tin chi tiết</Typography>
+            )}
+          </Card>
+        </View>
+
+        {/* PACKAGES */}
+        <View style={styles.section}>
+          <Typography variant="label" style={styles.sectionLabel}>Các gói dịch vụ</Typography>
+          {packages.length === 0 ? (
+            <Card style={styles.emptyCard}><Typography variant="caption" color="muted">Hiện chưa có dịch vụ nào khả dụng</Typography></Card>
+          ) : (
+            packages.map((pkg) => (
+              <TouchableOpacity 
+                key={pkg.id} 
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/package/[id]', params: { id: pkg.id, mentorId: id } } as any)}
+              >
+                <Card variant="premium" style={styles.packageCard}>
+                  <View style={styles.pkgTop}>
+                    <View style={styles.pkgIcon}>
+                      <Ionicons name="sparkles" size={20} color={theme.colors.primary} />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Typography variant="bodyMedium" style={{ fontWeight: '800' }}>{pkg.title}</Typography>
+                      <Typography variant="caption" color="muted" numberOfLines={1}>{pkg.description}</Typography>
+                    </View>
+                  </View>
+                  <View style={styles.pkgBottom}>
+                    <View style={styles.priceBadge}>
+                      <Typography variant="label" style={{ color: theme.colors.primary }}>Từ ${pkg.versions[0]?.price || 0}</Typography>
+                    </View>
+                    <Typography variant="label" style={{ color: theme.colors.primary, fontWeight: '800' }}>Chi tiết →</Typography>
+                  </View>
+                </Card>
+              </TouchableOpacity>
             ))
-          ) : (
-            <Typography variant="body" color="secondary">
-              {TEXT.MENTOR_DETAIL.NO_ADDITIONAL_INFO}
-            </Typography>
           )}
-        </SectionBlock>
-
-        <SectionBlock title={TEXT.MENTOR_DETAIL.EXPERIENCE}>
-          {mentor.experiences?.length ? (
-            mentor.experiences.map((experience) => (
-              <InfoItem
-                key={experience.id}
-                title={`${experience.role} - ${experience.company}`}
-                description={experience.description || TEXT.MENTOR_DETAIL.NO_ADDITIONAL_INFO}
-              />
-            ))
-          ) : (
-            <Typography variant="body" color="secondary">
-              {TEXT.MENTOR_DETAIL.NO_ADDITIONAL_INFO}
-            </Typography>
-          )}
-        </SectionBlock>
-
-        <SectionBlock title={TEXT.MENTOR_DETAIL.CERTIFICATE}>
-          {mentor.certificates?.length ? (
-            mentor.certificates.map((certificate) => (
-              <InfoItem
-                key={certificate.id}
-                title={certificate.name}
-                description={certificate.issuer}
-              />
-            ))
-          ) : (
-            <Typography variant="body" color="secondary">
-              {TEXT.MENTOR_DETAIL.NO_ADDITIONAL_INFO}
-            </Typography>
-          )}
-        </SectionBlock>
-
-        <Typography variant="h3" style={styles.packagesTitle}>
-          {TEXT.MENTOR_DETAIL.PACKAGES}
-        </Typography>
-
-        {packages.length === 0 ? (
-          <Typography variant="bodyMedium" color="secondary">
-            {TEXT.MENTOR_DETAIL.EMPTY_PACKAGES}
-          </Typography>
-        ) : (
-          packages.map((pkg) => (
-            <TouchableOpacity
-              key={pkg.id}
-              style={styles.packageCard}
-              onPress={() =>
-                router.push({
-                  pathname: '/package/[id]',
-                  params: { id: pkg.id, mentorId: id },
-                })
-              }
-            >
-              <View style={styles.packageHeader}>
-                <View style={styles.packageContent}>
-                  <Typography variant="bodyMedium" style={styles.pkgTitle}>
-                    {pkg.title}
-                  </Typography>
-                  <Typography variant="caption" color="secondary" numberOfLines={2}>
-                    {pkg.description}
-                  </Typography>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={theme.colors.border.default} />
-              </View>
-
-              <View style={styles.pkgFooter}>
-                <Typography variant="caption" color="secondary">
-                  {TEXT.MENTOR_DETAIL.STARTING_FROM}
-                </Typography>
-                <Typography variant="bodyMedium" style={styles.pkgPrice}>
-                  ${pkg.versions[0]?.price || 0}
-                </Typography>
-              </View>
-            </TouchableOpacity>
-          ))
-        )}
+        </View>
       </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-function TrustCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.trustCard}>
-      <Ionicons name={icon} size={20} color={theme.colors.primary} />
-      <Typography variant="caption" color="secondary" style={styles.trustLabel}>
-        {label}
-      </Typography>
-      <Typography variant="h3" style={styles.trustValue}>
-        {value}
-      </Typography>
     </View>
   );
 }
 
-function SectionBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.section}>
-      <Typography variant="bodyMedium" style={styles.sectionTitle}>
-        {title}
-      </Typography>
-      {children}
-    </View>
-  );
-}
-
-function InfoItem({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+function InfoItem({ icon, title, subtitle }: { icon: any, title: string, subtitle: string }) {
   return (
     <View style={styles.infoItem}>
-      <Typography variant="bodyMedium" style={styles.infoTitle}>
-        {title}
-      </Typography>
-      <Typography variant="caption" color="secondary" style={styles.infoDescription}>
-        {description}
-      </Typography>
+      <View style={styles.infoIconBox}>
+        <Ionicons name={icon} size={16} color={theme.colors.secondary} />
+      </View>
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>{title}</Typography>
+        <Typography variant="caption" color="muted">{subtitle}</Typography>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.default,
-  },
-  backBtn: {
-    padding: 8,
-    marginLeft: -8,
-  },
-  headerTitle: {
-    fontWeight: '700',
-  },
-  headerSpacer: {
-    width: 24,
-  },
-  scroll: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  name: {
-    fontWeight: '800',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  headline: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  verifiedText: {
-    color: '#FFF',
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-  bio: {
-    lineHeight: 22,
-    color: theme.colors.text.secondary,
-    marginBottom: 20,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  trustCard: {
-    width: '48%',
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    borderRadius: 16,
-    padding: 16,
-  },
-  trustLabel: {
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  trustValue: {
-    fontWeight: '800',
-  },
-  section: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  chipsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  chip: {
-    backgroundColor: theme.colors.primaryLight,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  chipText: {
-    color: theme.colors.primary,
-    fontWeight: '700',
-  },
-  infoItem: {
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.default,
-  },
-  infoTitle: {
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  infoDescription: {
-    lineHeight: 18,
-  },
-  packagesTitle: {
-    marginBottom: 12,
-    fontWeight: '700',
-  },
-  packageCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    marginBottom: 16,
-  },
-  packageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  packageContent: {
-    flex: 1,
-  },
-  pkgTitle: {
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  pkgFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.default,
-  },
-  pkgPrice: {
-    color: theme.colors.primary,
-    fontWeight: '800',
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  topGradient: { height: 160, paddingHorizontal: 20 },
+  topNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10 },
+  iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  scroll: { paddingBottom: 100 },
+  profileCardWrapper: { paddingHorizontal: 20, marginTop: -60 },
+  profileCard: { padding: 20, borderRadius: 28 },
+  avatarRow: { flexDirection: 'row', alignItems: 'center' },
+  avatarBorder: { padding: 3, borderRadius: 52, backgroundColor: '#FFF', ...theme.shadows.medium, position: 'relative' },
+  verifiedBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#FFF', borderRadius: 10, padding: 2, ...theme.shadows.soft },
+  nameSection: { flex: 1, marginLeft: 20 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  divider: { height: 1, backgroundColor: theme.colors.border.light, marginVertical: 20 },
+  bio: { lineHeight: 22, marginBottom: 16 },
+  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { backgroundColor: theme.colors.primarySoft, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 },
+  chipText: { color: theme.colors.primary, fontWeight: '700', fontSize: 11 },
+  section: { marginTop: 24, paddingHorizontal: 20 },
+  sectionLabel: { textTransform: 'uppercase', color: theme.colors.text.muted, fontSize: 12, letterSpacing: 1, marginBottom: 12, marginLeft: 4 },
+  contentCard: { paddingVertical: 8, borderRadius: 24 },
+  infoItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16 },
+  infoIconBox: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
+  emptyCard: { padding: 20, alignItems: 'center' },
+  packageCard: { padding: 16, borderRadius: 24, marginBottom: 12 },
+  pkgTop: { flexDirection: 'row', alignItems: 'center' },
+  pkgIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.colors.primarySoft, justifyContent: 'center', alignItems: 'center' },
+  pkgBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.border.light },
+  priceBadge: { backgroundColor: theme.colors.primarySoft, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
 });

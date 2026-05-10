@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { theme } from '../../src/theme/theme';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useAuthStore } from '../../src/core/store/authStore';
 
 /**
@@ -19,13 +19,16 @@ import { useAuthStore } from '../../src/core/store/authStore';
  * để tránh crash nếu file vẫn tồn tại trong thư mục.
  */
 export default function TabsLayout() {
-  const userRole = useAuthStore((s) => s.userRole);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const roles = useAuthStore((s) => s.roles);
+  const activeMode = useAuthStore((s) => s.activeMode);
 
   // ── Quy tắc hiển thị tab theo role ─────────────────────────
   // - Mentor: không cần tìm Mentor khác → ẩn tab "Chuyên gia"
   // - Guest : chưa đăng nhập → ẩn "Tin nhắn" và "Lịch hẹn"
-  const isMentor = userRole === 'mentor';
-  const isGuest = userRole === 'guest';
+  const isGuest = !isAuthenticated;
+  const isMentor = roles.includes('mentor');
+  const hideMentorDiscoveryTab = isMentor && activeMode === 'mentor';
 
   return (
     <Tabs
@@ -50,10 +53,7 @@ export default function TabsLayout() {
         options={{
           title: 'Trang chủ',
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
-            </View>
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -61,12 +61,9 @@ export default function TabsLayout() {
         name="mentor"
         options={{
           title: 'Chuyên gia',
-          href: isMentor ? null : undefined,
+          href: hideMentorDiscoveryTab ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
-            </View>
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -76,10 +73,7 @@ export default function TabsLayout() {
           title: 'Tin nhắn',
           href: isGuest ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
-            </View>
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -89,10 +83,7 @@ export default function TabsLayout() {
           title: 'Lịch hẹn',
           href: isGuest ? null : undefined,
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
-            </View>
+            <Ionicons name={focused ? 'calendar' : 'calendar-outline'} size={size} color={color} />
           ),
         }}
       />
@@ -101,25 +92,11 @@ export default function TabsLayout() {
         options={{
           title: 'Hồ sơ',
           tabBarIcon: ({ color, size, focused }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
-              {focused && <View style={[styles.dot, { backgroundColor: color }]} />}
-            </View>
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
           ),
         }}
       />
-      <Tabs.Screen name="marketplace" options={{ href: null }} />
     </Tabs>
   );
 }
 
-const styles = StyleSheet.create({
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 2,
-    position: 'absolute',
-    bottom: -6, // Cách nhẹ icon
-  }
-});

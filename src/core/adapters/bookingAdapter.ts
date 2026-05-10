@@ -20,9 +20,13 @@ import {
 
 function toBookingStatus(raw: string): BookingStatus {
   const map: Record<string, BookingStatus> = {
+    PENDING: 'pending',
+    CONFIRMED: 'confirmed',
     ACTIVE: 'active',
+    IN_PROGRESS: 'active',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
+    CANCELED: 'cancelled',
   };
   return map[raw?.toUpperCase()] ?? 'active';
 }

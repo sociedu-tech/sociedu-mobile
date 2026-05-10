@@ -291,12 +291,64 @@ export interface ProgressReportResponseDTO {
   updatedAt: string;
 }
 
+// ── Report & Dispute ──────────────────────────────────────────
+export type ReportType = 'user' | 'message' | 'booking' | 'session' | 'review' | 'comment';
+export type ReportStatus = 'open' | 'under_review' | 'resolved' | 'rejected';
+
+export interface ReportResponseDTO {
+  id: string;
+  reporterId: string;
+  targetType: ReportType;
+  targetId: string;
+  reason: string;
+  description: string | null;
+  status: ReportStatus;
+  evidenceFiles: EvidenceResponseDTO[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateReportRequest {
+  targetType: ReportType;
+  targetId: string;
+  reason: string;
+  description?: string;
+  evidenceFileIds?: string[];
+}
+
+export type DisputeStatus =
+  | 'open'
+  | 'under_review'
+  | 'resolved_buyer'
+  | 'resolved_mentor'
+  | 'partial_refund'
+  | 'closed';
+
+export interface DisputeResponseDTO {
+  id: string;
+  reportId: string | null;
+  bookingId: string | null;
+  sessionId: string | null;
+  reason: string;
+  status: DisputeStatus;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDisputeRequest {
+  reportId?: string;
+  bookingId?: string;
+  sessionId?: string;
+  reason: string;
+}
+
 // ─────────────────────────────────────────────────────────────
 // MOBILE TYPES  (dùng trong UI, sau khi qua adapter)
 // ─────────────────────────────────────────────────────────────
 
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
-export type BookingStatus = 'active' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled';
 export type SessionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type OrderStatus = 'pending_payment' | 'paid' | 'cancelled' | 'refunded';
 export type UserRole = 'user' | 'mentor' | 'admin';
@@ -506,4 +558,25 @@ export interface ProgressReport {
   feedbackAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Report {
+  id: string;
+  targetType: ReportType;
+  targetId: string;
+  reason: string;
+  description: string | null;
+  status: ReportStatus;
+  evidenceFiles: SessionEvidence[];
+  createdAt: Date;
+}
+
+export interface Dispute {
+  id: string;
+  bookingId: string | null;
+  sessionId: string | null;
+  reason: string;
+  status: DisputeStatus;
+  resolutionNote: string | null;
+  createdAt: Date;
 }

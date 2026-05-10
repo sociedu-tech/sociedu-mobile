@@ -41,7 +41,7 @@ Trang thai implementation:
 
 Trang thai implementation:
 
-- Da thay route `app/(tabs)/marketplace/index.tsx`, `app/(tabs)/marketplace/[id].tsx`, `app/mentor/[id].tsx`.
+- Da thay route `app/(tabs)/mentor.tsx` va `app/mentor/[id].tsx`.
 - `mentorService` da mo ta API lay mentor, chi tiet mentor va package.
 - Search/filter nang cao chua thay ro la fully implemented.
 
@@ -107,8 +107,8 @@ Trang thai implementation:
 
 Trang thai implementation:
 
-- Co trong PRD v2.2 va SYSTEM.
-- Chua thay route/service ro rang trong codebase hien tai.
+- Co route `app/mentor/progress-reports/*` va `progressReportService` trong `src/core/services/progressReportService.ts`.
+- API that su cho progress report can tiep tuc doi chieu voi backend (hien tai service da goi `API_PATHS.progressReports.*`).
 
 ## Open questions / Known gaps
 

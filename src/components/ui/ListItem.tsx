@@ -17,14 +17,14 @@ export const ListItem = ({ title, subtitle, iconName, onPress, right, style }: L
   <TouchableOpacity style={[styles.row, style]} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
     {iconName && (
       <View style={styles.iconBox}>
-        <Ionicons name={iconName} size={22} color={theme.colors.secondary} />
+        <Ionicons name={iconName} size={20} color={theme.colors.primary} />
       </View>
     )}
     <View style={styles.content}>
       <Typography variant="bodyMedium" style={styles.title}>{title}</Typography>
-      {subtitle && <Typography variant="caption" color="secondary" style={styles.subtitle}>{subtitle}</Typography>}
+      {subtitle && <Typography variant="caption" color="muted" style={styles.subtitle}>{subtitle}</Typography>}
     </View>
-    {right}
+    {right || (onPress && <Ionicons name="chevron-forward" size={18} color={theme.colors.border.default} />)}
   </TouchableOpacity>
 );
 
@@ -32,25 +32,29 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.md,
+    paddingVertical: 14,
     paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
     backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing.sm,
-    ...theme.shadows.soft,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.light,
   },
   iconBox: {
-    width: 36,
+    width: 38, height: 38,
+    borderRadius: 10,
+    backgroundColor: theme.colors.primarySoft,
     alignItems: 'center',
-    marginRight: theme.spacing.md,
+    justifyContent: 'center',
+    marginRight: 14,
   },
   content: {
     flex: 1,
   },
   title: {
     fontWeight: '700',
+    color: theme.colors.text.primary,
   },
   subtitle: {
-    marginTop: 2,
+    marginTop: 1,
+    fontSize: 12,
   },
 });

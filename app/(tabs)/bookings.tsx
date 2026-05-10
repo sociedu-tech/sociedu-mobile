@@ -140,7 +140,7 @@ function BookingCard({ item, onPress }: { item: Booking; onPress: () => void }) 
 // ─── Main Screen ─────────────────────────────────────────────────
 export default function BookingsTab() {
   const router = useRouter();
-  const role = useAuthStore((s) => s.userRole);
+  const activeMode = useAuthStore((s) => s.activeMode);
   
   // Dùng selector nguyên khối để render nhanh, nhưng extract state riêng cho việc khác
   const bookingStoreState = useBookingStore();
@@ -154,7 +154,7 @@ export default function BookingsTab() {
   const [activeTab, setActiveTab] = useState<BookingTab>('upcoming');
 
   const loadData = async () => {
-    if (role === 'mentor') {
+    if (activeMode === 'mentor') {
       await fetchMentorBookings();
     } else {
       await fetchBuyerBookings();
@@ -163,7 +163,7 @@ export default function BookingsTab() {
 
   useEffect(() => {
     loadData();
-  }, [role]);
+  }, [activeMode]);
 
   const handleTabPress = (tab: BookingTab) => {
     setActiveTab(tab);
