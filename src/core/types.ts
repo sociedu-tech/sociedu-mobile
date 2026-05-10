@@ -303,7 +303,7 @@ export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 export type BookingStatus = 'active' | 'scheduled' | 'completed' | 'cancelled' | 'refunded';
 export type SessionStatus = 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'no_show' | 'cancelled' | 'refunded';
 export type OrderStatus = 'pending_payment' | 'paid' | 'failed' | 'cancelled' | 'refunded';
-export type UserRole = 'user' | 'mentor' | 'admin';
+export type UserRole = 'user' | 'buyer' | 'mentor' | 'admin';
 
 export interface MentorPackage {
   id: string;
@@ -381,7 +381,8 @@ export interface User {
   name: string;
   email: string;
   avatar: string | null;
-  role: UserRole;
+  roles: UserRole[];
+  activeRole: UserRole;
   bio?: string;
   headline?: string;
   location?: string;

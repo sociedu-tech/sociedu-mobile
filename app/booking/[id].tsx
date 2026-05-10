@@ -19,7 +19,7 @@ import { CustomButton } from '../../src/components/button/CustomButton';
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const role = useAuthStore((s) => s.userRole);
+  const role = useAuthStore((s) => s.activeRole);
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -394,11 +394,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
   },
   rowInfo: {
     flexDirection: 'row',

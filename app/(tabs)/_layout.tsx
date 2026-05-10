@@ -19,7 +19,7 @@ import { useAuthStore } from '../../src/core/store/authStore';
  * để tránh crash nếu file vẫn tồn tại trong thư mục.
  */
 export default function TabsLayout() {
-  const userRole = useAuthStore((s) => s.userRole);
+  const userRole = useAuthStore((s) => s.activeRole);
 
   // ── Quy tắc hiển thị tab theo role ─────────────────────────
   // - Mentor: không cần tìm Mentor khác → ẩn tab "Chuyên gia"

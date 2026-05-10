@@ -11,6 +11,7 @@ import { Typography } from '../../src/components/typography/Typography';
 import { TEXT } from '../../src/core/constants/strings';
 import { mentorService } from '../../src/core/services/mentorService';
 import { User } from '../../src/core/types';
+import { formatCurrency } from '../../src/core/utils/formatCurrency';
 import { theme } from '../../src/theme/theme';
 
 export default function MentorDetailScreen() {
@@ -214,7 +215,7 @@ export default function MentorDetailScreen() {
                   {TEXT.MENTOR_DETAIL.STARTING_FROM}
                 </Typography>
                 <Typography variant="bodyMedium" style={styles.pkgPrice}>
-                  ${pkg.versions[0]?.price || 0}
+                  {formatCurrency(pkg.versions[0]?.price || 0)}
                 </Typography>
               </View>
             </TouchableOpacity>

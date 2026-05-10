@@ -81,6 +81,20 @@ export const mentorService = {
     return unwrap(res);
   },
 
+  getPackageDetail: async (
+    packageId: string | number,
+    mentorId: string | number,
+  ): Promise<MentorPackage> => {
+    const packages = await mentorService.getPackages(mentorId);
+    const found = packages.find((item) => String(item.id) === String(packageId));
+
+    if (!found) {
+      throw new Error('Package not found.');
+    }
+
+    return toPackage(found);
+  },
+
   getMyPackageById: async (pkgId: string | number): Promise<MentorPackage> => {
     const res = USE_MOCK
       ? await mockMentorApi.getMyPackageById(pkgId)

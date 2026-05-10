@@ -9,11 +9,11 @@ import { ErrorState } from '../../src/components/states/ErrorState';
 import { LoadingState } from '../../src/components/states/LoadingState';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Typography } from '../../src/components/typography/Typography';
-import { toPackage } from '../../src/core/adapters/mentorAdapter';
 import { TEXT } from '../../src/core/constants/strings';
 import { mentorService } from '../../src/core/services/mentorService';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { MentorPackage, MentorPackageVersion, User } from '../../src/core/types';
+import { formatCurrency } from '../../src/core/utils/formatCurrency';
 import { theme } from '../../src/theme/theme';
 
 export default function PackageDetailScreen() {
@@ -36,17 +36,10 @@ export default function PackageDetailScreen() {
         throw new Error(TEXT.PACKAGE_DETAIL.NOT_FOUND);
       }
 
-      const [mentorData, packages] = await Promise.all([
+      const [mentorData, uiPkg] = await Promise.all([
         mentorService.getProfile(mentorId),
-        mentorService.getPackages(mentorId),
+        mentorService.getPackageDetail(id, mentorId),
       ]);
-      const found = packages.find((item) => String(item.id) === id);
-
-      if (!found) {
-        throw new Error(TEXT.PACKAGE_DETAIL.NOT_FOUND);
-      }
-
-      const uiPkg = toPackage(found);
       setMentor(mentorData);
       setPkg(uiPkg);
       setSelectedVer(uiPkg.versions[0] ?? null);
@@ -174,7 +167,7 @@ export default function PackageDetailScreen() {
                   </Typography>
                 </View>
                 <Typography variant="h3" style={styles.priceText}>
-                  ${ver.price}
+                  {formatCurrency(ver.price)}
                 </Typography>
               </TouchableOpacity>
             );
@@ -221,7 +214,7 @@ export default function PackageDetailScreen() {
             {TEXT.PACKAGE_DETAIL.TOTAL_LABEL}
           </Typography>
           <Typography variant="h2" style={styles.totalPrice}>
-            ${selectedVer?.price || 0}
+            {formatCurrency(selectedVer?.price || 0)}
           </Typography>
         </View>
         <CustomButton

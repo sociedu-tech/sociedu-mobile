@@ -80,6 +80,7 @@ export default function LoginScreen() {
     try {
       const data = await authService.login({ email: email.trim(), password });
       storeLogin(data);
+      router.replace(data.roles.length > 1 ? '/role-picker' : '/(tabs)');
     } catch (err: any) {
       setError(err.message || 'Đăng nhập thất bại.');
     } finally {

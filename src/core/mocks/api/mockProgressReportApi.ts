@@ -56,12 +56,11 @@ function findReport(reportId: string) {
 }
 
 export const mockProgressReportApi = {
-  getMyReports: async (role: string) => {
+  getMyReports: async (userId?: string) => {
     await delay(300);
-    const reports =
-      role === 'mentor'
-        ? mockProgressReports
-        : mockProgressReports.filter((report) => report.menteeId === 'e34a621c-a90b-4bd2-bea4-23be5185ea93');
+    const reports = userId
+      ? mockProgressReports.filter((report) => report.mentorId === userId || report.menteeId === userId)
+      : mockProgressReports;
     return withApiResponse(reports);
   },
 

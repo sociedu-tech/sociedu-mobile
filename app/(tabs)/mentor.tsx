@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,7 +17,6 @@ import { LoadingState } from '../../src/components/states/LoadingState';
 import { ErrorState } from '../../src/components/states/ErrorState';
 import { EmptyState } from '../../src/components/states/EmptyState';
 import { theme } from '../../src/theme/theme';
-import { useBreakpoint } from '../../src/theme/useBreakpoint';
 import { mentorService } from '../../src/core/services/mentorService';
 import { User } from '../../src/core/types';
 import { Card } from '../../src/components/ui/Card';
@@ -26,7 +25,6 @@ import { Avatar } from '../../src/components/ui/Avatar';
 import { scaleSpace, scaleFont } from '../../src/theme/responsiveUtils';
 
 
-import { useMemo } from 'react';
 import { useDebounce } from '../../src/hooks/useDebounce';
 
 // ...existing code...
@@ -37,7 +35,6 @@ import { useDebounce } from '../../src/hooks/useDebounce';
  */
 export default function MentorScreen() {
   const router = useRouter();
-  const breakpoint = useBreakpoint();
   const [mentors, setMentors] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

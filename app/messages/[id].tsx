@@ -55,14 +55,14 @@ export default function ConversationDetailScreen() {
   const [inputText, setInputText] = useState('');
 
   const loadConversation = useCallback(async () => {
-    if (!id) return;
+    if (!id || !currentUserId) return;
     setLoading(true);
     setError(null);
 
     try {
       const [conversationData, messageData] = await Promise.all([
-        conversationService.getConversationById(id),
-        conversationService.getMessages(id),
+        conversationService.getConversationById(id, currentUserId),
+        conversationService.getMessages(id, currentUserId),
       ]);
 
       setConversation(conversationData);
@@ -82,20 +82,20 @@ export default function ConversationDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [currentUserId, id]);
 
   useEffect(() => {
     void loadConversation();
   }, [loadConversation]);
 
   const handleSend = useCallback(async () => {
-    if (!id || !inputText.trim() || sending) return;
+    if (!id || !currentUserId || !inputText.trim() || sending) return;
     const text = inputText.trim();
     setInputText('');
     setSending(true);
 
     try {
-      const createdMessage = await conversationService.sendMessage(id, text);
+      const createdMessage = await conversationService.sendMessage(id, text, currentUserId);
       setMessages((currentMessages) => [...currentMessages, createdMessage]);
       requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
     } catch (sendError: any) {
@@ -104,7 +104,7 @@ export default function ConversationDetailScreen() {
     } finally {
       setSending(false);
     }
-  }, [id, inputText, sending]);
+  }, [currentUserId, id, inputText, sending]);
 
   const messageList = useMemo(
     () => messages.sort((left, right) => left.createdAt.getTime() - right.createdAt.getTime()),
@@ -156,7 +156,8 @@ export default function ConversationDetailScreen() {
               {conversation.name}
             </Typography>
             <Typography color="secondary" variant="caption">
-              {currentUserId === conversation.peer?.id ? TEXT.MESSAGES.STATUS_OFFLINE : TEXT.MESSAGES.STATUS_ONLINE}
+              {/* Presence is not wired yet, so show the peer as online until real-time status exists. */}
+              {TEXT.MESSAGES.STATUS_ONLINE}
             </Typography>
           </View>
         </View>

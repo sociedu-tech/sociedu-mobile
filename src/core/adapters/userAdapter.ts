@@ -77,7 +77,8 @@ export function toUserFromProfile(dto: UserProfileResponseDTO): User {
     name: `${dto.firstName ?? ''} ${dto.lastName ?? ''}`.trim(),
     email: '',                        // không có trong UserProfileResponse
     avatar: buildAvatarUrl(dto.avatarFileId),
-    role: 'user',
+    roles: ['user'],
+    activeRole: 'user',
     bio: dto.bio ?? undefined,
     headline: dto.headline ?? undefined,
     location: dto.location ?? undefined,

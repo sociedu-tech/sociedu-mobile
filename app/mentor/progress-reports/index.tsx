@@ -18,6 +18,7 @@ import { Typography } from '../../../src/components/typography/Typography';
 import { Card } from '../../../src/components/ui/Card';
 import { TEXT } from '../../../src/core/constants/strings';
 import { progressReportService } from '../../../src/core/services/progressReportService';
+import { useAuthStore } from '../../../src/core/store/authStore';
 import { ProgressReport } from '../../../src/core/types';
 import { theme } from '../../../src/theme/theme';
 
@@ -40,6 +41,7 @@ function getStatusMeta(status: ProgressReport['status']) {
 
 function MentorProgressReportsContent() {
   const router = useRouter();
+  const currentUserId = useAuthStore((state) => state.user?.id);
   const [reports, setReports] = useState<ProgressReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,14 +54,14 @@ function MentorProgressReportsContent() {
     setError(null);
 
     try {
-      setReports(await progressReportService.getMyReports());
+      setReports(await progressReportService.getMyReports(currentUserId));
     } catch (loadError: any) {
       setError(loadError?.message || TEXT.PROGRESS_REPORT.LOAD_ERROR);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   useEffect(() => {
     void loadReports();

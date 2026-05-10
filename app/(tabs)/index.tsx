@@ -286,7 +286,7 @@ function MentorHome() {
 //  ROOT – Chọn màn hình theo role
 // ═══════════════════════════════════════════════════════════════
 export default function HomeScreen() {
-  const userRole = useAuthStore((s) => s.userRole);
+  const userRole = useAuthStore((s) => s.activeRole);
   return userRole === 'mentor' ? <MentorHome /> : <BuyerHome />;
 }
 

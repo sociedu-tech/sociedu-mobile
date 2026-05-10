@@ -1,8 +1,8 @@
 /**
  * authAdapter.ts
- * Chuyển đổi AuthResponseDTO (backend) → AuthUser (mobile store)
+ * Chuyen doi AuthResponseDTO (backend) -> AuthUser (mobile store)
  */
-import { AuthResponseDTO } from '../types';
+import { AuthResponseDTO, UserRole } from '../types';
 
 export interface AuthUser {
   id: string;
@@ -10,22 +10,26 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   fullName: string;
-  roles: string[];           // lowercase, ROLE_ prefix stripped
-  userRole: string;          // role chính (phần tử đầu tiên)
+  roles: UserRole[];
+  activeRole: UserRole;
 }
 
 /**
- * Normalize role: "ROLE_MENTOR" → "mentor"
+ * Normalize role: "ROLE_MENTOR" -> "mentor"
  */
-function normalizeRole(role: string): string {
-  return role.replace(/^ROLE_/, '').toLowerCase();
+function normalizeRole(role: string): UserRole | null {
+  const normalized = role.replace(/^ROLE_/, '').toLowerCase();
+  if (normalized === 'user' || normalized === 'buyer' || normalized === 'mentor' || normalized === 'admin') {
+    return normalized;
+  }
+  return null;
 }
 
 /**
- * Chuyển AuthResponseDTO → AuthUser
+ * Chuyen AuthResponseDTO -> AuthUser
  */
 export function toAuthUser(dto: AuthResponseDTO): AuthUser {
-  const roles = dto.roles.map(normalizeRole);
+  const normalizedRoles = dto.roles.map(normalizeRole).filter((role): role is UserRole => role !== null);
   const firstName = dto.firstName ?? '';
   const lastName = dto.lastName ?? '';
 
@@ -35,7 +39,7 @@ export function toAuthUser(dto: AuthResponseDTO): AuthUser {
     firstName,
     lastName,
     fullName: `${firstName} ${lastName}`.trim(),
-    roles,
-    userRole: roles[0] ?? 'user',
+    roles: normalizedRoles,
+    activeRole: normalizedRoles[0] ?? 'user',
   };
 }

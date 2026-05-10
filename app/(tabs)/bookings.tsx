@@ -146,7 +146,7 @@ function BookingCard({ item, onPress }: { item: Booking; onPress: () => void }) 
 // ─── Main Screen ─────────────────────────────────────────────────
 export default function BookingsTab() {
   const router = useRouter();
-  const role = useAuthStore((s) => s.userRole);
+  const role = useAuthStore((s) => s.activeRole);
   
   // Dùng selector nguyên khối để render nhanh, nhưng extract state riêng cho việc khác
   const bookingStoreState = useBookingStore();

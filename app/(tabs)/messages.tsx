@@ -56,7 +56,7 @@ export default function InboxScreen() {
     setError(null);
 
     try {
-      const data = await conversationService.getMyConversations();
+      const data = await conversationService.getMyConversations(currentUserId);
       setConversations(data);
     } catch (loadError: any) {
       setError(loadError?.message || TEXT.MESSAGES.LOAD_ERROR);
@@ -64,7 +64,7 @@ export default function InboxScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   useEffect(() => {
     if (!authLoading && currentUserId) {

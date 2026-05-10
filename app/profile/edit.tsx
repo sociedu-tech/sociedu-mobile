@@ -20,13 +20,9 @@ import { CustomButton } from '../../src/components/button/CustomButton';
 import { theme } from '../../src/theme/theme';
 import { scaleFont } from '../../src/theme/responsiveUtils';
 import { userService } from '../../src/core/services/userService';
-import { useAuthStore } from '../../src/core/store/authStore';
-import { User } from '../../src/core/types';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const updateStoreUser = useAuthStore((s) => s.login); // Re-use login to update local state fully if needed
-  
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -47,11 +43,13 @@ export default function EditProfileScreen() {
       const data = await userService.getMe();
       setFirstName(data.name.split(' ').slice(0, -1).join(' ') || '');
       setLastName(data.name.split(' ').slice(-1).join(' ') || data.name);
+      setHeadline(data.headline || '');
+      setBio(data.bio || '');
       // Giả lập lấy thêm details nếu model User hỗ trợ
       // Nếu API thật trả về rỗng, gán chuỗi rỗng
       setAvatarUri(data.avatar || null);
-    } catch (e) {
-      console.log('Error loading profile', e);
+    } catch {
+      Alert.alert('Lỗi', 'Không thể tải hồ sơ.');
     } finally {
       setFetching(false);
     }
@@ -88,6 +86,8 @@ export default function EditProfileScreen() {
       await userService.updateProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        headline: headline.trim(),
+        bio: bio.trim(),
       });
 
       // Nếu có API up ảnh, gọi ở đây. 

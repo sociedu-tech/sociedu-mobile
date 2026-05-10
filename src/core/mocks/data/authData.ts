@@ -23,3 +23,10 @@ export const mockMentorAuthData: AuthResponseDTO = {
   lastName: "Chuyên Gia",
   roles: ["ROLE_MENTOR"]
 };
+
+export const mockDualRoleAuthData = {
+  ...mockAuthData,
+  email: 'both@test.com',
+  roles: ['ROLE_BUYER', 'ROLE_MENTOR'],
+  activeRole: 'buyer',
+};

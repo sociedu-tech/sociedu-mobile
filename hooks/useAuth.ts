@@ -6,18 +6,22 @@
  */
 import { useAuthStore } from '../src/core/store/authStore';
 import { AuthUser } from '../src/core/adapters/authAdapter';
+import { UserRole } from '../src/core/types';
 
-export type { AuthUser };
+export type { AuthUser, UserRole };
 
 export function useAuth() {
-  const { user, isAuthenticated, userRole, loading, login, logout } = useAuthStore();
+  const { user, isAuthenticated, roles, activeRole, userRole, loading, login, switchRole, logout } = useAuthStore();
   
   return {
     user,
     isAuthenticated,
+    roles,
+    activeRole,
     userRole,
     loading,
     login,
+    switchRole,
     logout,
   };
 }

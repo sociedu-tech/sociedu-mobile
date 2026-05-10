@@ -11,10 +11,10 @@ import { ErrorState } from '../../src/components/states/ErrorState';
 import { LoadingState } from '../../src/components/states/LoadingState';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Typography } from '../../src/components/typography/Typography';
-import { toPackage } from '../../src/core/adapters/mentorAdapter';
 import { mentorService } from '../../src/core/services/mentorService';
 import { orderService } from '../../src/core/services/orderService';
 import { MentorPackage, MentorPackageVersion, User } from '../../src/core/types';
+import { formatCurrency } from '../../src/core/utils/formatCurrency';
 import { theme } from '../../src/theme/theme';
 
 const PLATFORM_FEE = 0;
@@ -31,13 +31,6 @@ const getInitials = (name?: string) =>
     .slice(-2)
     .map((part) => part.charAt(0).toUpperCase())
     .join('');
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    maximumFractionDigits: 0,
-  }).format(value);
 
 const getDeliveryLabel = (deliveryType: string) => {
   const normalized = deliveryType.toUpperCase();
@@ -97,17 +90,10 @@ export default function CheckoutScreen() {
         throw new Error('Không tìm thấy thông tin gói học để thanh toán.');
       }
 
-      const [mentorData, packageDtos] = await Promise.all([
+      const [mentorData, uiPackage] = await Promise.all([
         mentorService.getProfile(mentorId),
-        mentorService.getPackages(mentorId),
+        mentorService.getPackageDetail(packageId, mentorId),
       ]);
-      const foundPackageDto = packageDtos.find((item) => String(item.id) === String(packageId));
-
-      if (!foundPackageDto) {
-        throw new Error('Gói học không còn khả dụng.');
-      }
-
-      const uiPackage = toPackage(foundPackageDto);
       const foundVersion = uiPackage.versions.find((item) => String(item.id) === String(versionId));
 
       if (!foundVersion) {
@@ -243,7 +229,7 @@ export default function CheckoutScreen() {
             Chi phí
           </Typography>
           <InfoRow label="Giá gói học" value={formatCurrency(basePrice)} />
-          <InfoRow label="Phí nền tảng" value={formatCurrency(PLATFORM_FEE)} />
+          {PLATFORM_FEE > 0 && <InfoRow label="Phí nền tảng" value={formatCurrency(PLATFORM_FEE)} />}
           <View style={styles.totalRow}>
             <Typography variant="bodyMedium" weight="700">
               Tổng thanh toán

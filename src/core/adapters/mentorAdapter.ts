@@ -74,7 +74,8 @@ export function toMentorUser(dto: MentorProfileResponseDTO): User {
     name: '',
     email: '',
     avatar: null,
-    role: 'mentor',
+    roles: ['mentor'],
+    activeRole: 'mentor',
     joinedDate: '',
     rating: dto.ratingAvg ?? 0,
     mentorInfo: {

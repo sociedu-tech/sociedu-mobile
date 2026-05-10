@@ -3,7 +3,6 @@ import { toProgressReport, toProgressReportList } from '../adapters/progressRepo
 import { API_PATHS } from '../backend';
 import { USE_MOCK } from '../config';
 import { mockProgressReportApi } from '../mocks/api/mockProgressReportApi';
-import { useAuthStore } from '../store/authStore';
 import {
   CreateProgressReportRequest,
   ProgressReport,
@@ -12,10 +11,9 @@ import {
 } from '../types';
 
 export const progressReportService = {
-  getMyReports: async (): Promise<ProgressReport[]> => {
-    const userRole = useAuthStore.getState().userRole;
+  getMyReports: async (userId?: string): Promise<ProgressReport[]> => {
     const response = USE_MOCK
-      ? await mockProgressReportApi.getMyReports(userRole)
+      ? await mockProgressReportApi.getMyReports(userId)
       : await api.get<{ data: ProgressReportResponseDTO[] }>(API_PATHS.progressReports.list);
 
     return toProgressReportList(unwrap(response));

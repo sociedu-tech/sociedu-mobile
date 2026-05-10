@@ -1,42 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../../src/components/typography/Typography';
+import { ErrorState } from '../../src/components/states/ErrorState';
+import { LoadingState } from '../../src/components/states/LoadingState';
 import { theme } from '../../src/theme/theme';
-import { api } from '../../src/core/api';
-
-interface UserProfile {
-  id: string | number;
-  name: string;
-  email: string;
-  avatar: string;
-  roles: string[];
-  mentorInfo?: {
-    headline: string;
-    expertise: string[];
-    rating: number;
-    sessionsCompleted: number;
-    price: number;
-    bio: string;
-    verificationStatus: string;
-  };
-}
+import { userService } from '../../src/core/services/userService';
+import { User } from '../../src/core/types';
+import { formatCurrency } from '../../src/core/utils/formatCurrency';
 
 /**
  * UserProfileScreen – tương đương "/profile/:id" trên web.
  */
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get(`/api/v1/users/${id}`);
-        setProfile(res.data);
+        const data = await userService.getPublicProfile(id);
+        setProfile(data);
       } catch {
         setError('Không thể tải hồ sơ người dùng.');
       } finally {
@@ -46,23 +33,10 @@ export default function UserProfileScreen() {
     if (id) fetchProfile();
   }, [id]);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   if (error || !profile) {
-    return (
-      <View style={styles.center}>
-        <Ionicons name="alert-circle-outline" size={48} color={theme.colors.error} />
-        <Typography variant="body" style={styles.errorText}>
-          {error || 'Không tìm thấy hồ sơ.'}
-        </Typography>
-      </View>
-    );
+    return <ErrorState error={error || 'Không tìm thấy hồ sơ.'} />;
   }
 
   return (
@@ -112,7 +86,7 @@ export default function UserProfileScreen() {
           <View style={styles.statItem}>
             <Ionicons name="cash-outline" size={20} color={theme.colors.success} />
             <Typography variant="h3" style={styles.statValue}>
-              ${profile.mentorInfo.price}
+              {formatCurrency(profile.mentorInfo.price)}
             </Typography>
             <Typography variant="caption" style={styles.statLabel}>/ giờ</Typography>
           </View>
@@ -150,18 +124,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-    backgroundColor: theme.colors.background,
-  },
-  errorText: {
-    marginTop: 12,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
   },
   profileHeader: {
     alignItems: 'center',

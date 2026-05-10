@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -13,7 +12,6 @@ import { useRouter } from 'expo-router';
 import { Typography } from '../../src/components/typography/Typography';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme/theme';
-import { useBreakpoint } from '../../src/theme/useBreakpoint';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { userService } from '../../src/core/services/userService';
 import { User } from '../../src/core/types';
@@ -23,14 +21,24 @@ import { Card } from '../../src/components/ui/Card';
 import { ListItem } from '../../src/components/ui/ListItem';
 
 
+function RoleBadge({ role }: { role: string }) {
+  return (
+    <View style={{ backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border.default, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+      <Typography variant="caption" style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10, letterSpacing: 0.5, textAlign: 'center' }}>
+        {role.toUpperCase()}
+      </Typography>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const breakpoint = useBreakpoint();
   const authUser = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authLoading = useAuthStore((s) => s.loading);
-  const userRole = useAuthStore((s) => s.userRole);
+  const roles = useAuthStore((s) => s.roles);
+  const activeRole = useAuthStore((s) => s.activeRole);
+  const switchRole = useAuthStore((s) => s.switchRole);
   const logout = useAuthStore((s) => s.logout);
   const [fullUser, setFullUser] = useState<User | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -39,8 +47,8 @@ export default function ProfileScreen() {
     try {
       const data = await userService.getMe();
       setFullUser(data);
-    } catch (e) {
-      console.log('Failed to fetch full profile', e);
+    } catch {
+      setFullUser(null);
     }
   };
 
@@ -97,12 +105,8 @@ export default function ProfileScreen() {
         {/* HEADER */}
         <View style={{ alignItems: 'center', marginBottom: theme.spacing.xxl }}>
            <Avatar uri={avatarUri || undefined} initials={getInitials()} size={96} />
-           <View style={{ marginTop: -14, zIndex: 10 }}>
-             <View style={{ backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border.default, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
-               <Typography variant="caption" style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10, letterSpacing: 0.5, textAlign: 'center' }}>
-                 {userRole.toUpperCase()}
-               </Typography>
-             </View>
+           <View style={{ marginTop: -14, zIndex: 10, flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+             {roles.map((role) => <RoleBadge key={role} role={role} />)}
            </View>
            <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.text.primary, marginTop: 12, marginBottom: 4, textAlign: 'center' }}>{displayName}</Typography>
            <Typography variant="body" color="secondary" style={{ textAlign: 'center', marginBottom: 20 }}>{displayEmail}</Typography>
@@ -114,11 +118,36 @@ export default function ProfileScreen() {
         </View>
 
         {/* BẢNG ĐIỀU KHIỂN */}
-        {(userRole === 'mentor' || userRole === 'admin') && (
+        {roles.length > 1 && (
+          <Section style={{ marginBottom: theme.spacing.xl }}>
+            <Typography variant="label" style={{ fontWeight: '700', color: theme.colors.text.secondary, marginBottom: theme.spacing.sm, marginLeft: theme.spacing.xs, textTransform: 'uppercase', fontSize: 13, letterSpacing: 0.5 }}>Vai trÃ² hiá»‡n táº¡i</Typography>
+            <Card style={{ padding: theme.spacing.sm, borderRadius: theme.borderRadius.xl }}>
+              <View style={{ flexDirection: 'row', gap: theme.spacing.sm, flexWrap: 'wrap' }}>
+                {roles.map((role) => {
+                  const selected = role === activeRole;
+                  return (
+                    <TouchableOpacity
+                      key={role}
+                      onPress={() => switchRole(role)}
+                      style={{ flex: 1, minWidth: 120, paddingVertical: 12, paddingHorizontal: theme.spacing.md, borderRadius: theme.borderRadius.lg, backgroundColor: selected ? theme.colors.primary : theme.colors.surface, borderWidth: 1, borderColor: selected ? theme.colors.primary : theme.colors.border.default, alignItems: 'center' }}
+                      activeOpacity={0.75}
+                    >
+                      <Typography variant="bodyMedium" style={{ color: selected ? theme.colors.text.inverse : theme.colors.text.primary, fontWeight: '700' }}>
+                        {role.toUpperCase()}
+                      </Typography>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Card>
+          </Section>
+        )}
+
+        {(roles.includes('mentor') || roles.includes('admin')) && (
           <Section style={{ marginBottom: theme.spacing.xl }}>
             <Typography variant="label" style={{ fontWeight: '700', color: theme.colors.text.secondary, marginBottom: theme.spacing.sm, marginLeft: theme.spacing.xs, textTransform: 'uppercase', fontSize: 13, letterSpacing: 0.5 }}>Bảng điều khiển</Typography>
             <Card style={{ paddingVertical: 0, borderRadius: theme.borderRadius.xl, overflow: 'hidden' }}>
-              {userRole === 'mentor' && (
+              {roles.includes('mentor') && (
                 <ListItem
                   title="Mentor Dashboard"
                   subtitle="Quản lý lịch hẹn, gói dịch vụ"
@@ -126,7 +155,7 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/mentor/dashboard' as any)}
                 />
               )}
-              {userRole === 'admin' && (
+              {roles.includes('admin') && (
                 <ListItem
                   title="Admin Panel"
                   subtitle="Kiểm duyệt user & hệ thống"
