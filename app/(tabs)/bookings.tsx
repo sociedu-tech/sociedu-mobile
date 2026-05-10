@@ -13,7 +13,7 @@ import { EmptyState } from '../../src/components/states/EmptyState';
 import { LoadingState } from '../../src/components/states/LoadingState';
 import { ErrorState } from '../../src/components/states/ErrorState';
 import { theme } from '../../src/theme/theme';
-import { useBookingStore, getUpcomingBookings, getCompletedBookings, getCanceledBookings } from '../../src/core/store/bookingStore';
+import { useBookingStore } from '../../src/core/store/bookingStore';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { Booking } from '../../src/core/types';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,10 +44,10 @@ const TABS: TabConfig[] = [
   {
     key: 'upcoming',
     label: TEXT.BOOKING.TAB_UPCOMING,
-    statuses: ['active', 'pending', 'confirmed'],
+    statuses: ['scheduled', 'in_progress'],
     icon: 'time-outline',
     emptyTitle: TEXT.BOOKING.EMPTY_UPCOMING,
-    emptyDesc: 'Đặt lịch với Mentor để bắt đầu hành trình học tập của bạn.',
+    emptyDesc: TEXT.BOOKING.EMPTY_UPCOMING_DESC,
     emptyIcon: 'calendar-outline',
   },
   {
@@ -56,16 +56,16 @@ const TABS: TabConfig[] = [
     statuses: ['completed'],
     icon: 'checkmark-circle-outline',
     emptyTitle: TEXT.BOOKING.EMPTY_COMPLETED,
-    emptyDesc: 'Các buổi học đã kết thúc sẽ xuất hiện ở đây.',
+    emptyDesc: TEXT.BOOKING.EMPTY_COMPLETED_DESC,
     emptyIcon: 'trophy-outline',
   },
   {
     key: 'cancelled',
     label: TEXT.BOOKING.TAB_CANCELLED,
-    statuses: ['cancelled'],
+    statuses: ['canceled', 'cancelled', 'refunded'],
     icon: 'close-circle-outline',
     emptyTitle: TEXT.BOOKING.EMPTY_CANCELLED,
-    emptyDesc: 'Các lịch hẹn đã hủy sẽ được lưu tại đây.',
+    emptyDesc: TEXT.BOOKING.EMPTY_CANCELLED_DESC,
     emptyIcon: 'ban-outline',
   },
 ];
@@ -74,22 +74,28 @@ const TABS: TabConfig[] = [
 function getStatusStyle(status: string): { bg: string; color: string; label: string } {
   switch (status) {
     case 'completed':
-      return { bg: '#BBF7D0', color: '#15803D', label: 'Hoàn thành' };
+      return { bg: '#BBF7D0', color: '#15803D', label: TEXT.BOOKING.STATUS_COMPLETED };
+    case 'canceled':
     case 'cancelled':
-      return { bg: '#FECACA', color: '#DC2626', label: 'Đã hủy' };
+      return { bg: '#FECACA', color: '#DC2626', label: TEXT.BOOKING.STATUS_CANCELLED };
+    case 'refunded':
+      return { bg: '#E5E7EB', color: '#4B5563', label: TEXT.BOOKING.STATUS_REFUNDED };
     case 'confirmed':
-      return { bg: '#DBEAFE', color: '#1D4ED8', label: 'Đã xác nhận' };
+      return { bg: '#DBEAFE', color: '#1D4ED8', label: TEXT.BOOKING.STATUS_CONFIRMED };
     case 'pending':
-      return { bg: '#FEF3C7', color: '#D97706', label: 'Chờ xác nhận' };
-    case 'active':
+      return { bg: '#FEF3C7', color: '#D97706', label: TEXT.BOOKING.STATUS_PENDING };
+    case 'scheduled':
+      return { bg: '#DBEAFE', color: '#1D4ED8', label: TEXT.BOOKING.STATUS_SCHEDULED };
+    case 'in_progress':
     default:
-      return { bg: theme.colors.primaryLight, color: theme.colors.primary, label: 'Đang diễn ra' };
+      return { bg: theme.colors.primaryLight, color: theme.colors.primary, label: TEXT.BOOKING.STATUS_IN_PROGRESS };
   }
 }
 
 // ─── Booking Card ────────────────────────────────────────────────
 function BookingCard({ item, onPress }: { item: Booking; onPress: () => void }) {
   const statusStyle = getStatusStyle(item.status);
+  const title = item.mentorName || 'Mã: ' + item.id.slice(0, 8).toUpperCase();
 
   return (
     <TouchableOpacity
@@ -104,7 +110,7 @@ function BookingCard({ item, onPress }: { item: Booking; onPress: () => void }) 
             <Ionicons name="calendar" size={16} color={theme.colors.primary} />
           </View>
           <Typography variant="bodyMedium" style={styles.cardTitle} numberOfLines={1}>
-            {'Mã: ' + item.id.slice(0, 8).toUpperCase()}
+            {title}
           </Typography>
         </View>
         <View style={styles.headerRight}>
@@ -122,7 +128,7 @@ function BookingCard({ item, onPress }: { item: Booking; onPress: () => void }) 
         <View style={styles.metaItem}>
           <Ionicons name="book-outline" size={13} color={theme.colors.text.secondary} />
           <Typography variant="caption" color="secondary" style={styles.metaText}>
-            {item.sessions.length + ' buổi học'}
+            {item.packageName || item.sessions.length + ' buổi học'}
           </Typography>
         </View>
         <View style={styles.metaDot} />
@@ -147,10 +153,6 @@ export default function BookingsTab() {
   const { loading, error, fetchBuyerBookings, fetchMentorBookings } = bookingStoreState;
   
   // Áp dụng selector
-  const upcomingList = getUpcomingBookings(bookingStoreState);
-  const completedList = getCompletedBookings(bookingStoreState);
-  const canceledList = getCanceledBookings(bookingStoreState);
-
   const [activeTab, setActiveTab] = useState<BookingTab>('upcoming');
 
   const loadData = async () => {
@@ -170,9 +172,9 @@ export default function BookingsTab() {
   };
 
   const currentTabConfig = TABS.find((t) => t.key === activeTab)!;
-  const filteredBookings = activeTab === 'upcoming' ? upcomingList 
-    : activeTab === 'completed' ? completedList 
-    : canceledList;
+  const filteredBookings = bookingStoreState.bookings.filter((booking) =>
+    currentTabConfig.statuses.includes(booking.status),
+  );
 
   if (error) {
     return <ErrorState error={error} onRetry={loadData} />;

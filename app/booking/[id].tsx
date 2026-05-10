@@ -24,6 +24,7 @@ export default function BookingDetailScreen() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     fetchBooking();
@@ -51,6 +52,29 @@ export default function BookingDetailScreen() {
     } catch (err: any) {
       Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.UPDATE_STATUS_ERROR);
     }
+  };
+
+  const handleCancelBooking = () => {
+    if (!booking) return;
+
+    Alert.alert('Hủy booking', 'Bạn có chắc chắn muốn hủy booking này?', [
+      { text: TEXT.COMMON.CANCEL, style: 'cancel' },
+      {
+        text: 'Hủy booking',
+        style: 'destructive',
+        onPress: async () => {
+          setCancelLoading(true);
+          try {
+            await bookingService.cancelBooking(booking.id);
+            await fetchBooking();
+          } catch (err: any) {
+            Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.UPDATE_STATUS_ERROR);
+          } finally {
+            setCancelLoading(false);
+          }
+        },
+      },
+    ]);
   };
 
   if (loading) return <LoadingState message={TEXT.BOOKING.LOADING_DETAIL} />;
@@ -82,11 +106,43 @@ export default function BookingDetailScreen() {
           </View>
           <View style={styles.rowBetween}>
             <Typography variant="caption" color="secondary">{TEXT.BOOKING.OVERALL_STATUS_LABEL}</Typography>
-            <Typography variant="bodyMedium" style={[styles.bold, { color: theme.colors.primary }]}>
-              {booking.status.toUpperCase()}
-            </Typography>
+            {booking.status === 'refunded' ? (
+              <View style={styles.refundBadge}>
+                <Ionicons name="return-down-back-outline" size={14} color={theme.colors.text.inverse} />
+                <Typography variant="caption" style={styles.refundBadgeText}>
+                  REFUNDED
+                </Typography>
+              </View>
+            ) : (
+              <Typography variant="bodyMedium" style={[styles.bold, { color: theme.colors.primary }]}>
+                {booking.status.toUpperCase()}
+              </Typography>
+            )}
           </View>
+          {booking.mentorName ? (
+            <View style={styles.rowBetween}>
+              <Typography variant="caption" color="secondary">Mentor</Typography>
+              <Typography variant="bodyMedium" style={styles.bold}>{booking.mentorName}</Typography>
+            </View>
+          ) : null}
+          {booking.packageName ? (
+            <View style={styles.rowBetween}>
+              <Typography variant="caption" color="secondary">Gói học</Typography>
+              <Typography variant="bodyMedium" style={styles.bold}>{booking.packageName}</Typography>
+            </View>
+          ) : null}
         </View>
+
+        {role !== 'mentor' && booking.status === 'scheduled' ? (
+          <CustomButton
+            label="Hủy booking"
+            variant="destructive"
+            loading={cancelLoading}
+            disabled={cancelLoading}
+            onPress={handleCancelBooking}
+            style={styles.cancelBookingButton}
+          />
+        ) : null}
 
         <Typography variant="h3" style={{ marginVertical: 16 }}>
           {TEXT.BOOKING.TIMELINE_TITLE}
@@ -103,7 +159,10 @@ export default function BookingDetailScreen() {
                 index={index}
                 role={role}
                 isLast={index === booking.sessions.length - 1}
+                bookingId={booking.id}
+                actionsDisabled={booking.status === 'refunded'}
                 onUpdateStatus={(status) => updateSessionStatus(session.id, status)}
+                onReviewSubmitted={fetchBooking}
               />
             ))}
           </View>
@@ -118,23 +177,41 @@ function SessionCard({
   index,
   role,
   isLast,
+  bookingId,
+  actionsDisabled,
   onUpdateStatus,
+  onReviewSubmitted,
 }: {
   session: BookingSession;
   index: number;
   role: string;
   isLast: boolean;
+  bookingId: string;
+  actionsDisabled: boolean;
   onUpdateStatus: (status: string) => void;
+  onReviewSubmitted: () => Promise<void>;
 }) {
   const [showReview, setShowReview] = useState(false);
   const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState('5');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(Boolean(session.reviewed || session.hasReviewed));
+
+  useEffect(() => {
+    setReviewSubmitted(Boolean(session.reviewed || session.hasReviewed));
+  }, [session.hasReviewed, session.reviewed]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
         return '#10B981';
+      case 'scheduled':
       case 'in_progress':
         return '#3B82F6';
+      case 'no_show':
+        return '#F97316';
+      case 'refunded':
+        return '#9CA3AF';
       case 'cancelled':
         return '#EF4444';
       default:
@@ -149,6 +226,25 @@ function SessionCard({
       });
     } else {
       Alert.alert(TEXT.BOOKING.NO_MEETING_LINK_TITLE, TEXT.BOOKING.NO_MEETING_LINK_MESSAGE);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    const rating = Math.min(5, Math.max(1, Number(reviewRating) || 5));
+
+    setReviewSubmitting(true);
+    try {
+      await bookingService.submitReview(bookingId, {
+        rating,
+        comment: reviewText,
+      });
+      setReviewSubmitted(true);
+      setShowReview(false);
+      await onReviewSubmitted();
+    } catch (err: any) {
+      Alert.alert(TEXT.COMMON.ERROR, err.message || TEXT.BOOKING.UPDATE_STATUS_ERROR);
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -178,15 +274,16 @@ function SessionCard({
         <View style={styles.actionRow}>
           {session.status !== 'completed' ? (
             <TouchableOpacity
-              style={[styles.btn, !session.meetingUrl && styles.btnDisabled]}
+              style={[styles.btn, (!session.meetingUrl || actionsDisabled) && styles.btnDisabled]}
               onPress={handleOpenMeet}
+              disabled={actionsDisabled}
               activeOpacity={0.7}
             >
               <Ionicons name="videocam-outline" size={16} color="#FFF" />
               <Typography variant="caption" style={styles.btnText}>{TEXT.BOOKING.BTN_JOIN}</Typography>
             </TouchableOpacity>
           ) : (
-            role !== 'mentor' && (
+            role !== 'mentor' && !actionsDisabled && !reviewSubmitted && (
               <TouchableOpacity
                 style={[styles.btn, { backgroundColor: theme.colors.warning }]}
                 onPress={() => setShowReview(true)}
@@ -198,7 +295,7 @@ function SessionCard({
             )
           )}
 
-          {role === 'mentor' && session.status !== 'completed' && (
+          {role === 'mentor' && session.status !== 'completed' && !actionsDisabled && (
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: '#10B981', marginLeft: 8 }]}
               onPress={() => onUpdateStatus('COMPLETED')}
@@ -221,12 +318,17 @@ function SessionCard({
               multiline
               numberOfLines={3}
             />
+            <TextInput
+              placeholder="Đánh giá (1-5)"
+              value={reviewRating}
+              onChangeText={setReviewRating}
+              keyboardType="numeric"
+            />
             <CustomButton
               label={TEXT.BOOKING.REVIEW_SUBMIT}
-              onPress={() => {
-                Alert.alert(TEXT.COMMON.SUCCESS, TEXT.BOOKING.REVIEW_SUCCESS);
-                setShowReview(false);
-              }}
+              onPress={handleSubmitReview}
+              loading={reviewSubmitting}
+              disabled={reviewSubmitting}
               style={{ marginTop: 8 }}
             />
           </View>
@@ -261,6 +363,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  refundBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.text.disabled,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  refundBadgeText: {
+    color: theme.colors.text.inverse,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  cancelBookingButton: {
+    marginTop: 16,
   },
   bold: { fontWeight: '700' },
   sessionCard: {

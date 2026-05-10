@@ -118,5 +118,33 @@ export const mockBookingApi = {
       }
     }
     throw new Error("Session not found");
+  },
+
+  cancelBooking: async (bookingId: string) => {
+    await delay(500);
+    const booking = mockBookingsDTO.find(x => x.id === bookingId);
+    if (!booking) throw new Error("Booking not found");
+
+    booking.status = 'CANCELED';
+    booking.sessions.forEach((session) => {
+      if (session.status !== 'COMPLETED') {
+        session.status = 'CANCELED';
+      }
+    });
+    return withApiResponse(null);
+  },
+
+  submitReview: async (bookingId: string, data: { rating: number; comment: string }) => {
+    await delay(500);
+    const booking = mockBookingsDTO.find(x => x.id === bookingId);
+    if (!booking) throw new Error("Booking not found");
+
+    const completedSession = booking.sessions.find((session) => session.status === 'COMPLETED');
+    if (completedSession) {
+      completedSession.reviewed = true;
+      completedSession.hasReviewed = true;
+    }
+
+    return withApiResponse({ id: `review-mock-${Date.now()}`, bookingId, ...data });
   }
 };

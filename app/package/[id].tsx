@@ -3,18 +3,17 @@ import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
 
 import { CustomButton } from '../../src/components/button/CustomButton';
 import { ErrorState } from '../../src/components/states/ErrorState';
 import { LoadingState } from '../../src/components/states/LoadingState';
+import { Avatar } from '../../src/components/ui/Avatar';
 import { Typography } from '../../src/components/typography/Typography';
 import { toPackage } from '../../src/core/adapters/mentorAdapter';
 import { TEXT } from '../../src/core/constants/strings';
 import { mentorService } from '../../src/core/services/mentorService';
-import { orderService } from '../../src/core/services/orderService';
 import { useAuthStore } from '../../src/core/store/authStore';
-import { MentorPackage, MentorPackageVersion } from '../../src/core/types';
+import { MentorPackage, MentorPackageVersion, User } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
 
 export default function PackageDetailScreen() {
@@ -23,10 +22,10 @@ export default function PackageDetailScreen() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const [pkg, setPkg] = useState<MentorPackage | null>(null);
+  const [mentor, setMentor] = useState<User | null>(null);
   const [selectedVer, setSelectedVer] = useState<MentorPackageVersion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const fetchPackage = useCallback(async () => {
     setLoading(true);
@@ -37,7 +36,10 @@ export default function PackageDetailScreen() {
         throw new Error(TEXT.PACKAGE_DETAIL.NOT_FOUND);
       }
 
-      const packages = await mentorService.getPackages(mentorId);
+      const [mentorData, packages] = await Promise.all([
+        mentorService.getProfile(mentorId),
+        mentorService.getPackages(mentorId),
+      ]);
       const found = packages.find((item) => String(item.id) === id);
 
       if (!found) {
@@ -45,6 +47,7 @@ export default function PackageDetailScreen() {
       }
 
       const uiPkg = toPackage(found);
+      setMentor(mentorData);
       setPkg(uiPkg);
       setSelectedVer(uiPkg.versions[0] ?? null);
     } catch (err: any) {
@@ -75,37 +78,28 @@ export default function PackageDetailScreen() {
       return;
     }
 
-    setCheckoutLoading(true);
-    try {
-      const order = await orderService.checkout(Number(selectedVer.id));
-      if (!order.paymentUrl) {
-        throw new Error(TEXT.PACKAGE_DETAIL.PAYMENT_URL_MISSING);
-      }
-
-      await WebBrowser.openBrowserAsync(order.paymentUrl);
-      const finalOrder = await orderService.pollUntilPaid(order.id);
-
-      if (finalOrder.status === 'paid') {
-        Alert.alert(
-          TEXT.PACKAGE_DETAIL.CHECKOUT_SUCCESS_TITLE,
-          TEXT.PACKAGE_DETAIL.CHECKOUT_SUCCESS_MESSAGE,
-          [
-            {
-              text: TEXT.PACKAGE_DETAIL.VIEW_BOOKINGS,
-              onPress: () => router.replace('/(tabs)/bookings'),
-            },
-          ],
-        );
-      }
-    } catch (err: any) {
-      Alert.alert(TEXT.PACKAGE_DETAIL.ERROR_TITLE, err?.message || TEXT.COMMON.ERROR);
-    } finally {
-      setCheckoutLoading(false);
-    }
+    router.push({
+      pathname: '/checkout/[versionId]',
+      params: {
+        versionId: selectedVer.id,
+        packageId: pkg?.id ?? id,
+        mentorId,
+      },
+    } as any);
   };
 
   if (loading) return <LoadingState />;
   if (error || !pkg) return <ErrorState error={error || TEXT.PACKAGE_DETAIL.NOT_FOUND} onRetry={fetchPackage} />;
+
+  const mentorInitials = (mentor?.name || 'Mentor')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+  const cancelPolicy =
+    (pkg as MentorPackage & { cancelPolicy?: string }).cancelPolicy ||
+    'Việc hủy lịch và hoàn tiền phụ thuộc vào xác nhận của mentor và chính sách nền tảng. Nếu giao dịch có vấn đề, vui lòng liên hệ hỗ trợ để được xử lý.';
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -120,6 +114,33 @@ export default function PackageDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {mentor && (
+          <View style={styles.mentorCard}>
+            <Avatar uri={mentor.avatar} initials={mentorInitials} size={56} />
+            <View style={styles.mentorInfo}>
+              <View style={styles.mentorNameRow}>
+                <Typography variant="bodyMedium" style={styles.mentorName}>
+                  {mentor.name || 'Mentor'}
+                </Typography>
+                {mentor.mentorInfo?.verificationStatus === 'verified' && (
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color={theme.colors.text.inverse} />
+                    <Typography variant="caption" style={styles.verifiedText}>
+                      Đã xác minh
+                    </Typography>
+                  </View>
+                )}
+              </View>
+              <View style={styles.ratingRow}>
+                <Ionicons name="star" size={16} color={theme.colors.warning} />
+                <Typography variant="caption" color="secondary" style={styles.ratingText}>
+                  {(mentor.mentorInfo?.rating ?? mentor.rating ?? 0).toFixed(1)}
+                </Typography>
+              </View>
+            </View>
+          </View>
+        )}
+
         <View style={styles.card}>
           <Typography variant="h2" style={styles.title}>
             {pkg.title}
@@ -183,6 +204,15 @@ export default function PackageDetailScreen() {
             ))}
           </>
         )}
+
+        <View style={styles.policyCard}>
+          <Typography variant="h3" style={styles.sectionTitle}>
+            Chính sách hủy & hoàn tiền
+          </Typography>
+          <Typography variant="body" color="secondary" style={styles.policyText}>
+            {cancelPolicy}
+          </Typography>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -197,7 +227,6 @@ export default function PackageDetailScreen() {
         <CustomButton
           label={TEXT.PACKAGE_DETAIL.PAY_NOW}
           onPress={handleCheckout}
-          loading={checkoutLoading}
           style={styles.checkoutButton}
         />
       </View>
@@ -221,6 +250,42 @@ const styles = StyleSheet.create({
   headerTitle: { fontWeight: '700' },
   headerSpacer: { width: 40 },
   scroll: { padding: 20 },
+  mentorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+  },
+  mentorInfo: { flex: 1, marginLeft: 12 },
+  mentorNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  mentorName: { fontWeight: '700', marginRight: 8 },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.info,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  verifiedText: {
+    color: theme.colors.text.inverse,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  ratingText: { marginLeft: 4 },
   card: {
     backgroundColor: theme.colors.surface,
     padding: 20,
@@ -269,6 +334,15 @@ const styles = StyleSheet.create({
   currContent: { flex: 1, paddingTop: 2 },
   curriculumTitle: { fontWeight: '700' },
   curriculumDescription: { marginTop: 4 },
+  policyCard: {
+    backgroundColor: theme.colors.surface,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+  },
+  policyText: { lineHeight: 22 },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',

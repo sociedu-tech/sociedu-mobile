@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import * as Linking from 'expo-linking';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuthStore } from '../src/core/store/authStore';
 import { theme } from '../src/theme/theme';
 
@@ -26,6 +28,14 @@ export default function RootLayout() {
   // ── Step 1: Hydrate từ AsyncStorage ──────────────────────
   useEffect(() => {
     hydrate().finally(() => setHydrated(true));
+  }, []);
+
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', () => {
+      WebBrowser.dismissBrowser();
+    });
+
+    return () => subscription.remove();
   }, []);
 
   // ── Step 2: Auth guard ───────────────────────────────────
@@ -59,6 +69,7 @@ export default function RootLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" />
+      <Stack.Screen name="payment-result" options={{ headerShown: false }} />
 
       {/* Stack screens cho detail / protected pages */}
       <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Hồ sơ' }} />

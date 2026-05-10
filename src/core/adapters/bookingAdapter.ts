@@ -21,8 +21,11 @@ import {
 function toBookingStatus(raw: string): BookingStatus {
   const map: Record<string, BookingStatus> = {
     ACTIVE: 'active',
+    SCHEDULED: 'scheduled',
     COMPLETED: 'completed',
+    CANCELED: 'cancelled',
     CANCELLED: 'cancelled',
+    REFUNDED: 'refunded',
   };
   return map[raw?.toUpperCase()] ?? 'active';
 }
@@ -30,9 +33,13 @@ function toBookingStatus(raw: string): BookingStatus {
 function toSessionStatus(raw: string): SessionStatus {
   const map: Record<string, SessionStatus> = {
     PENDING: 'pending',
+    SCHEDULED: 'scheduled',
     IN_PROGRESS: 'in_progress',
     COMPLETED: 'completed',
+    NO_SHOW: 'no_show',
+    CANCELED: 'cancelled',
     CANCELLED: 'cancelled',
+    REFUNDED: 'refunded',
   };
   return map[raw?.toUpperCase()] ?? 'pending';
 }
@@ -41,6 +48,7 @@ function toOrderStatus(raw: string): OrderStatus {
   const map: Record<string, OrderStatus> = {
     PENDING_PAYMENT: 'pending_payment',
     PAID: 'paid',
+    FAILED: 'failed',
     CANCELLED: 'cancelled',
     REFUNDED: 'refunded',
   };
@@ -68,6 +76,8 @@ function toSession(dto: BookingSessionResponseDTO): BookingSession {
     status: toSessionStatus(dto?.status),
     meetingUrl: dto?.meetingUrl ?? null,
     evidences: (dto?.evidences ?? []).map(toEvidence),
+    reviewed: dto?.reviewed,
+    hasReviewed: dto?.hasReviewed,
   };
 }
 
@@ -81,6 +91,8 @@ export function toBooking(dto: BookingResponseDTO): Booking {
     status: toBookingStatus(dto?.status),
     createdAt: dto?.createdAt ?? '',
     sessions: (dto?.sessions ?? []).map(toSession),
+    mentorName: dto?.mentorName,
+    packageName: dto?.packageName,
   };
 }
 

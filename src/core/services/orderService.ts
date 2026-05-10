@@ -33,7 +33,7 @@ export const orderService = {
     for (let attempt = 0; attempt < maxRetry; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       const order = await orderService.getById(orderId);
-      if (order.status === 'paid' || order.status === 'cancelled') {
+      if (order.status === 'paid' || order.status === 'failed' || order.status === 'cancelled') {
         return order;
       }
     }

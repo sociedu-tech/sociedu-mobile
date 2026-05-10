@@ -165,6 +165,8 @@ export interface BookingSessionResponseDTO {
   status: string;               // "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
   meetingUrl: string | null;
   evidences: EvidenceResponseDTO[];
+  reviewed?: boolean;
+  hasReviewed?: boolean;
 }
 
 export interface BookingResponseDTO {
@@ -176,6 +178,8 @@ export interface BookingResponseDTO {
   status: string;               // "ACTIVE" | "COMPLETED" | "CANCELLED"
   createdAt: string;
   sessions: BookingSessionResponseDTO[];
+  mentorName?: string;
+  packageName?: string;
 }
 
 // ── User ──────────────────────────────────────────────────────
@@ -296,9 +300,9 @@ export interface ProgressReportResponseDTO {
 // ─────────────────────────────────────────────────────────────
 
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
-export type BookingStatus = 'active' | 'completed' | 'cancelled';
-export type SessionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-export type OrderStatus = 'pending_payment' | 'paid' | 'cancelled' | 'refunded';
+export type BookingStatus = 'active' | 'scheduled' | 'completed' | 'cancelled' | 'refunded';
+export type SessionStatus = 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'no_show' | 'cancelled' | 'refunded';
+export type OrderStatus = 'pending_payment' | 'paid' | 'failed' | 'cancelled' | 'refunded';
 export type UserRole = 'user' | 'mentor' | 'admin';
 
 export interface MentorPackage {
@@ -406,6 +410,8 @@ export interface BookingSession {
   status: SessionStatus;
   meetingUrl: string | null;
   evidences: SessionEvidence[];
+  reviewed?: boolean;
+  hasReviewed?: boolean;
 }
 
 export interface Booking {
@@ -417,6 +423,8 @@ export interface Booking {
   status: BookingStatus;
   createdAt: string;
   sessions: BookingSession[];
+  mentorName?: string;
+  packageName?: string;
 }
 
 export interface Order {

@@ -87,4 +87,25 @@ export const bookingService = {
     );
     return unwrap(res);
   },
+
+  cancelBooking: async (bookingId: string): Promise<void> => {
+    if (USE_MOCK) {
+      await mockBookingApi.cancelBooking(bookingId);
+      return;
+    }
+
+    await api.post(`${BASE}/${bookingId}/cancel`);
+  },
+
+  submitReview: async (
+    bookingId: string,
+    data: { rating: number; comment: string },
+  ): Promise<void> => {
+    if (USE_MOCK) {
+      await mockBookingApi.submitReview(bookingId, data);
+      return;
+    }
+
+    await api.post(`${BASE}/${bookingId}/reviews`, data);
+  },
 };
