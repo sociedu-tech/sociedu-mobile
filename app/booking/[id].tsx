@@ -19,7 +19,7 @@ import { CustomButton } from '../../src/components/button/CustomButton';
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const role = useAuthStore((s) => s.userRole);
+  const role = useAuthStore((s) => s.activeMode);
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +86,34 @@ export default function BookingDetailScreen() {
               {booking.status.toUpperCase()}
             </Typography>
           </View>
+        </View>
+
+        <View style={styles.actionSection}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() =>
+              router.push({
+                pathname: '/report/form',
+                params: { targetType: 'booking', targetId: booking.id },
+              })
+            }
+          >
+            <Ionicons name="flag-outline" size={20} color={theme.colors.secondary} />
+            <Typography variant="caption" style={styles.actionBtnText}>Báo cáo</Typography>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() =>
+              router.push({
+                pathname: '/dispute/form',
+                params: { bookingId: booking.id },
+              })
+            }
+          >
+            <Ionicons name="alert-circle-outline" size={20} color={theme.colors.error} />
+            <Typography variant="caption" style={[styles.actionBtnText, { color: theme.colors.error }]}>Khiếu nại</Typography>
+          </TouchableOpacity>
         </View>
 
         <Typography variant="h3" style={{ marginVertical: 16 }}>
@@ -263,6 +291,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bold: { fontWeight: '700' },
+  actionSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+    marginHorizontal: 4,
+  },
+  actionBtnText: {
+    marginLeft: 8,
+    fontWeight: '600',
+    color: theme.colors.text.secondary,
+  },
   sessionCard: {
     backgroundColor: theme.colors.surface,
     padding: 16,

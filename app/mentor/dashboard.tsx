@@ -5,9 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ProtectedRoute } from '../../src/components/ProtectedRoute';
 import { ErrorState } from '../../src/components/states/ErrorState';
@@ -18,6 +20,10 @@ import { bookingService } from '../../src/core/services/bookingService';
 import { mentorService } from '../../src/core/services/mentorService';
 import { Booking, User } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
+import { Card } from '../../src/components/ui/Card';
+import { ListItem } from '../../src/components/ui/ListItem';
+
+const { width } = Dimensions.get('window');
 
 type DashboardData = {
   bookings: Booking[];
@@ -39,7 +45,6 @@ function MentorDashboardContent() {
     } else {
       setLoading(true);
     }
-
     setError(null);
 
     try {
@@ -53,15 +58,13 @@ function MentorDashboardContent() {
       const services = servicesResult.status === 'fulfilled' ? servicesResult.value : [];
       const mentorProfile = profileResult.status === 'fulfilled' ? profileResult.value : null;
 
-      // Chỉ báo lỗi toàn màn hình nếu cả 3 API đều fail
       const allFailed =
         bookingsResult.status === 'rejected' &&
         servicesResult.status === 'rejected' &&
         profileResult.status === 'rejected';
 
       if (allFailed) {
-        const firstError = bookingsResult.status === 'rejected' ? bookingsResult.reason : null;
-        throw firstError || new Error(TEXT.MENTOR_DASHBOARD.LOAD_ERROR);
+        throw new Error(TEXT.MENTOR_DASHBOARD.LOAD_ERROR);
       }
 
       setData({
@@ -84,10 +87,12 @@ function MentorDashboardContent() {
 
   const stats = useMemo(() => {
     const bookings = data?.bookings ?? [];
-    const activeBookings = bookings.filter((booking) => booking.status === 'active').length;
+    const activeBookings = bookings.filter((booking) =>
+      ['active', 'pending', 'confirmed'].includes(booking.status)
+    ).length;
     const now = Date.now();
     const upcomingSessions = bookings
-      .filter((booking) => booking.status === 'active')
+      .filter((booking) => ['active', 'pending', 'confirmed'].includes(booking.status))
       .flatMap((booking) => booking.sessions)
       .filter((session) => {
         if (!session.scheduledAt) return false;
@@ -104,139 +109,125 @@ function MentorDashboardContent() {
     };
   }, [data]);
 
-  if (loading) {
-    return <LoadingState message={TEXT.MENTOR_DASHBOARD.LOADING} />;
-  }
-
-  if (error || !data) {
-    return <ErrorState error={error || TEXT.MENTOR_DASHBOARD.LOAD_ERROR} onRetry={() => loadDashboard()} />;
-  }
+  if (loading) return <LoadingState message={TEXT.MENTOR_DASHBOARD.LOADING} />;
+  if (error || !data) return <ErrorState error={error || TEXT.MENTOR_DASHBOARD.LOAD_ERROR} onRetry={() => loadDashboard()} />;
 
   const statCards = [
     {
-      icon: 'calendar-outline' as const,
-      label: TEXT.MENTOR_DASHBOARD.ACTIVE_BOOKINGS,
+      icon: 'calendar' as const,
+      label: 'Lịch đặt',
       value: String(stats.activeBookings),
       color: theme.colors.primary,
-      backgroundColor: '#EEF2FF',
+      bg: theme.colors.primarySoft,
     },
     {
-      icon: 'time-outline' as const,
-      label: TEXT.MENTOR_DASHBOARD.UPCOMING_SESSIONS,
+      icon: 'time' as const,
+      label: 'Sắp tới',
       value: String(stats.upcomingSessions),
       color: theme.colors.info,
-      backgroundColor: '#EFF6FF',
+      bg: '#EFF6FF',
     },
     {
-      icon: 'briefcase-outline' as const,
-      label: TEXT.MENTOR_DASHBOARD.ACTIVE_SERVICES,
+      icon: 'briefcase' as const,
+      label: 'Dịch vụ',
       value: String(stats.activeServicesCount),
       color: theme.colors.success,
-      backgroundColor: '#ECFDF5',
+      bg: '#ECFDF5',
     },
     {
-      icon: 'star-outline' as const,
-      label: TEXT.MENTOR_DASHBOARD.AVERAGE_RATING,
-      value:
-        stats.ratingValue > 0
-          ? stats.ratingValue.toFixed(1)
-          : TEXT.MENTOR_DASHBOARD.EMPTY_RATING,
+      icon: 'star' as const,
+      label: 'Đánh giá',
+      value: stats.ratingValue > 0 ? stats.ratingValue.toFixed(1) : 'N/A',
       color: theme.colors.warning,
-      backgroundColor: '#FFFBEB',
+      bg: '#FFFBEB',
     },
   ];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => loadDashboard(true)}
-          tintColor={theme.colors.primary}
-        />
-      }
-    >
-      <View style={styles.heroCard}>
-        <View style={styles.heroIcon}>
-          <Ionicons name="school-outline" size={28} color={theme.colors.primary} />
-        </View>
-        <Typography variant="h2" style={styles.heroTitle}>
-          {TEXT.MENTOR_DASHBOARD.TITLE}
-        </Typography>
-        <Typography variant="body" color="secondary" style={styles.heroSubtitle}>
-          {TEXT.MENTOR_DASHBOARD.SUBTITLE}
-        </Typography>
-      </View>
-
-      <View style={styles.statsGrid}>
-        {statCards.map((card) => (
-          <View key={card.label} style={styles.statCard}>
-            <View style={[styles.statIconBox, { backgroundColor: card.backgroundColor }]}>
-              <Ionicons name={card.icon} size={22} color={card.color} />
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={theme.colors.primary} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* DASHBOARD HERO */}
+        <LinearGradient
+          colors={[theme.colors.primary, theme.colors.primaryDark]}
+          style={styles.heroGradient}
+        >
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <View style={styles.heroContent}>
+            <View style={styles.heroIconBox}>
+              <Ionicons name="grid" size={24} color={theme.colors.primary} />
             </View>
-            <Typography variant="caption" color="secondary" style={styles.statLabel}>
-              {card.label}
+            <Typography variant="h2" style={{ color: '#FFF', fontWeight: '900' }}>
+              {TEXT.MENTOR_DASHBOARD.TITLE}
             </Typography>
-            <Typography variant="h3" style={styles.statValue}>
-              {card.value}
+            <Typography variant="body" style={{ color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>
+              {TEXT.MENTOR_DASHBOARD.SUBTITLE}
             </Typography>
           </View>
-        ))}
-      </View>
+        </LinearGradient>
 
-      <View style={styles.section}>
-        <Typography variant="bodyMedium" style={styles.sectionTitle}>
-          {TEXT.MENTOR_DASHBOARD.QUICK_LINKS}
-        </Typography>
-
-        <QuickLink
-          icon="briefcase-outline"
-          label={TEXT.MENTOR_DASHBOARD.GO_TO_SERVICES}
-          onPress={() => router.push('/mentor/services')}
-        />
-        <QuickLink
-          icon="calendar-outline"
-          label={TEXT.MENTOR_DASHBOARD.GO_TO_BOOKINGS}
-          onPress={() => router.push('/(tabs)/bookings')}
-        />
-        <QuickLink
-          icon="person-outline"
-          label={TEXT.MENTOR_DASHBOARD.GO_TO_PROFILE}
-          onPress={() => router.push('/mentor/profile-edit')}
-        />
-        <QuickLink
-          icon="document-text-outline"
-          label={TEXT.PROGRESS_REPORT.LIST_TITLE}
-          onPress={() => router.push('/mentor/progress-reports')}
-        />
-      </View>
-    </ScrollView>
-  );
-}
-
-function QuickLink({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity style={styles.quickLink} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.quickLinkLeft}>
-        <View style={styles.quickLinkIcon}>
-          <Ionicons name={icon} size={20} color={theme.colors.primary} />
+        {/* STATS GRID */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statsGrid}>
+            {statCards.map((card) => (
+              <Card key={card.label} variant="premium" style={styles.statCard}>
+                <View style={[styles.statIconBox, { backgroundColor: card.bg }]}>
+                  <Ionicons name={card.icon} size={20} color={card.color} />
+                </View>
+                <Typography variant="h2" style={{ fontWeight: '900', color: theme.colors.text.primary }}>{card.value}</Typography>
+                <Typography variant="caption" color="muted">{card.label}</Typography>
+              </Card>
+            ))}
+          </View>
         </View>
-        <Typography variant="bodyMedium" style={styles.quickLinkText}>
-          {label}
-        </Typography>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.secondary} />
-    </TouchableOpacity>
+
+        {/* QUICK LINKS SECTION */}
+        <View style={styles.section}>
+          <Typography variant="label" style={styles.sectionLabel}>Lối tắt quản lý</Typography>
+          <Card style={styles.listCard}>
+            <ListItem
+              iconName="cube"
+              title={TEXT.MENTOR_DASHBOARD.GO_TO_SERVICES}
+              subtitle="Cập nhật gói dịch vụ của bạn"
+              onPress={() => router.push('/mentor/services')}
+            />
+            <ListItem
+              iconName="calendar"
+              title={TEXT.MENTOR_DASHBOARD.GO_TO_BOOKINGS}
+              subtitle="Theo dõi các buổi hẹn sắp tới"
+              onPress={() => router.push('/(tabs)/bookings')}
+            />
+            <ListItem
+              iconName="document-text"
+              title={TEXT.PROGRESS_REPORT.LIST_TITLE}
+              subtitle="Báo cáo tiến độ học viên"
+              onPress={() => router.push('/mentor/progress-reports')}
+            />
+            <ListItem
+              iconName="settings"
+              title="Cấu hình Mentor"
+              subtitle="Thay đổi hồ sơ & chuyên môn"
+              onPress={() => router.push('/mentor/profile-edit')}
+            />
+          </Card>
+        </View>
+
+        {/* RECENT ACTIVITY PLACEHOLDER */}
+        <View style={styles.section}>
+          <Typography variant="label" style={styles.sectionLabel}>Thông báo mới nhất</Typography>
+          <Card style={{ padding: 20, alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+            <Ionicons name="notifications-off-outline" size={32} color={theme.colors.border.default} />
+            <Typography variant="caption" color="muted" style={{ marginTop: 8 }}>Chưa có thông báo mới nào</Typography>
+          </Card>
+        </View>
+
+      </ScrollView>
+    </View>
   );
 }
 
@@ -253,100 +244,70 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xxl,
+  scrollContent: {
+    paddingBottom: 60,
   },
-  heroCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    marginBottom: theme.spacing.lg,
+  heroGradient: {
+    paddingTop: 60,
+    paddingBottom: 80,
+    paddingHorizontal: theme.spacing.lg,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
-  heroIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: theme.colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
+  backBtn: {
+    width: 40, height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 20,
   },
-  heroTitle: {
-    fontWeight: '800',
-    marginBottom: theme.spacing.xs,
+  heroContent: {
+    alignItems: 'flex-start',
   },
-  heroSubtitle: {
-    lineHeight: 22,
+  heroIconBox: {
+    width: 48, height: 48,
+    borderRadius: 16,
+    backgroundColor: '#FFF',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 16,
+    ...theme.shadows.soft,
+  },
+  statsContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    marginTop: -40,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: theme.spacing.lg,
+    gap: 12,
   },
   statCard: {
-    width: '48%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    marginBottom: theme.spacing.md,
+    width: (width - 40 - 12) / 2,
+    padding: 16,
+    borderRadius: 24,
+    alignItems: 'center',
   },
   statIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  statLabel: {
-    minHeight: 32,
-    marginBottom: theme.spacing.xs,
-  },
-  statValue: {
-    fontWeight: '800',
+    width: 40, height: 40,
+    borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 10,
   },
   section: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
+    marginTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
   },
-  sectionTitle: {
-    fontWeight: '700',
-    marginBottom: theme.spacing.sm,
+  sectionLabel: {
+    textTransform: 'uppercase',
+    color: theme.colors.text.muted,
+    fontSize: 12,
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginLeft: 4,
   },
-  quickLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.default,
-  },
-  quickLinkLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: theme.spacing.md,
-  },
-  quickLinkIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: theme.colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: theme.spacing.sm,
-  },
-  quickLinkText: {
-    fontWeight: '600',
-    color: theme.colors.text.primary,
-  },
+  listCard: {
+    paddingVertical: 0,
+    borderRadius: 24,
+    overflow: 'hidden',
+  }
 });

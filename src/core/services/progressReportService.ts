@@ -13,12 +13,16 @@ import {
 
 export const progressReportService = {
   getMyReports: async (): Promise<ProgressReport[]> => {
-    const userRole = useAuthStore.getState().userRole;
+    const activeMode = useAuthStore.getState().activeMode;
     const response = USE_MOCK
-      ? await mockProgressReportApi.getMyReports(userRole)
+      ? await mockProgressReportApi.getMyReports(activeMode)
       : await api.get<{ data: ProgressReportResponseDTO[] }>(API_PATHS.progressReports.list);
 
     return toProgressReportList(unwrap(response));
+  },
+
+  getMenteeReports: async (): Promise<ProgressReport[]> => {
+    return progressReportService.getMyReports();
   },
 
   getReportById: async (id: string): Promise<ProgressReport> => {

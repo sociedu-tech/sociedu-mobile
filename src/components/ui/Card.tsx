@@ -6,16 +6,18 @@ import { getCardStyle } from './cardResponsive';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
+  variant?: 'default' | 'premium';
   style?: any;
 }
 
-export const Card = ({ children, style, ...rest }: CardProps) => {
+export const Card = ({ children, variant = 'default', style, ...rest }: CardProps) => {
   const breakpoint = useBreakpoint();
   const responsiveStyle = getCardStyle(breakpoint);
   return (
     <View
       style={[
         styles.card,
+        variant === 'premium' ? theme.shadows.premium : theme.shadows.soft,
         responsiveStyle,
         responsiveStyle.maxWidth !== '100%' ? { alignSelf: 'center', width: '100%', maxWidth: responsiveStyle.maxWidth } : {},
         style,
@@ -30,8 +32,8 @@ export const Card = ({ children, style, ...rest }: CardProps) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.surface,
-    ...theme.shadows.soft,
     borderWidth: 1,
-    borderColor: theme.colors.border.default,
+    borderColor: theme.colors.border.light,
+    borderRadius: theme.borderRadius.lg,
   },
 });

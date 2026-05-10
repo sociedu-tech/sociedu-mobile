@@ -160,6 +160,17 @@ export default function ConversationDetailScreen() {
             </Typography>
           </View>
         </View>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: '/report/form',
+              params: { targetType: 'user', targetId: conversation.peer?.id || '' },
+            })
+          }
+          style={styles.iconButton}
+        >
+          <Ionicons name="flag-outline" size={22} color={theme.colors.secondary} />
+        </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>

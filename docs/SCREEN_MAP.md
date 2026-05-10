@@ -31,10 +31,7 @@ Tai lieu nay map module nghiep vu voi route/man hinh hien co trong `app/`, giup 
 | Module | Route hien co | Ghi chu |
 | --- | --- | --- |
 | Home | `app/(tabs)/index.tsx` | Trang tong quan trong tab |
-| Explore | `app/(tabs)/explore.tsx` | Discovery layer |
-| Marketplace listing | `app/(tabs)/marketplace/index.tsx` | Listing mentor/package theo huong marketplace |
-| Marketplace detail | `app/(tabs)/marketplace/[id].tsx` | Detail trong nested marketplace flow |
-| Mentor listing tab | `app/(tabs)/mentor.tsx` | Co the trung lap muc dich voi marketplace listing |
+| Mentor listing tab | `app/(tabs)/mentor.tsx` | Danh sach mentor + search/filter |
 | Mentor detail | `app/mentor/[id].tsx` | Chi tiet mentor cap route rieng |
 | Package detail | `app/package/[id].tsx` | Detail cho package/package version |
 | Bookings list | `app/(tabs)/bookings.tsx` | Danh sach booking cua user |
@@ -52,6 +49,8 @@ Tai lieu nay map module nghiep vu voi route/man hinh hien co trong `app/`, giup 
 | Mentor dashboard | `app/mentor/dashboard.tsx` | Skeleton/working area cho mentor |
 | Mentor services list | `app/mentor/services/index.tsx` | Quan ly package cua mentor |
 | Mentor service form | `app/mentor/services/form.tsx` | Tao/sua dich vu |
+| Mentor progress reports | `app/mentor/progress-reports/index.tsx` | Danh sach bao cao tien do |
+| Mentor progress report detail | `app/mentor/progress-reports/[id].tsx` | Chi tiet + feedback |
 
 ### 4. Admin flows
 
@@ -67,14 +66,11 @@ Tai lieu nay map module nghiep vu voi route/man hinh hien co trong `app/`, giup 
 | Root layout | `app/_layout.tsx` | Root navigator va global wrapper |
 | Auth layout | `app/(auth)/_layout.tsx` | Auth route grouping |
 | Tabs layout | `app/(tabs)/_layout.tsx` | Bottom tab setup |
-| Marketplace layout | `app/(tabs)/marketplace/_layout.tsx` | Nested flow cho marketplace |
-| Modal | `app/modal.tsx` | Utility modal route |
-| UI playground | `app/ui-playground.tsx` | Playground/noi thu nghiem UI |
 
 ### 6. Nhan xet tong hop
 
 - Route map hien tai bao phu nhieu phan cua product vision: auth, discovery, mentor, package, booking, messages, profile, admin.
-- Co dau hieu ton tai dong thoi nhieu entry cho discovery (`mentor`, `explore`, `marketplace`), can su dung docs khac de lam ro vai tro tung route.
+- Co dau hieu ton tai nhieu entry cho discovery (home/index va `mentor`), can tiep tuc doi chieu voi scope san pham de tranh trung lap UX.
 - Chua thay route ro rang cho report/dispute, progress report, payment result, notification center.
 
 ## Open questions / Known gaps

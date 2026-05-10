@@ -18,7 +18,11 @@ import { MentorPackage, MentorPackageVersion } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
 
 export default function PackageDetailScreen() {
-  const { id, mentorId } = useLocalSearchParams<{ id: string; mentorId: string }>();
+  const { id, mentorId, versionId } = useLocalSearchParams<{
+    id: string;
+    mentorId: string;
+    versionId?: string;
+  }>();
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
@@ -46,20 +50,26 @@ export default function PackageDetailScreen() {
 
       const uiPkg = toPackage(found);
       setPkg(uiPkg);
-      setSelectedVer(uiPkg.versions[0] ?? null);
+
+      // Ưu tiên chọn version từ params, nếu không thì chọn bản mặc định hoặc bản đầu tiên
+      let initialVer = uiPkg.versions.find((v) => String(v.id) === versionId);
+      if (!initialVer) {
+        initialVer = uiPkg.versions.find((v) => v.isDefault) || uiPkg.versions[0];
+      }
+      setSelectedVer(initialVer ?? null);
     } catch (err: any) {
       setError(err?.message || TEXT.PACKAGE_DETAIL.NOT_FOUND);
     } finally {
       setLoading(false);
     }
-  }, [id, mentorId]);
+  }, [id, mentorId, versionId]);
 
   useEffect(() => {
     void fetchPackage();
   }, [fetchPackage]);
 
-  const handleCheckout = async () => {
-    if (!selectedVer) return;
+  const handleCheckout = () => {
+    if (!selectedVer || !pkg) return;
 
     if (!isAuthenticated) {
       Alert.alert(TEXT.PACKAGE_DETAIL.ERROR_TITLE, TEXT.PACKAGE_DETAIL.LOGIN_REQUIRED, [
@@ -75,40 +85,23 @@ export default function PackageDetailScreen() {
       return;
     }
 
-    setCheckoutLoading(true);
-    try {
-      const order = await orderService.checkout(Number(selectedVer.id));
-      if (!order.paymentUrl) {
-        throw new Error(TEXT.PACKAGE_DETAIL.PAYMENT_URL_MISSING);
-      }
-
-      await WebBrowser.openBrowserAsync(order.paymentUrl);
-      const finalOrder = await orderService.pollUntilPaid(order.id);
-
-      if (finalOrder.status === 'paid') {
-        Alert.alert(
-          TEXT.PACKAGE_DETAIL.CHECKOUT_SUCCESS_TITLE,
-          TEXT.PACKAGE_DETAIL.CHECKOUT_SUCCESS_MESSAGE,
-          [
-            {
-              text: TEXT.PACKAGE_DETAIL.VIEW_BOOKINGS,
-              onPress: () => router.replace('/(tabs)/bookings'),
-            },
-          ],
-        );
-      }
-    } catch (err: any) {
-      Alert.alert(TEXT.PACKAGE_DETAIL.ERROR_TITLE, err?.message || TEXT.COMMON.ERROR);
-    } finally {
-      setCheckoutLoading(false);
-    }
+    router.push({
+      pathname: '/checkout',
+      params: {
+        packageId: pkg.id,
+        versionId: selectedVer.id,
+        mentorId: mentorId,
+      },
+    });
   };
 
   if (loading) return <LoadingState />;
-  if (error || !pkg) return <ErrorState error={error || TEXT.PACKAGE_DETAIL.NOT_FOUND} onRetry={fetchPackage} />;
+  if (error || !pkg)
+    return <ErrorState error={error || TEXT.PACKAGE_DETAIL.NOT_FOUND} onRetry={fetchPackage} />;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
@@ -119,8 +112,14 @@ export default function PackageDetailScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.card}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* PACKAGE INFO */}
+        <View style={styles.packageCard}>
+          <View style={styles.categoryBadge}>
+            <Typography variant="caption" style={styles.categoryText}>
+              GÓI DỊCH VỤ
+            </Typography>
+          </View>
           <Typography variant="h2" style={styles.title}>
             {pkg.title}
           </Typography>
@@ -129,70 +128,120 @@ export default function PackageDetailScreen() {
           </Typography>
         </View>
 
-        <Typography variant="h3" style={styles.sectionTitle}>
-          {TEXT.PACKAGE_DETAIL.DURATION_TITLE}
-        </Typography>
+        {/* VERSION SELECTION */}
+        <View style={styles.sectionHeader}>
+          <Typography variant="h3" style={styles.sectionTitle}>
+            {TEXT.PACKAGE_DETAIL.DURATION_TITLE}
+          </Typography>
+          <Typography variant="caption" color="secondary">
+            {pkg.versions.length} lựa chọn
+          </Typography>
+        </View>
+
         <View style={styles.versionContainer}>
           {pkg.versions.map((ver) => {
             const isSelected = selectedVer?.id === ver.id;
             return (
               <TouchableOpacity
                 key={ver.id}
+                activeOpacity={0.8}
                 style={[styles.verCard, isSelected && styles.verCardSelected]}
                 onPress={() => setSelectedVer(ver)}
               >
-                <View style={[styles.radio, isSelected && styles.radioSelected]}>
-                  {isSelected && <View style={styles.radioInner} />}
+                <View style={styles.verCardMain}>
+                  <View style={[styles.radio, isSelected && styles.radioSelected]}>
+                    {isSelected && <View style={styles.radioInner} />}
+                  </View>
+                  <View style={styles.versionContent}>
+                    <Typography
+                      variant="bodyMedium"
+                      style={[styles.versionDuration, isSelected && { color: theme.colors.primary }]}
+                    >
+                      {ver.duration} phút mentoring
+                    </Typography>
+                    <Typography variant="caption" color="secondary">
+                      Hình thức: {ver.deliveryType}
+                    </Typography>
+                  </View>
+                  <View style={styles.priceContainer}>
+                    <Typography variant="h3" style={styles.priceText}>
+                      ${ver.price}
+                    </Typography>
+                  </View>
                 </View>
-                <View style={styles.versionContent}>
-                  <Typography variant="bodyMedium" style={styles.versionDuration}>
-                    {ver.duration} phút
-                  </Typography>
-                  <Typography variant="caption" color="secondary">
-                    {ver.deliveryType}
-                  </Typography>
-                </View>
-                <Typography variant="h3" style={styles.priceText}>
-                  ${ver.price}
-                </Typography>
+                {ver.isDefault && (
+                  <View style={styles.defaultBadge}>
+                    <Typography variant="caption" style={styles.defaultBadgeText}>
+                      PHỔ BIẾN NHẤT
+                    </Typography>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
         </View>
 
+        {/* CURRICULUM TIMELINE */}
         {selectedVer && (
-          <>
-            <Typography variant="h3" style={styles.sectionTitle}>
+          <View style={styles.curriculumSection}>
+            <Typography variant="h3" style={[styles.sectionTitle, { marginBottom: 20 }]}>
               {TEXT.PACKAGE_DETAIL.CURRICULUM_TITLE}
             </Typography>
-            {selectedVer.curriculums.map((curriculum, index) => (
-              <View key={curriculum.id} style={styles.curriculumItem}>
-                <View style={styles.timeline}>
-                  <View style={styles.dot} />
-                  {index < selectedVer.curriculums.length - 1 && <View style={styles.line} />}
-                </View>
-                <View style={styles.currContent}>
-                  <Typography variant="bodyMedium" style={styles.curriculumTitle}>
-                    {curriculum.title}
+            <View style={styles.timelineContainer}>
+              {selectedVer.curriculums.length > 0 ? (
+                selectedVer.curriculums.map((curriculum, index) => (
+                  <View key={curriculum.id} style={styles.curriculumItem}>
+                    <View style={styles.timeline}>
+                      <View style={styles.dotContainer}>
+                        <View style={styles.dot} />
+                      </View>
+                      {index < selectedVer.curriculums.length - 1 && <View style={styles.line} />}
+                    </View>
+                    <View style={styles.currContent}>
+                      <Typography variant="bodyMedium" style={styles.curriculumTitle}>
+                        Buổi {index + 1}: {curriculum.title}
+                      </Typography>
+                      <Typography variant="caption" color="secondary" style={styles.curriculumDescription}>
+                        {curriculum.description || TEXT.PACKAGE_DETAIL.CURRICULUM_FALLBACK}
+                      </Typography>
+                      {curriculum.duration > 0 && (
+                        <View style={styles.currDurationBadge}>
+                          <Ionicons name="time-outline" size={12} color={theme.colors.text.secondary} />
+                          <Typography variant="caption" color="secondary" style={{ marginLeft: 4 }}>
+                            {curriculum.duration} phút
+                          </Typography>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyCurriculum}>
+                  <Ionicons name="information-circle-outline" size={24} color={theme.colors.text.disabled} />
+                  <Typography variant="body" color="secondary" style={{ marginTop: 8 }}>
+                    {TEXT.PACKAGE_DETAIL.CURRICULUM_FALLBACK}
                   </Typography>
-                  <Typography variant="caption" color="secondary" style={styles.curriculumDescription}>
-                    {curriculum.description || TEXT.PACKAGE_DETAIL.CURRICULUM_FALLBACK}
-                  </Typography>
                 </View>
-              </View>
-            ))}
-          </>
+              )}
+            </View>
+          </View>
         )}
       </ScrollView>
 
+      {/* STICKY FOOTER */}
       <View style={styles.footer}>
         <View style={styles.totalBox}>
           <Typography variant="caption" color="secondary">
             {TEXT.PACKAGE_DETAIL.TOTAL_LABEL}
           </Typography>
-          <Typography variant="h2" style={styles.totalPrice}>
-            ${selectedVer?.price || 0}
-          </Typography>
+          <View style={styles.priceRow}>
+            <Typography variant="h2" style={styles.totalPrice}>
+              ${selectedVer?.price || 0}
+            </Typography>
+            <Typography variant="caption" color="secondary" style={{ marginLeft: 4, marginBottom: 4 }}>
+              / gói
+            </Typography>
+          </View>
         </View>
         <CustomButton
           label={TEXT.PACKAGE_DETAIL.PAY_NOW}
@@ -220,64 +269,156 @@ const styles = StyleSheet.create({
   backBtn: { padding: 8, marginLeft: -8 },
   headerTitle: { fontWeight: '700' },
   headerSpacer: { width: 40 },
-  scroll: { padding: 20 },
-  card: {
+  scroll: { padding: 20, paddingBottom: 40 },
+  packageCard: {
     backgroundColor: theme.colors.surface,
-    padding: 20,
-    borderRadius: 20,
+    padding: 24,
+    borderRadius: 24,
     marginBottom: 24,
     borderWidth: 1,
     borderColor: theme.colors.border.default,
+    // Premium shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 2,
   },
-  title: { fontWeight: '800', marginBottom: 12 },
-  desc: { lineHeight: 22 },
-  sectionTitle: { marginBottom: 16, fontWeight: '700' },
-  versionContainer: { marginBottom: 24 },
-  verCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
+  categoryBadge: {
+    backgroundColor: theme.colors.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
     marginBottom: 12,
+  },
+  categoryText: {
+    color: theme.colors.primary,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  title: { fontWeight: '800', marginBottom: 12, lineHeight: 32 },
+  desc: { lineHeight: 24, fontSize: 15 },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  sectionTitle: { fontWeight: '800', color: theme.colors.text.primary },
+  versionContainer: { marginBottom: 32 },
+  verCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: theme.colors.border.default,
+    marginBottom: 16,
+    overflow: 'hidden',
   },
   verCardSelected: {
     borderColor: theme.colors.primary,
-    backgroundColor: `${theme.colors.primaryLight}10`,
+    backgroundColor: `${theme.colors.primaryLight}15`,
+  },
+  verCardMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
   },
   radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: theme.colors.border.default,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   radioSelected: { borderColor: theme.colors.primary },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.primary },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: theme.colors.primary },
   versionContent: { flex: 1 },
-  versionDuration: { fontWeight: '700' },
-  priceText: { color: theme.colors.primary },
-  curriculumItem: { flexDirection: 'row', marginBottom: 20 },
-  timeline: { alignItems: 'center', width: 20, marginRight: 12 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.primary, marginTop: 6 },
-  line: { width: 2, flex: 1, backgroundColor: theme.colors.border.default, marginVertical: 4 },
-  currContent: { flex: 1, paddingTop: 2 },
-  curriculumTitle: { fontWeight: '700' },
-  curriculumDescription: { marginTop: 4 },
+  versionDuration: { fontWeight: '700', fontSize: 16, marginBottom: 2 },
+  priceContainer: { alignItems: 'flex-end' },
+  priceText: { color: theme.colors.primary, fontWeight: '800' },
+  defaultBadge: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    borderBottomLeftRadius: 12,
+  },
+  defaultBadgeText: { color: '#FFF', fontWeight: '800', fontSize: 9 },
+  curriculumSection: {
+    marginBottom: 40,
+  },
+  timelineContainer: {
+    paddingLeft: 4,
+  },
+  curriculumItem: { flexDirection: 'row', minHeight: 80 },
+  timeline: { alignItems: 'center', width: 24, marginRight: 16 },
+  dotContainer: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
+    borderWidth: 3,
+    borderColor: theme.colors.primaryLight,
+  },
+  line: {
+    width: 2,
+    flex: 1,
+    backgroundColor: theme.colors.border.default,
+    marginVertical: 4,
+  },
+  currContent: { flex: 1, paddingBottom: 24 },
+  curriculumTitle: { fontWeight: '700', fontSize: 16, color: theme.colors.text.primary },
+  curriculumDescription: { marginTop: 6, lineHeight: 20, fontSize: 14 },
+  currDurationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+  },
+  emptyCurriculum: {
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+  },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
+    // Shadow for sticky footer
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 10,
   },
   totalBox: { flex: 1 },
-  totalPrice: { color: theme.colors.primary },
-  checkoutButton: { flex: 1.5 },
+  priceRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  totalPrice: { color: theme.colors.primary, fontWeight: '800' },
+  checkoutButton: { flex: 1.5, height: 56, borderRadius: 16 },
 });

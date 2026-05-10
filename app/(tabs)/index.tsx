@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { View, ScrollView, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, Animated, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Typography } from '../../src/components/typography/Typography';
 import { CustomButton } from '../../src/components/button/CustomButton';
 import { theme } from '../../src/theme/theme';
@@ -11,61 +12,63 @@ import { Section } from '../../src/components/ui/Section';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { useBookingStore } from '../../src/core/store/bookingStore';
 
+const { width } = Dimensions.get('window');
+
 // ═══════════════════════════════════════════════════════════════
 //  DỮ LIỆU TĨNH
 // ═══════════════════════════════════════════════════════════════
 const HIGHLIGHTS = [
   {
-    icon: 'people-outline' as const,
+    icon: 'people' as const,
     title: 'Mentor chất lượng',
     desc: 'Kết nối với sinh viên xuất sắc và chuyên gia trong ngành.',
     color: theme.colors.primary,
-    bg: theme.colors.primaryLight,
+    bg: theme.colors.primarySoft,
   },
   {
-    icon: 'chatbubbles-outline' as const,
+    icon: 'chatbubbles' as const,
     title: 'Tư vấn 1-1',
     desc: 'Đặt lịch hẹn và nhận tư vấn trực tiếp với mentor.',
     color: theme.colors.success,
-    bg: '#D1FAE5',
+    bg: '#ECFDF5',
   },
   {
-    icon: 'shield-checkmark-outline' as const,
+    icon: 'shield-checkmark' as const,
     title: 'Đã xác minh',
     desc: 'Mọi mentor đều được hệ thống xác minh năng lực.',
     color: theme.colors.info,
-    bg: '#DBEAFE',
+    bg: '#EFF6FF',
   },
 ];
 
 const MENTOR_QUICK_ACTIONS = [
   {
-    icon: 'calendar-outline' as const,
+    icon: 'calendar' as const,
     label: 'Lịch hẹn',
     route: '/(tabs)/bookings',
     color: theme.colors.primary,
-    bg: theme.colors.primaryLight,
+    bg: theme.colors.primarySoft,
   },
   {
-    icon: 'chatbubbles-outline' as const,
+    icon: 'chatbubbles' as const,
     label: 'Tin nhắn',
     route: '/(tabs)/messages',
     color: theme.colors.success,
-    bg: '#D1FAE5',
+    bg: '#ECFDF5',
   },
   {
-    icon: 'person-outline' as const,
+    icon: 'person' as const,
     label: 'Hồ sơ',
     route: '/(tabs)/profile',
     color: theme.colors.info,
-    bg: '#DBEAFE',
+    bg: '#EFF6FF',
   },
   {
-    icon: 'cube-outline' as const,
+    icon: 'cube' as const,
     label: 'Dịch vụ',
     route: '/mentor/services',
     color: theme.colors.warning,
-    bg: '#FEF3C7',
+    bg: '#FFFBEB',
   },
 ];
 
@@ -75,83 +78,98 @@ const MENTOR_QUICK_ACTIONS = [
 function BuyerHome() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(24)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
     ]).start();
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xl }} showsVerticalScrollIndicator={false}>
-        {/* HERO */}
-        <Section>
-          <Animated.View style={{ alignItems: 'center', paddingTop: 24, paddingBottom: 28, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-            <View style={styles.heroIcon}>
-              <Ionicons name="school" size={36} color={theme.colors.primary} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+      <ScrollView contentContainerStyle={{ paddingBottom: theme.spacing.xxl }} showsVerticalScrollIndicator={false}>
+        {/* HERO SECTION WITH GRADIENT BACKGROUND */}
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
+          <LinearGradient
+            colors={['#EEF2FF', '#FFFFFF']}
+            style={styles.heroContainer}
+          >
+            <View style={styles.heroContent}>
+              <View style={styles.heroIconBadge}>
+                <Ionicons name="school" size={32} color={theme.colors.primary} />
+              </View>
+              <Typography variant="h1" align="center" style={styles.heroTitle}>
+                {'Nâng tầm kiến thức\ncùng '}
+                <Typography variant="h1" style={{ color: theme.colors.primary, fontWeight: '900' }}>UniShare</Typography>
+              </Typography>
+              <Typography variant="body" color="secondary" align="center" style={styles.heroSubtitle}>
+                {'Kết nối trực tiếp với các Mentor hàng đầu để bứt phá giới hạn bản thân.'}
+              </Typography>
+              <CustomButton
+                label="Khám phá ngay"
+                variant="gradient"
+                size="lg"
+                icon={<Ionicons name="rocket" size={20} color="#FFF" />}
+                onPress={() => router.push('/(tabs)/mentor' as any)}
+                style={styles.heroButton}
+              />
             </View>
-            <Typography variant="h1" align="center">
-              {'Tìm kiếm '}
-              <Typography variant="h1" style={{ color: theme.colors.primary, fontWeight: '900' }}>Mentor</Typography>
-              {'\nhoàn hảo cho bạn'}
-            </Typography>
-            <Typography variant="body" color="secondary" align="center" style={{ marginTop: theme.spacing.md }}>
-              {'Kết nối với những người đi trước giàu kinh nghiệm để nhận được lời khuyên, định hướng và học hỏi.'}
-            </Typography>
-            <CustomButton
-              label="Khám phá Mentor"
-              variant="primary"
-              size="lg"
-              icon={<Ionicons name="arrow-forward" size={18} color="#FFF" />}
-              onPress={() => router.push('/(tabs)/mentor' as any)}
-              style={styles.heroButton}
-            />
-          </Animated.View>
-        </Section>
+          </LinearGradient>
+        </Animated.View>
 
-        {/* HIGHLIGHTS */}
-        <Section>
-          <Typography variant="h3" align="center" style={styles.sectionTitle}>
-            {'Tại sao chọn UniShare?'}
-          </Typography>
-          {HIGHLIGHTS.map((item) => (
-            <Card key={item.title} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.md }}>
-              <View style={[styles.highlightIcon, { backgroundColor: item.bg }]}>
-                <Ionicons name={item.icon} size={22} color={item.color} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.text.primary, marginBottom: 2 }}>
-                  {item.title}
-                </Typography>
-                <Typography variant="caption" color="secondary">{item.desc}</Typography>
-              </View>
-            </Card>
-          ))}
-        </Section>
-
-        {/* STATS */}
-        <Section>
-          <Card>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ alignItems: 'center', flex: 1 }}>
-                <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>{'500+'}</Typography>
-                <Typography variant="caption" color="secondary">{'Mentor'}</Typography>
+        {/* STATS SECTION */}
+        <Section style={{ marginTop: -40 }}>
+          <Card variant="premium" style={styles.statsCard}>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Typography variant="h3" style={styles.statValue}>{'500+'}</Typography>
+                <Typography variant="caption" color="muted" style={styles.statLabel}>{'Mentor'}</Typography>
               </View>
               <View style={styles.statDivider} />
-              <View style={{ alignItems: 'center', flex: 1 }}>
-                <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>{'2K+'}</Typography>
-                <Typography variant="caption" color="secondary">{'Buổi học'}</Typography>
+              <View style={styles.statItem}>
+                <Typography variant="h3" style={styles.statValue}>{'2K+'}</Typography>
+                <Typography variant="caption" color="muted" style={styles.statLabel}>{'Buổi học'}</Typography>
               </View>
               <View style={styles.statDivider} />
-              <View style={{ alignItems: 'center', flex: 1 }}>
-                <Typography variant="h2" style={{ fontWeight: '800', color: theme.colors.primary, marginBottom: 2 }}>{'4.8'}</Typography>
-                <Typography variant="caption" color="secondary">{'Đánh giá'}</Typography>
+              <View style={styles.statItem}>
+                <Typography variant="h3" style={styles.statValue}>{'4.9'}</Typography>
+                <Typography variant="caption" color="muted" style={styles.statLabel}>{'Đánh giá'}</Typography>
               </View>
             </View>
           </Card>
+        </Section>
+
+        {/* HIGHLIGHTS */}
+        <Section style={{ marginTop: theme.spacing.lg }}>
+          <Typography variant="h3" style={styles.sectionTitle}>
+            {'Giá trị vượt trội'}
+          </Typography>
+          {HIGHLIGHTS.map((item, index) => (
+            <Animated.View 
+              key={item.title}
+              style={{ 
+                opacity: fadeAnim, 
+                transform: [{ translateY: slideAnim }]
+              }}
+            >
+              <Card style={styles.highlightCard}>
+                <View style={[styles.highlightIcon, { backgroundColor: item.bg }]}>
+                  <Ionicons name={item.icon} size={24} color={item.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Typography variant="bodyMedium" style={{ fontWeight: '700', marginBottom: 2 }}>
+                    {item.title}
+                  </Typography>
+                  <Typography variant="caption" color="secondary" style={{ lineHeight: 18 }}>{item.desc}</Typography>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={theme.colors.border.default} />
+              </Card>
+            </Animated.View>
+          ))}
         </Section>
       </ScrollView>
     </SafeAreaView>
@@ -168,89 +186,93 @@ function MentorHome() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
   }, []);
 
   const upcomingCount = bookings.filter((b) => ['active', 'pending', 'confirmed'].includes(b.status)).length;
   const completedCount = bookings.filter((b) => b.status === 'completed').length;
-  const displayName = user?.email?.split('@')[0] || 'Mentor';
+  const displayName = user?.fullName || user?.email?.split('@')[0] || 'Mentor';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
       <Animated.ScrollView
         style={{ opacity: fadeAnim }}
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* GREETING HEADER */}
-        <View style={styles.mentorHeader}>
+        {/* PREMIUM GREETING HEADER */}
+        <LinearGradient
+          colors={[theme.colors.text.primary, '#1E293B']}
+          style={styles.mentorHeader}
+        >
           <View style={styles.mentorHeaderContent}>
             <Typography variant="caption" style={styles.mentorGreetingLabel}>
-              {'Chào mừng trở lại 👋'}
+              {'Chào buổi sáng 👋'}
             </Typography>
             <Typography variant="h2" style={styles.mentorGreetingName}>
               {displayName}
             </Typography>
-            <Typography variant="body" style={styles.mentorGreetingSubtitle}>
-              {'Hôm nay bạn có ' + upcomingCount + ' lịch hẹn sắp tới'}
-            </Typography>
+            <View style={styles.mentorStatusBadge}>
+              <View style={styles.statusDot} />
+              <Typography variant="caption" style={{ color: '#A5B4FC', fontWeight: '700' }}>
+                {'SẴN SÀNG TƯ VẤN'}
+              </Typography>
+            </View>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(tabs)/profile' as any)}
-            style={styles.mentorAvatarBtn}
+            activeOpacity={0.8}
+            style={styles.mentorAvatarWrapper}
           >
             <View style={styles.mentorAvatarCircle}>
-              <Typography variant="h3" style={{ color: theme.colors.primary, fontWeight: '900' }}>
+              <Typography variant="h3" style={{ color: theme.colors.primary, fontWeight: '800' }}>
                 {displayName.charAt(0).toUpperCase()}
               </Typography>
             </View>
+            <View style={styles.avatarActiveIndicator} />
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
-        {/* STATS CARDS */}
-        <Section>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            {'Tổng quan'}
-          </Typography>
-          <View style={styles.statsRow}>
-            <Card style={[styles.statCard, { borderLeftColor: theme.colors.primary }]}>
-              <Typography variant="h2" style={[styles.statNumber, { color: theme.colors.primary }]}>
-                {String(upcomingCount)}
-              </Typography>
-              <Typography variant="caption" color="secondary">{'Sắp tới'}</Typography>
+        {/* OVERVIEW STATS */}
+        <Section style={{ marginTop: -30 }}>
+          <View style={styles.statsRowMentor}>
+            <Card variant="premium" style={[styles.statCardMentor, { borderTopColor: theme.colors.primary, borderTopWidth: 4 }]}>
+              <Typography variant="h2" style={{ color: theme.colors.primary, fontWeight: '900' }}>{upcomingCount}</Typography>
+              <Typography variant="caption" color="muted">{'Sắp tới'}</Typography>
             </Card>
-            <Card style={[styles.statCard, { borderLeftColor: theme.colors.success }]}>
-              <Typography variant="h2" style={[styles.statNumber, { color: theme.colors.success }]}>
-                {String(completedCount)}
-              </Typography>
-              <Typography variant="caption" color="secondary">{'Hoàn thành'}</Typography>
+            <Card variant="premium" style={[styles.statCardMentor, { borderTopColor: theme.colors.success, borderTopWidth: 4 }]}>
+              <Typography variant="h2" style={{ color: theme.colors.success, fontWeight: '900' }}>{completedCount}</Typography>
+              <Typography variant="caption" color="muted">{'Đã xong'}</Typography>
             </Card>
-            <Card style={[styles.statCard, { borderLeftColor: theme.colors.warning }]}>
-              <Typography variant="h2" style={[styles.statNumber, { color: theme.colors.warning }]}>
-                {'4.8'}
-              </Typography>
-              <Typography variant="caption" color="secondary">{'Đánh giá'}</Typography>
+            <Card variant="premium" style={[styles.statCardMentor, { borderTopColor: theme.colors.warning, borderTopWidth: 4 }]}>
+              <Typography variant="h2" style={{ color: theme.colors.warning, fontWeight: '900' }}>{'4.9'}</Typography>
+              <Typography variant="caption" color="muted">{'Rating'}</Typography>
             </Card>
           </View>
         </Section>
 
-        {/* QUICK ACTIONS */}
-        <Section>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            {'Thao tác nhanh'}
-          </Typography>
+        {/* QUICK ACTIONS GRID */}
+        <Section style={{ marginTop: theme.spacing.lg }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Typography variant="h3" style={{ fontWeight: '800' }}>
+              {'Thao tác nhanh'}
+            </Typography>
+            <TouchableOpacity onPress={() => router.push('/mentor/dashboard' as any)}>
+              <Typography variant="label" style={{ color: theme.colors.primary }}>{'Xem tất cả →'}</Typography>
+            </TouchableOpacity>
+          </View>
           <View style={styles.actionsGrid}>
             {MENTOR_QUICK_ACTIONS.map((action) => (
               <TouchableOpacity
                 key={action.label}
-                style={[styles.actionCard, { backgroundColor: action.bg }]}
-                activeOpacity={0.75}
+                style={styles.actionCard}
+                activeOpacity={0.7}
                 onPress={() => router.push(action.route as any)}
               >
-                <View style={[styles.actionIconBg, { backgroundColor: action.color + '22' }]}>
-                  <Ionicons name={action.icon} size={24} color={action.color} />
+                <View style={[styles.actionIconBg, { backgroundColor: action.bg }]}>
+                  <Ionicons name={action.icon} size={28} color={action.color} />
                 </View>
-                <Typography variant="label" style={[styles.actionLabel, { color: action.color }]}>
+                <Typography variant="label" style={{ color: theme.colors.text.primary, marginTop: 4 }}>
                   {action.label}
                 </Typography>
               </TouchableOpacity>
@@ -258,163 +280,189 @@ function MentorHome() {
           </View>
         </Section>
 
-        {/* TIP CARD */}
-        <Section>
-          <Card style={styles.tipCard}>
-            <View style={styles.tipHeader}>
-              <Ionicons name="bulb-outline" size={20} color={theme.colors.warning} />
-              <Typography variant="bodyMedium" style={styles.tipTitle}>
-                {'Mẹo hôm nay'}
-              </Typography>
-            </View>
-            <Typography variant="body" color="secondary">
-              {'Cập nhật hồ sơ thường xuyên giúp bạn xuất hiện cao hơn trong kết quả tìm kiếm và thu hút nhiều học viên hơn.'}
-            </Typography>
-            <TouchableOpacity onPress={() => router.push('/profile/edit' as any)} style={styles.tipAction}>
-              <Typography variant="label" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                {'Cập nhật hồ sơ →'}
-              </Typography>
-            </TouchableOpacity>
-          </Card>
-        </Section>
+
       </Animated.ScrollView>
     </SafeAreaView>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ROOT – Chọn màn hình theo role
-// ═══════════════════════════════════════════════════════════════
 export default function HomeScreen() {
-  const userRole = useAuthStore((s) => s.userRole);
-  return userRole === 'mentor' ? <MentorHome /> : <BuyerHome />;
+  const activeMode = useAuthStore((s) => s.activeMode);
+  return activeMode === 'mentor' ? <MentorHome /> : <BuyerHome />;
 }
 
 // ─── Styles ──────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  // Buyer
-  heroIcon: {
-    width: 72, height: 72,
-    borderRadius: theme.borderRadius.xl,
-    backgroundColor: theme.colors.primaryLight,
+  // Buyer Styles
+  heroContainer: {
+    paddingTop: 40,
+    paddingBottom: 80,
+    paddingHorizontal: theme.spacing.lg,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  heroContent: {
+    alignItems: 'center',
+  },
+  heroIconBadge: {
+    width: 64, height: 64,
+    borderRadius: 20,
+    backgroundColor: '#FFF',
     justifyContent: 'center', alignItems: 'center',
+    marginBottom: 20,
+    ...theme.shadows.soft,
+  },
+  heroTitle: {
+    marginBottom: 12,
+    color: theme.colors.text.primary,
+  },
+  heroSubtitle: {
+    maxWidth: '80%',
     marginBottom: 24,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15, shadowRadius: 14, elevation: 5,
+    lineHeight: 22,
   },
   heroButton: {
-    marginTop: theme.spacing.xl,
-    borderRadius: theme.borderRadius.full,
-    paddingHorizontal: theme.spacing.xl,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25, shadowRadius: 14, elevation: 6,
+    width: width * 0.6,
+    borderRadius: 30,
   },
-  sectionTitle: {
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+  statsCard: {
+    marginHorizontal: theme.spacing.lg,
+    paddingVertical: 20,
+    borderRadius: 24,
   },
-  highlightIcon: {
-    width: 44, height: 44,
-    borderRadius: theme.borderRadius.lg,
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
-  statDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: theme.colors.border.default,
-  },
-
-  // Mentor Header
-  mentorHeader: {
+  statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    color: theme.colors.primary,
+    fontWeight: '900',
+  },
+  statLabel: {
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  statDivider: {
+    width: 1, height: 30,
+    backgroundColor: theme.colors.border.light,
+  },
+  sectionTitle: {
+    marginBottom: 16,
+    marginLeft: 4,
+    fontWeight: '800',
+  },
+  highlightCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    padding: 16,
+    gap: 16,
+    borderRadius: 20,
+  },
+  highlightIcon: {
+    width: 48, height: 48,
+    borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center',
+  },
+
+  // Mentor Styles
+  mentorHeader: {
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: 20,
-    paddingBottom: 24,
-    backgroundColor: theme.colors.text.primary,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    marginBottom: 4,
+    paddingTop: 30,
+    paddingBottom: 60,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
   mentorHeaderContent: { flex: 1 },
-  mentorGreetingLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 4,
-    fontSize: 13,
+  mentorGreetingLabel: { color: 'rgba(255,255,255,0.6)', marginBottom: 4 },
+  mentorGreetingName: { color: '#FFF', fontWeight: '900', fontSize: 28, marginBottom: 8 },
+  mentorStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    gap: 6,
   },
-  mentorGreetingName: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  mentorGreetingSubtitle: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
-  },
-  mentorAvatarBtn: { marginLeft: 16 },
+  statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.success },
+  mentorAvatarWrapper: { position: 'relative' },
   mentorAvatarCircle: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: theme.colors.primaryLight,
+    width: 56, height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFF',
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 2, borderColor: theme.colors.primary,
   },
-
-  // Stats
-  statsRow: {
+  avatarActiveIndicator: {
+    position: 'absolute',
+    bottom: 2, right: 2,
+    width: 14, height: 14,
+    borderRadius: 7,
+    backgroundColor: theme.colors.success,
+    borderWidth: 2, borderColor: '#1E293B',
+  },
+  statsRowMentor: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    gap: 12,
   },
-  statCard: {
+  statCardMentor: {
     flex: 1,
-    borderLeftWidth: 3,
-    paddingVertical: 14,
     alignItems: 'center',
+    paddingVertical: 16,
+    borderRadius: 20,
   },
-  statNumber: {
-    fontWeight: '900',
-    marginBottom: 2,
-  },
-
-  // Quick Actions
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: 12,
+    paddingHorizontal: 4,
   },
   actionCard: {
-    width: '47%',
-    borderRadius: theme.borderRadius.lg,
-    padding: 16,
+    width: (width - 64) / 2,
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 20,
     alignItems: 'center',
-    gap: 10,
+    ...theme.shadows.soft,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
   },
   actionIconBg: {
-    width: 48, height: 48, borderRadius: 16,
+    width: 56, height: 56,
+    borderRadius: 18,
     justifyContent: 'center', alignItems: 'center',
+    marginBottom: 12,
   },
-  actionLabel: {
-    fontWeight: '700',
-    fontSize: 13,
-  },
-
-  // Tip
-  tipCard: { gap: 10 },
-  tipHeader: {
+  tipCardGradient: {
+    borderRadius: 24,
+    padding: 20,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    overflow: 'hidden',
+    marginTop: theme.spacing.md,
   },
-  tipTitle: {
-    fontWeight: '700',
-    color: theme.colors.text.primary,
-  },
-  tipAction: {
-    marginTop: 4,
+  tipHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tipButton: {
+    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
     alignSelf: 'flex-start',
+    marginTop: 16,
   },
+  tipIconBackground: {
+    position: 'absolute',
+    right: -10, bottom: -10,
+    opacity: 0.2,
+  }
 });

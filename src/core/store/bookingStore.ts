@@ -48,7 +48,7 @@ export const useBookingStore = create<BookingState>((set) => ({
 
 // ─── SELECTORS (UI Filter Logic) ───────────────────────────────
 export const getUpcomingBookings = (state: BookingState) => 
-  state.bookings.filter(b => b.status === 'active');
+  state.bookings.filter((b) => ['active', 'pending', 'confirmed'].includes(b.status));
 
 export const getCompletedBookings = (state: BookingState) => 
   state.bookings.filter(b => b.status === 'completed');

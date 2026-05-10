@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   USER: 'user',
+  ACTIVE_MODE: 'active_mode',
 } as const;
 
 export const api = axios.create({
@@ -32,6 +33,7 @@ export const tokenStorage = {
       STORAGE_KEYS.ACCESS_TOKEN,
       STORAGE_KEYS.REFRESH_TOKEN,
       STORAGE_KEYS.USER,
+      STORAGE_KEYS.ACTIVE_MODE,
     ]),
 };
 

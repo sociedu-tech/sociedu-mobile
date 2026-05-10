@@ -27,7 +27,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const loading = useAuthStore((s) => s.loading);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const userRole = useAuthStore((s) => s.userRole);
+  const roles = useAuthStore((s) => s.roles);
 
   if (loading) {
     return (
@@ -41,7 +41,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     return <Redirect href="/(auth)/login" />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
+  if (allowedRoles && !allowedRoles.some((role) => roles.includes(role))) {
     return <Redirect href="/(tabs)" />;
   }
 
