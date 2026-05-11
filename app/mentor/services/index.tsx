@@ -50,16 +50,15 @@ export default function MentorServicesScreen() {
   }, [fetchServices]);
 
   const handleToggleStatus = async (pkgId: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
-    
     // 1. Optimistic Update (Cập nhật UI ngay lập tức)
     setServices((prev) => 
-      prev.map(p => p.id === pkgId ? { ...p, isActive: newStatus } : p)
+      prev.map(p => p.id === pkgId ? { ...p, isActive: !currentStatus } : p)
     );
 
     try {
       // 2. Call API
-      await mentorService.toggleServiceStatus(pkgId, newStatus);
+      const updated = await mentorService.toggleServiceStatus(pkgId);
+      setServices((prev) => prev.map((p) => (p.id === pkgId ? updated : p)));
       // Optional: Hiện toast success
     } catch (err: any) {
       // 3. Rollback nếu lỗi

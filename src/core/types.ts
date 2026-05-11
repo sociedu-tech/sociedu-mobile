@@ -18,6 +18,17 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
+export interface PageResponseDTO<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
 // ── Auth ──────────────────────────────────────────────────────
 export interface AuthResponseDTO {
   accessToken: string;
@@ -82,7 +93,8 @@ export interface SessionMeResponseDTO {
 
 // ── Mentor / Service ──────────────────────────────────────────
 export interface MentorProfileResponseDTO {
-  userId: number;                 // Long
+  userId: string | number;
+  displayName?: string | null;
   headline: string;
   expertise: string;              // comma-separated "React,Node.js"
   basePrice: number;              // BigDecimal
@@ -93,7 +105,7 @@ export interface MentorProfileResponseDTO {
 }
 
 export interface ServicePackageVersionResponseDTO {
-  id: number;
+  id: string | number;
   price: number;
   duration: number;               // minutes
   deliveryType: string;
@@ -105,8 +117,8 @@ export interface ServicePackageVersionResponseDTO {
 }
 
 export interface ServicePackageResponseDTO {
-  id: number;
-  mentorId: number;
+  id: string | number;
+  mentorId: string | number;
   name: string;
   description: string;
   isActive: boolean;
@@ -114,8 +126,8 @@ export interface ServicePackageResponseDTO {
 }
 
 export interface CurriculumItemResponseDTO {
-  id: number;
-  packageVersionId: number;
+  id: string | number;
+  packageVersionId: string | number;
   title: string;
   description: string;
   orderIndex: number;
@@ -132,20 +144,16 @@ export interface CreateCurriculumRequest {
 export interface CreateServiceRequest {
   name: string;
   description: string;
-  isActive: boolean;
-  versions: {
-    price: number;
-    duration: number;
-    deliveryType: string;
-    isDefault: boolean;
-    curriculums: CreateCurriculumRequest[];
-  }[];
+  isActive?: boolean;
+  price: number;
+  duration: number;
+  deliveryType?: string;
+  curriculums: CreateCurriculumRequest[];
 }
 
 export interface UpdateServiceRequest {
   name: string;
   description: string;
-  isActive: boolean;
 }
 
 export interface CreatePackageVersionRequest {

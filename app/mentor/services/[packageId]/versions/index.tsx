@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,37 +35,6 @@ export default function PackageVersionsScreen() {
     void loadPackage();
   }, [loadPackage]);
 
-  const handleDelete = async (version: MentorPackageVersion) => {
-    Alert.alert(
-      TEXT.SERVICE_VERSION.DELETE_CONFIRM_TITLE,
-      TEXT.SERVICE_VERSION.DELETE_CONFIRM_MESSAGE.replace('{id}', String(version.id)),
-      [
-        { text: TEXT.COMMON.CANCEL, style: 'cancel' },
-        {
-          text: TEXT.SERVICE_VERSION.DELETE_VERSION,
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await mentorService.deletePackageVersion(packageId, version.id);
-              await loadPackage();
-            } catch (err: any) {
-              Alert.alert(TEXT.SERVICE_VERSION.DELETE_ERROR_TITLE, err?.message || TEXT.SERVICE_VERSION.DELETE_ERROR_TITLE);
-            }
-          },
-        },
-      ],
-    );
-  };
-
-  const handleSetDefault = async (version: MentorPackageVersion) => {
-    try {
-      await mentorService.setDefaultPackageVersion(packageId, version.id);
-      await loadPackage();
-    } catch (err: any) {
-      Alert.alert(TEXT.SERVICE_VERSION.SET_DEFAULT_ERROR_TITLE, err?.message || TEXT.COMMON.RETRY);
-    }
-  };
-
   const renderBadge = (label: string, color: string, backgroundColor: string) => (
     <View style={[styles.badge, { backgroundColor }]}>
       <Typography variant="caption" style={{ color, fontWeight: '700' }}>
@@ -91,7 +54,7 @@ export default function PackageVersionsScreen() {
             style={styles.editAction}
           >
             <Typography variant="label" style={styles.editActionText}>
-              {TEXT.SERVICE_VERSION.EDIT_VERSION}
+              Quản lý giáo trình
             </Typography>
           <Ionicons name="chevron-forward" size={16} color={theme.colors.primary} />
         </TouchableOpacity>
@@ -102,9 +65,6 @@ export default function PackageVersionsScreen() {
         {item.isActive
           ? renderBadge(TEXT.SERVICE_VERSION.BADGE_ACTIVE, theme.colors.success, '#ECFDF5')
           : renderBadge(TEXT.SERVICE_VERSION.BADGE_INACTIVE, theme.colors.text.secondary, '#F3F4F6')}
-        {item.hasOrders || !item.isEditable
-          ? renderBadge(TEXT.SERVICE_VERSION.BADGE_HAS_ORDER, theme.colors.warning, '#FFF7ED')
-          : renderBadge(TEXT.SERVICE_VERSION.BADGE_EDITABLE, theme.colors.success, '#ECFDF5')}
       </View>
 
       <Typography variant="body" color="secondary" style={styles.metaText}>
@@ -114,32 +74,10 @@ export default function PackageVersionsScreen() {
         {TEXT.SERVICE_VERSION.DELIVERY_TYPE}: {item.deliveryType}
       </Typography>
 
-      {item.hasOrders || !item.isEditable ? (
-        <View style={styles.warningBox}>
-          <Typography variant="caption" style={styles.warningText}>
-            {TEXT.SERVICE_VERSION.WARNING_VERSION_HAS_ORDER}
-          </Typography>
-        </View>
-      ) : null}
-
-      <View style={styles.actionRow}>
-        {!item.isDefault ? (
-          <CustomButton
-            label={TEXT.SERVICE_VERSION.SET_DEFAULT}
-            size="sm"
-            variant="outline"
-            onPress={() => handleSetDefault(item)}
-            style={styles.inlineAction}
-          />
-        ) : null}
-        <CustomButton
-          label={TEXT.SERVICE_VERSION.DELETE_VERSION}
-          size="sm"
-          variant="destructive"
-          onPress={() => handleDelete(item)}
-          style={styles.inlineAction}
-          disabled={item.isDefault || item.hasOrders || !item.isEditable}
-        />
+      <View style={styles.warningBox}>
+        <Typography variant="caption" style={styles.warningText}>
+          Phiên này đang dùng contract backend thật: có thể xem chi tiết và quản lý giáo trình, còn đặt mặc định hoặc xóa phiên bản sẽ được bổ sung sau.
+        </Typography>
       </View>
     </View>
   );
@@ -277,14 +215,6 @@ const styles = StyleSheet.create({
   warningText: {
     color: theme.colors.warning,
     fontWeight: '600',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    marginTop: 16,
-  },
-  inlineAction: {
-    flex: 1,
-    marginRight: 8,
   },
   emptyState: {
     alignItems: 'center',

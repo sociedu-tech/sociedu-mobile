@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,14 +10,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../../src/components/typography/Typography';
 import { LoadingState } from '../../src/components/states/LoadingState';
 import { ErrorState } from '../../src/components/states/ErrorState';
 import { EmptyState } from '../../src/components/states/EmptyState';
 import { theme } from '../../src/theme/theme';
-import { useBreakpoint } from '../../src/theme/useBreakpoint';
 import { mentorService } from '../../src/core/services/mentorService';
 import { User } from '../../src/core/types';
 import { Card } from '../../src/components/ui/Card';
@@ -25,9 +24,8 @@ import { Section } from '../../src/components/ui/Section';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { scaleSpace, scaleFont } from '../../src/theme/responsiveUtils';
 
-
-import { useMemo } from 'react';
 import { useDebounce } from '../../src/hooks/useDebounce';
+import { useAuthStore } from '../../src/core/store/authStore';
 
 // ...existing code...
 
@@ -37,7 +35,8 @@ import { useDebounce } from '../../src/hooks/useDebounce';
  */
 export default function MentorScreen() {
   const router = useRouter();
-  const breakpoint = useBreakpoint();
+  const activeMode = useAuthStore((s) => s.activeMode);
+  const isMentor = useAuthStore((s) => s.roles.includes('mentor'));
   const [mentors, setMentors] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -105,6 +104,10 @@ export default function MentorScreen() {
 
   if (error) {
     return <ErrorState error={error} onRetry={() => fetchMentors()} />;
+  }
+
+  if (isMentor && activeMode === 'mentor') {
+    return <Redirect href="/mentor/dashboard" />;
   }
 
   // ─── Render ─────────────────────────────────────────────
