@@ -1,8 +1,8 @@
 /**
  * authAdapter.ts
- * Chuyển đổi AuthResponseDTO (backend) → AuthUser (mobile store)
+ * Chuyen doi auth/session DTO sang AuthUser cho mobile store.
  */
-import { AuthResponseDTO } from '../types';
+import { AuthResponseDTO, SessionMeResponseDTO } from '../types';
 
 export interface AuthUser {
   id: string;
@@ -11,31 +11,50 @@ export interface AuthUser {
   lastName: string;
   fullName: string;
   headline?: string;
-  roles: string[];           // lowercase, ROLE_ prefix stripped
-  userRole: string;          // role chính (phần tử đầu tiên)
+  emailVerified?: boolean;
+  roles: string[];
+  userRole: string;
 }
 
-/**
- * Normalize role: "ROLE_MENTOR" → "mentor"
- */
 function normalizeRole(role: string): string {
   return role.replace(/^ROLE_/, '').toLowerCase();
 }
 
-/**
- * Chuyển AuthResponseDTO → AuthUser
- */
-export function toAuthUser(dto: AuthResponseDTO): AuthUser {
-  const roles = dto.roles.map(normalizeRole);
-  const firstName = dto.firstName ?? '';
-  const lastName = dto.lastName ?? '';
+function normalizeRoles(roles: string[]): string[] {
+  return roles.map(normalizeRole);
+}
+
+export function toAuthUser(dto: AuthResponseDTO, session?: SessionMeResponseDTO | null): AuthUser {
+  const roles = normalizeRoles(session?.roles ?? dto.roles);
+  const firstName = session?.firstName ?? dto.firstName ?? '';
+  const lastName = session?.lastName ?? dto.lastName ?? '';
 
   return {
-    id: dto.userId,
-    email: dto.email,
+    id: session?.userId ?? dto.userId,
+    email: session?.email ?? dto.email,
     firstName,
     lastName,
-    fullName: `${firstName} ${lastName}`.trim(),
+    fullName: session?.fullName || `${firstName} ${lastName}`.trim(),
+    headline: session?.headline ?? undefined,
+    emailVerified: session?.emailVerified,
+    roles,
+    userRole: roles[0] ?? 'user',
+  };
+}
+
+export function toAuthUserFromSession(session: SessionMeResponseDTO): AuthUser {
+  const roles = normalizeRoles(session.roles);
+  const firstName = session.firstName ?? '';
+  const lastName = session.lastName ?? '';
+
+  return {
+    id: session.userId,
+    email: session.email,
+    firstName,
+    lastName,
+    fullName: session.fullName || `${firstName} ${lastName}`.trim(),
+    headline: session.headline ?? undefined,
+    emailVerified: session.emailVerified,
     roles,
     userRole: roles[0] ?? 'user',
   };
