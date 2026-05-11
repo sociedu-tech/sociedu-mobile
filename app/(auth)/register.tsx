@@ -87,7 +87,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFF' }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.primary }}>
       <LinearGradient colors={[theme.colors.primary, '#7C3AED']} style={StyleSheet.absoluteFill} />
       
       <SafeAreaView style={{ flex: 1 }}>
@@ -98,7 +98,7 @@ export default function RegisterScreen() {
               <View style={styles.logoCircle}>
                 <Ionicons name="sparkles" size={32} color={theme.colors.primary} />
               </View>
-              <Typography variant="h1" style={{ color: '#FFF', fontWeight: '900', fontSize: 32 }}>Tham gia UniShare</Typography>
+              <Typography variant="h1" style={{ color: '#FFF', fontWeight: '900', fontSize: 28, paddingTop: 4, textAlign: 'center' }}>Tham gia UniShare</Typography>
               <Typography variant="body" style={{ color: 'rgba(255,255,255,0.8)' }}>Khám phá tri thức cùng cộng đồng</Typography>
             </Animated.View>
 

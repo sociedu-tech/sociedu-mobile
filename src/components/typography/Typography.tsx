@@ -44,7 +44,11 @@ export const Typography: React.FC<TypographyProps> = ({
     <Text
       style={[
         variantStyle,
-        { color: getTextColor(color), textAlign: align },
+        { 
+          color: getTextColor(color), 
+          textAlign: align,
+          includeFontPadding: false,
+        },
         fontWeightProp,
         style,
       ]}

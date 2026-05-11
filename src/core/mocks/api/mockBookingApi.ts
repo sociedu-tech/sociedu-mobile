@@ -118,5 +118,21 @@ export const mockBookingApi = {
       }
     }
     throw new Error("Session not found");
+  },
+
+  cancel: async (id: string) => {
+    await delay(800);
+    const booking = mockBookingsDTO.find(x => x.id === id);
+    if (booking) {
+      booking.status = 'CANCELLED';
+      // Cũng hủy luôn các session chưa hoàn thành
+      booking.sessions.forEach(s => {
+        if (s.status !== 'COMPLETED') {
+          s.status = 'CANCELLED';
+        }
+      });
+      return withApiResponse(booking);
+    }
+    throw new Error("Booking not found");
   }
 };

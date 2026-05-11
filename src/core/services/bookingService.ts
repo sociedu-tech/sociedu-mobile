@@ -87,4 +87,15 @@ export const bookingService = {
     );
     return unwrap(res);
   },
+
+  /**
+   * Hủy booking
+   */
+  cancel: async (id: string): Promise<void> => {
+    if (USE_MOCK) {
+      await mockBookingApi.cancel(id);
+      return;
+    }
+    await api.post(`${BASE}/${id}/cancel`);
+  },
 };

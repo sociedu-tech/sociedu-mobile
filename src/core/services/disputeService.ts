@@ -1,35 +1,48 @@
-import { ApiResponse, CreateDisputeRequest, Dispute, DisputeResponseDTO } from '../types';
-import { api } from '../api';
+/**
+ * disputeService.ts – Dispute domain service
+ *
+ * Endpoints:
+ *   POST /disputes     → tạo khiếu nại
+ *   GET  /disputes/me  → danh sách khiếu nại của tôi
+ */
+import { api, unwrap } from '../api';
+import { USE_MOCK } from '../config';
+import { mockDisputeApi } from '../mocks/api/mockReportDisputeApi';
+import {
+  ApiResponse,
+  CreateDisputeRequest,
+  Dispute,
+  DisputeResponseDTO,
+} from '../types';
+
+function toDispute(dto: DisputeResponseDTO): Dispute {
+  return {
+    id: dto.id,
+    bookingId: dto.bookingId,
+    sessionId: dto.sessionId,
+    reason: dto.reason,
+    status: dto.status,
+    resolutionNote: dto.resolutionNote,
+    createdAt: new Date(dto.createdAt),
+  };
+}
 
 export const disputeService = {
-  /**
-   * Gửi khiếu nại (Dispute)
-   */
+  /** Gửi khiếu nại (Dispute) */
   async createDispute(request: CreateDisputeRequest): Promise<Dispute> {
-    const response = await api.post<ApiResponse<DisputeResponseDTO>>('/disputes', request);
-    return this.toDispute(response.data.data);
+    const response = USE_MOCK
+      ? await mockDisputeApi.createDispute(request)
+      : await api.post<ApiResponse<DisputeResponseDTO>>('/disputes', request);
+
+    return toDispute(unwrap(response));
   },
 
-  /**
-   * Lấy danh sách khiếu nại của tôi
-   */
+  /** Lấy danh sách khiếu nại của tôi */
   async getMyDisputes(): Promise<Dispute[]> {
-    const response = await api.get<ApiResponse<DisputeResponseDTO[]>>('/disputes/me');
-    return response.data.data.map((dto: DisputeResponseDTO) => this.toDispute(dto));
-  },
+    const response = USE_MOCK
+      ? await mockDisputeApi.getMyDisputes()
+      : await api.get<ApiResponse<DisputeResponseDTO[]>>('/disputes/me');
 
-  /**
-   * Adapter chuyển đổi từ DTO sang UI Model
-   */
-  toDispute(dto: DisputeResponseDTO): Dispute {
-    return {
-      id: dto.id,
-      bookingId: dto.bookingId,
-      sessionId: dto.sessionId,
-      reason: dto.reason,
-      status: dto.status,
-      resolutionNote: dto.resolutionNote,
-      createdAt: new Date(dto.createdAt),
-    };
+    return (unwrap(response) as DisputeResponseDTO[]).map(toDispute);
   },
 };

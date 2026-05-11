@@ -58,8 +58,9 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn thoát phiên đăng nhập?', [
-      { text: 'Hủy', style: 'cancel' },
+    console.log('User requested logout');
+    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn rời khỏi ứng dụng? Chúng tôi sẽ rất nhớ bạn đấy! ❤️', [
+      { text: 'Ở lại', style: 'cancel' },
       {
         text: 'Đăng xuất',
         style: 'destructive',
@@ -74,8 +75,7 @@ export default function ProfileScreen() {
   const displayEmail = fullUser?.email || authUser?.email || '';
   const avatarUri = fullUser?.avatar || null;
   const canUseMentorMode = roles.includes('mentor');
-  const canUseAdmin = roles.includes('admin');
-  const showDashboardSection = canUseAdmin || (canUseMentorMode && activeMode === 'mentor');
+  const showDashboardSection = canUseMentorMode && activeMode === 'mentor';
 
   const getInitials = () => {
     const parts = displayName.split(' ');
@@ -88,7 +88,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 160 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
@@ -100,9 +100,6 @@ export default function ProfileScreen() {
           <SafeAreaView edges={['top']}>
             <View style={styles.topNav}>
               <Typography variant="h3" style={{ color: '#FFF', fontWeight: '800' }}>Hồ sơ</Typography>
-              <TouchableOpacity onPress={() => router.push('/profile/edit')} style={styles.settingsBtn}>
-                <Ionicons name="settings-outline" size={22} color="#FFF" />
-              </TouchableOpacity>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -172,14 +169,6 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/mentor/dashboard' as any)}
                 />
               )}
-              {canUseAdmin && (
-                <ListItem
-                  title="Hệ thống Quản trị"
-                  subtitle="Kiểm duyệt & Cấu hình"
-                  iconName="shield-checkmark"
-                  onPress={() => router.push('/admin/index' as any)}
-                />
-              )}
             </Card>
           </Section>
         )}
@@ -195,15 +184,15 @@ export default function ProfileScreen() {
               onPress={() => router.push('/profile/edit')}
             />
             <ListItem
-              title="Chứng chỉ & Kinh nghiệm"
-              subtitle="Xác minh năng lực chuyên môn"
+              title={activeMode === 'mentor' ? 'Chứng chỉ & Kinh nghiệm' : 'Hồ sơ năng lực'}
+              subtitle={activeMode === 'mentor' ? 'Xác minh năng lực chuyên môn' : 'Giúp Mentor hiểu rõ bạn hơn'}
               iconName="medal"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/credentials')}
             />
             <ListItem
               title="Cài đặt thông báo"
               iconName="notifications"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/notifications')}
             />
             <ListItem
               title="Báo cáo tiến độ"
@@ -219,28 +208,24 @@ export default function ProfileScreen() {
           <Typography variant="label" style={styles.sectionLabel}>Hỗ trợ</Typography>
           <Card style={styles.listCard}>
             <ListItem
-              title="Trung tâm trợ giúp"
-              iconName="help-circle"
-              onPress={() => {}}
-            />
-            <ListItem
               title="Điều khoản & Chính sách"
               iconName="document-lock"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/terms')}
             />
           </Card>
         </Section>
 
         {/* LOGOUT BUTTON */}
-        <View style={{ paddingHorizontal: theme.spacing.lg, marginTop: theme.spacing.xl }}>
+        <View style={{ paddingHorizontal: theme.spacing.lg, marginTop: theme.spacing.xl, marginBottom: 20 }}>
           <TouchableOpacity 
             style={styles.logoutBtn} 
             onPress={handleLogout}
             activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="log-out" size={20} color={theme.colors.error} />
-            <Typography variant="bodyMedium" style={{ fontWeight: '800', color: theme.colors.error }}>
-              Đăng xuất
+            <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
+            <Typography variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.error }}>
+              Đăng xuất tài khoản
             </Typography>
           </TouchableOpacity>
           <Typography variant="caption" color="muted" align="center" style={{ marginTop: 20, opacity: 0.6 }}>
@@ -262,12 +247,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 10,
-  },
-  settingsBtn: {
-    width: 40, height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center', alignItems: 'center',
   },
   profileCardWrapper: {
     paddingHorizontal: theme.spacing.lg,
@@ -351,11 +330,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingVertical: 16,
-    backgroundColor: '#FFF',
-    borderRadius: 20,
+    paddingVertical: 14,
+    backgroundColor: '#FFF1F1', // Softer red
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#FEE2E2',
-    ...theme.shadows.soft,
   }
 });

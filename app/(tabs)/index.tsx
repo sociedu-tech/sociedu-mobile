@@ -166,7 +166,6 @@ function BuyerHome() {
                   </Typography>
                   <Typography variant="caption" color="secondary" style={{ lineHeight: 18 }}>{item.desc}</Typography>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={theme.colors.border.default} />
               </Card>
             </Animated.View>
           ))}
@@ -253,13 +252,10 @@ function MentorHome() {
 
         {/* QUICK ACTIONS GRID */}
         <Section style={{ marginTop: theme.spacing.lg }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ marginBottom: 16 }}>
             <Typography variant="h3" style={{ fontWeight: '800' }}>
               {'Thao tác nhanh'}
             </Typography>
-            <TouchableOpacity onPress={() => router.push('/mentor/dashboard' as any)}>
-              <Typography variant="label" style={{ color: theme.colors.primary }}>{'Xem tất cả →'}</Typography>
-            </TouchableOpacity>
           </View>
           <View style={styles.actionsGrid}>
             {MENTOR_QUICK_ACTIONS.map((action) => (

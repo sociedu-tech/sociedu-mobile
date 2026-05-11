@@ -66,7 +66,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFF' }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.primary }}>
       <LinearGradient
         colors={[theme.colors.primary, '#7C3AED']}
         style={StyleSheet.absoluteFill}
@@ -87,7 +87,7 @@ export default function LoginScreen() {
               <View style={styles.logoCircle}>
                 <Ionicons name="flash" size={40} color={theme.colors.primary} />
               </View>
-              <Typography variant="h1" style={{ color: '#FFF', fontWeight: '900', fontSize: 36 }}>UniShare</Typography>
+              <Typography variant="h1" style={{ color: '#FFF', fontWeight: '900', fontSize: 36, paddingTop: 4 }}>UniShare</Typography>
               <Typography variant="body" style={{ color: 'rgba(255,255,255,0.8)' }}>Kiến tạo tương lai trí tuệ</Typography>
             </Animated.View>
 

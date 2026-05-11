@@ -155,9 +155,18 @@ export default function ConversationDetailScreen() {
             <Typography style={styles.headerName} variant="bodyMedium">
               {conversation.name}
             </Typography>
-            <Typography color="secondary" variant="caption">
-              {currentUserId === conversation.peer?.id ? TEXT.MESSAGES.STATUS_OFFLINE : TEXT.MESSAGES.STATUS_ONLINE}
-            </Typography>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              {conversation.type === 'general' && (
+                <View style={{ backgroundColor: theme.colors.primarySoft, paddingHorizontal: 4, borderRadius: 4 }}>
+                  <Typography variant="caption" style={{ color: theme.colors.primary, fontSize: 10, fontWeight: '800' }}>
+                    {TEXT.MESSAGES.BADGE_GENERAL}
+                  </Typography>
+                </View>
+              )}
+              <Typography color="secondary" variant="caption">
+                {currentUserId === conversation.peer?.id ? TEXT.MESSAGES.STATUS_OFFLINE : TEXT.MESSAGES.STATUS_ONLINE}
+              </Typography>
+            </View>
           </View>
         </View>
         <TouchableOpacity

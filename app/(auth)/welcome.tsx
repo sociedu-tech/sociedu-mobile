@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: '900',
     letterSpacing: -1.5,
+    paddingTop: 4,
   },
   badge: {
     backgroundColor: theme.colors.success,
