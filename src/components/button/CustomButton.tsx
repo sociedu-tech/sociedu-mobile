@@ -146,7 +146,14 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
             colors={theme.colors.gradients.primary as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[StyleSheet.absoluteFill, { borderRadius: responsiveStyle.borderRadius }]}
+            style={[
+              StyleSheet.absoluteFill, 
+              { 
+                borderRadius: responsiveStyle.borderRadius,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }
+            ]}
           >
             {Content}
           </LinearGradient>

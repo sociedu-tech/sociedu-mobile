@@ -4,39 +4,23 @@ import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../../src/components/typography/Typography';
 import { theme } from '../../src/theme/theme';
-import { api } from '../../src/core/api';
-
-interface UserProfile {
-  id: string | number;
-  name: string;
-  email: string;
-  avatar: string;
-  roles: string[];
-  mentorInfo?: {
-    headline: string;
-    expertise: string[];
-    rating: number;
-    sessionsCompleted: number;
-    price: number;
-    bio: string;
-    verificationStatus: string;
-  };
-}
+import { userService } from '../../src/core/services/userService';
+import { User } from '../../src/core/types';
 
 /**
  * UserProfileScreen – tương đương "/profile/:id" trên web.
  */
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await api.get(`/api/v1/users/${id}`);
-        setProfile(res.data);
+        const data = await userService.getPublicProfile(id!);
+        setProfile(data);
       } catch {
         setError('Không thể tải hồ sơ người dùng.');
       } finally {
@@ -69,7 +53,7 @@ export default function UserProfileScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Avatar + Info */}
       <View style={styles.profileHeader}>
-        <Image source={{ uri: profile.avatar }} style={styles.avatar} />
+        <Image source={{ uri: profile.avatar || undefined }} style={styles.avatar} />
         <View style={styles.nameSection}>
           <Typography variant="h2" style={styles.name}>
             {profile.name}
@@ -83,9 +67,9 @@ export default function UserProfileScreen() {
             </View>
           )}
         </View>
-        {profile.mentorInfo?.headline && (
+        {profile.headline && (
           <Typography variant="body" style={styles.headline}>
-            {profile.mentorInfo.headline}
+            {profile.headline}
           </Typography>
         )}
       </View>
@@ -134,11 +118,11 @@ export default function UserProfileScreen() {
       )}
 
       {/* Bio */}
-      {profile.mentorInfo?.bio && (
+      {profile.bio && (
         <View style={styles.section}>
           <Typography variant="h3" style={styles.sectionTitle}>Giới thiệu</Typography>
           <Typography variant="body" style={styles.bio}>
-            {profile.mentorInfo.bio}
+            {profile.bio}
           </Typography>
         </View>
       )}

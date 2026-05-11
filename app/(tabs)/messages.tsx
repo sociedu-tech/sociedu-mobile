@@ -22,7 +22,7 @@ import { useAuthStore } from '../../src/core/store/authStore';
 import { Conversation } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
 
-type FilterTab = 'all' | 'unread' | 'booking';
+type FilterTab = 'all' | 'unread' | 'booking' | 'qa';
 
 function formatConversationTime(value: Date | null) {
   if (!value) return '';
@@ -84,7 +84,8 @@ export default function InboxScreen() {
         const matchesTab =
           activeTab === 'all' ||
           (activeTab === 'unread' && conversation.unreadCount > 0) ||
-          (activeTab === 'booking' && conversation.type === 'booking');
+          (activeTab === 'booking' && conversation.type === 'booking') ||
+          (activeTab === 'qa' && conversation.type === 'general');
 
         return matchesSearch && matchesTab;
       })
@@ -177,6 +178,7 @@ export default function InboxScreen() {
           { key: 'all' as const, label: TEXT.MESSAGES.TAB_ALL },
           { key: 'unread' as const, label: TEXT.MESSAGES.TAB_UNREAD },
           { key: 'booking' as const, label: TEXT.MESSAGES.TAB_BOOKING },
+          { key: 'qa' as const, label: TEXT.MESSAGES.TAB_QA },
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}

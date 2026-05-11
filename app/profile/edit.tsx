@@ -25,7 +25,7 @@ import { User } from '../../src/core/types';
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const updateStoreUser = useAuthStore((s) => s.login); // Re-use login to update local state fully if needed
+  const updateUser = useAuthStore((s) => s.updateUser);
   
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -88,12 +88,19 @@ export default function EditProfileScreen() {
       await userService.updateProfile({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
+        headline: headline.trim() || undefined,
+        bio: bio.trim() || undefined,
       });
 
-      // Nếu có API up ảnh, gọi ở đây. 
+      // Cập nhật store ngay để UI phản ánh thay đổi
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
+      updateUser({
+        fullName,
+        ...(headline.trim() ? { headline: headline.trim() } : {}),
+      });
 
       Alert.alert('Thành công', 'Đã cập nhật hồ sơ.', [
-        { text: 'Xong', onPress: () => router.back() }
+        { text: 'Xong', onPress: () => router.back() },
       ]);
     } catch (err: any) {
       Alert.alert('Lỗi', err.message || 'Không thể lưu hồ sơ.');

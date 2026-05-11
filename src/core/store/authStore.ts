@@ -17,6 +17,7 @@ interface AuthState {
 
   hydrate: () => Promise<void>;
   login: (userData?: AuthUser) => void;
+  updateUser: (partial: Partial<AuthUser>) => void;
   setActiveMode: (mode: ActiveMode) => void;
   logout: () => Promise<void>;
 }
@@ -131,6 +132,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       .catch(() => {
         set({ user: null, isAuthenticated: false, roles: [], userRole: 'guest', activeMode: 'buyer' });
       });
+  },
+
+  updateUser: (partial) => {
+    set((state) => {
+      if (!state.user) return state;
+      return { user: { ...state.user, ...partial } };
+    });
   },
 
   setActiveMode: (mode) => {

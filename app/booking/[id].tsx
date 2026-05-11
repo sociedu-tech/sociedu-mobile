@@ -24,6 +24,7 @@ export default function BookingDetailScreen() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     fetchBooking();
@@ -51,6 +52,34 @@ export default function BookingDetailScreen() {
     } catch (err: any) {
       Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.UPDATE_STATUS_ERROR);
     }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!booking) return;
+
+    Alert.alert(
+      TEXT.BOOKING.CANCEL_CONFIRM_TITLE,
+      TEXT.BOOKING.CANCEL_CONFIRM_MESSAGE,
+      [
+        { text: TEXT.COMMON.CANCEL, style: 'cancel' },
+        {
+          text: TEXT.COMMON.CONFIRM,
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true);
+            try {
+              await bookingService.cancel(booking.id);
+              Alert.alert(TEXT.COMMON.SUCCESS, TEXT.BOOKING.CANCEL_SUCCESS);
+              fetchBooking(); // Refresh data
+            } catch (err: any) {
+              Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.CANCEL_ERROR);
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) return <LoadingState message={TEXT.BOOKING.LOADING_DETAIL} />;
@@ -114,6 +143,19 @@ export default function BookingDetailScreen() {
             <Ionicons name="alert-circle-outline" size={20} color={theme.colors.error} />
             <Typography variant="caption" style={[styles.actionBtnText, { color: theme.colors.error }]}>Khiếu nại</Typography>
           </TouchableOpacity>
+
+          {(booking.status !== 'completed' && booking.status !== 'cancelled') && (
+            <TouchableOpacity
+              style={[styles.actionBtn, { borderColor: theme.colors.text.disabled }]}
+              onPress={handleCancelBooking}
+              disabled={cancelling}
+            >
+              <Ionicons name="close-circle-outline" size={20} color={theme.colors.text.secondary} />
+              <Typography variant="caption" style={styles.actionBtnText}>
+                {cancelling ? 'Đang hủy...' : TEXT.BOOKING.BTN_CANCEL}
+              </Typography>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Typography variant="h3" style={{ marginVertical: 16 }}>

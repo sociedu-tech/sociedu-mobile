@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View, Dimensions } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View, Dimensions, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { CustomButton } from '../../src/components/button/CustomButton';
+import { conversationService } from '../../src/core/services/conversationService';
+import { useAuthStore } from '../../src/core/store/authStore';
 
 import { Avatar } from '../../src/components/ui/Avatar';
 import { ErrorState } from '../../src/components/states/ErrorState';
@@ -23,7 +26,31 @@ export default function MentorDetailScreen() {
 
   const [mentor, setMentor] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const currentUserId = useAuthStore((s) => s.user?.id);
+
+  const handleChat = async () => {
+    if (!id || chatLoading) return;
+    if (!currentUserId) {
+      Alert.alert('Thông báo', 'Vui lòng đăng nhập để gửi tin nhắn');
+      return;
+    }
+    if (currentUserId === id) {
+      Alert.alert('Thông báo', 'Bạn không thể nhắn tin cho chính mình');
+      return;
+    }
+
+    try {
+      setChatLoading(true);
+      const conv = await conversationService.createConversation([id], 'general');
+      router.push(`/messages/${conv.id}` as any);
+    } catch (err: any) {
+      Alert.alert(TEXT.COMMON.ERROR, err?.message || 'Không thể bắt đầu cuộc trò chuyện');
+    } finally {
+      setChatLoading(false);
+    }
+  };
 
   const fetchMentor = useCallback(async () => {
     setLoading(true);
@@ -127,6 +154,26 @@ export default function MentorDetailScreen() {
           </Card>
         </View>
 
+        {/* CERTIFICATES SECTION */}
+        <View style={styles.section}>
+          <Typography variant="label" style={styles.sectionLabel}>{TEXT.MENTOR_DETAIL.CERTIFICATE}</Typography>
+          <Card style={styles.contentCard}>
+            {mentor.certificates?.map((cert) => (
+              <InfoItem 
+                key={cert.id} 
+                icon="medal" 
+                title={cert.name} 
+                subtitle={`${cert.issuer} • ${new Date(cert.issueDate).getFullYear()}`} 
+              />
+            ))}
+            {!mentor.certificates?.length && (
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+                <Typography variant="caption" color="muted">Chưa có chứng chỉ nào được xác minh</Typography>
+              </View>
+            )}
+          </Card>
+        </View>
+
         {/* PACKAGES */}
         <View style={styles.section}>
           <Typography variant="label" style={styles.sectionLabel}>Các gói dịch vụ</Typography>
@@ -161,6 +208,19 @@ export default function MentorDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* FIXED BOTTOM BAR */}
+      <View style={styles.bottomBar}>
+        <CustomButton
+          label={TEXT.MENTOR_DETAIL.BTN_CHAT}
+          variant="primary"
+          size="lg"
+          loading={chatLoading}
+          icon={<Ionicons name="chatbubble-ellipses" size={20} color="#FFF" />}
+          onPress={handleChat}
+          style={styles.chatButton}
+        />
+      </View>
     </View>
   );
 }
@@ -184,7 +244,7 @@ const styles = StyleSheet.create({
   topGradient: { height: 160, paddingHorizontal: 20 },
   topNav: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
-  scroll: { paddingBottom: 100 },
+  scroll: { paddingBottom: 120 },
   profileCardWrapper: { paddingHorizontal: 20, marginTop: -60 },
   profileCard: { padding: 20, borderRadius: 28 },
   avatarRow: { flexDirection: 'row', alignItems: 'center' },
@@ -208,4 +268,19 @@ const styles = StyleSheet.create({
   pkgIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: theme.colors.primarySoft, justifyContent: 'center', alignItems: 'center' },
   pkgBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.colors.border.light },
   priceBadge: { backgroundColor: theme.colors.primarySoft, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: 34, // Padding for safe area on some devices
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
+    ...theme.shadows.medium,
+  },
+  chatButton: {
+    borderRadius: 16,
+  },
 });

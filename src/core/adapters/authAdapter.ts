@@ -10,6 +10,7 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   fullName: string;
+  headline?: string;
   roles: string[];           // lowercase, ROLE_ prefix stripped
   userRole: string;          // role chính (phần tử đầu tiên)
 }

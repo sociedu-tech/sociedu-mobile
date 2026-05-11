@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 import { Typography } from '../../src/components/typography/Typography';
 import { CustomButton } from '../../src/components/button/CustomButton';
@@ -33,6 +35,29 @@ export default function ReportFormScreen() {
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [evidenceUris, setEvidenceUris] = useState<string[]>([]);
+
+  const handlePickEvidence = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Cấp quyền', 'Bạn cần cấp quyền truy cập ảnh để đính kèm bằng chứng.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.7,
+      selectionLimit: 5,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setEvidenceUris((prev) => [
+        ...prev,
+        ...result.assets.map((a) => a.uri),
+      ].slice(0, 5));
+    }
+  };
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -118,12 +143,31 @@ export default function ReportFormScreen() {
                 <Typography variant="caption" color="secondary" style={styles.label}>
                   {TEXT.REPORT.EVIDENCE_LABEL}
                 </Typography>
-                <TouchableOpacity style={styles.uploadBtn}>
-                  <Ionicons name="camera-outline" size={32} color={theme.colors.primary} />
-                  <Typography variant="caption" color="primary" style={{ marginTop: 8 }}>
-                    Thêm hình ảnh
-                  </Typography>
-                </TouchableOpacity>
+
+                {evidenceUris.length > 0 && (
+                  <View style={styles.evidenceGrid}>
+                    {evidenceUris.map((uri, index) => (
+                      <View key={uri} style={styles.evidenceItem}>
+                        <Image source={{ uri }} style={styles.evidenceImage} />
+                        <TouchableOpacity
+                          style={styles.removeEvidence}
+                          onPress={() => setEvidenceUris((prev) => prev.filter((_, i) => i !== index))}
+                        >
+                          <Ionicons name="close-circle" size={20} color={theme.colors.error} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {evidenceUris.length < 5 && (
+                  <TouchableOpacity style={styles.uploadBtn} onPress={handlePickEvidence}>
+                    <Ionicons name="camera-outline" size={32} color={theme.colors.primary} />
+                    <Typography variant="caption" color="primary" style={{ marginTop: 8 }}>
+                      Thêm hình ảnh ({evidenceUris.length}/5)
+                    </Typography>
+                  </TouchableOpacity>
+                )}
               </View>
             </ScrollView>
 
@@ -181,12 +225,38 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: `${theme.colors.primaryLight}10`,
+    backgroundColor: `${theme.colors.primaryLight}20`,
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
     backgroundColor: theme.colors.surface,
+  },
+  evidenceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  evidenceItem: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+  },
+  evidenceImage: {
+    width: '100%',
+    height: '100%',
+  },
+  removeEvidence: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#FFF',
+    borderRadius: 10,
   },
 });
