@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,7 +8,6 @@ import { Typography } from '../../src/components/typography/Typography';
 import { LoadingState } from '../../src/components/states/LoadingState';
 import { ErrorState } from '../../src/components/states/ErrorState';
 import { theme } from '../../src/theme/theme';
-
 import { bookingService } from '../../src/core/services/bookingService';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { Booking, BookingSession } from '../../src/core/types';
@@ -19,18 +18,13 @@ import { CustomButton } from '../../src/components/button/CustomButton';
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const role = useAuthStore((s) => s.activeMode);
+  const role = useAuthStore((state) => state.activeMode);
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
 
-  useEffect(() => {
-    fetchBooking();
-  }, [id]);
-
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -42,48 +36,26 @@ export default function BookingDetailScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    void fetchBooking();
+  }, [fetchBooking]);
 
   const updateSessionStatus = async (sessionId: string, newStatus: string) => {
     if (!booking) return;
     try {
       await bookingService.updateSession(booking.id, sessionId, { status: newStatus });
-      fetchBooking();
+      await fetchBooking();
     } catch (err: any) {
       Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.UPDATE_STATUS_ERROR);
     }
   };
 
-  const handleCancelBooking = async () => {
-    if (!booking) return;
-
-    Alert.alert(
-      TEXT.BOOKING.CANCEL_CONFIRM_TITLE,
-      TEXT.BOOKING.CANCEL_CONFIRM_MESSAGE,
-      [
-        { text: TEXT.COMMON.CANCEL, style: 'cancel' },
-        {
-          text: TEXT.COMMON.CONFIRM,
-          style: 'destructive',
-          onPress: async () => {
-            setCancelling(true);
-            try {
-              await bookingService.cancel(booking.id);
-              Alert.alert(TEXT.COMMON.SUCCESS, TEXT.BOOKING.CANCEL_SUCCESS);
-              fetchBooking(); // Refresh data
-            } catch (err: any) {
-              Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, err.message || TEXT.BOOKING.CANCEL_ERROR);
-            } finally {
-              setCancelling(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
   if (loading) return <LoadingState message={TEXT.BOOKING.LOADING_DETAIL} />;
-  if (error || !booking) return <ErrorState error={error || 'Booking not found'} onRetry={fetchBooking} />;
+  if (error || !booking) {
+    return <ErrorState error={error || 'Booking not found'} onRetry={fetchBooking} />;
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -91,26 +63,36 @@ export default function BookingDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
-        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
+        <Typography variant="bodyMedium" style={styles.headerTitle}>
           {TEXT.BOOKING.HEADER_DETAIL}
         </Typography>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: 32 }]}>
+      <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.card}>
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">{TEXT.BOOKING.ORDER_CODE_LABEL}</Typography>
-            <Typography variant="bodyMedium" style={styles.bold}>{booking.orderId.slice(0, 8)}</Typography>
+            <Typography variant="caption" color="secondary">
+              {TEXT.BOOKING.ORDER_CODE_LABEL}
+            </Typography>
+            <Typography variant="bodyMedium" style={styles.bold}>
+              {booking.orderId.slice(0, 8)}
+            </Typography>
           </View>
+
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">{TEXT.BOOKING.CREATED_AT_LABEL}</Typography>
+            <Typography variant="caption" color="secondary">
+              {TEXT.BOOKING.CREATED_AT_LABEL}
+            </Typography>
             <Typography variant="bodyMedium" style={styles.bold}>
               {new Date(booking.createdAt).toLocaleDateString('vi-VN')}
             </Typography>
           </View>
+
           <View style={styles.rowBetween}>
-            <Typography variant="caption" color="secondary">{TEXT.BOOKING.OVERALL_STATUS_LABEL}</Typography>
+            <Typography variant="caption" color="secondary">
+              {TEXT.BOOKING.OVERALL_STATUS_LABEL}
+            </Typography>
             <Typography variant="bodyMedium" style={[styles.bold, { color: theme.colors.primary }]}>
               {booking.status.toUpperCase()}
             </Typography>
@@ -128,7 +110,9 @@ export default function BookingDetailScreen() {
             }
           >
             <Ionicons name="flag-outline" size={20} color={theme.colors.secondary} />
-            <Typography variant="caption" style={styles.actionBtnText}>Báo cáo</Typography>
+            <Typography variant="caption" style={styles.actionBtnText}>
+              Báo cáo
+            </Typography>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -141,29 +125,20 @@ export default function BookingDetailScreen() {
             }
           >
             <Ionicons name="alert-circle-outline" size={20} color={theme.colors.error} />
-            <Typography variant="caption" style={[styles.actionBtnText, { color: theme.colors.error }]}>Khiếu nại</Typography>
+            <Typography variant="caption" style={[styles.actionBtnText, { color: theme.colors.error }]}>
+              Khiếu nại
+            </Typography>
           </TouchableOpacity>
-
-          {(booking.status !== 'completed' && booking.status !== 'cancelled') && (
-            <TouchableOpacity
-              style={[styles.actionBtn, { borderColor: theme.colors.text.disabled }]}
-              onPress={handleCancelBooking}
-              disabled={cancelling}
-            >
-              <Ionicons name="close-circle-outline" size={20} color={theme.colors.text.secondary} />
-              <Typography variant="caption" style={styles.actionBtnText}>
-                {cancelling ? 'Đang hủy...' : TEXT.BOOKING.BTN_CANCEL}
-              </Typography>
-            </TouchableOpacity>
-          )}
         </View>
 
-        <Typography variant="h3" style={{ marginVertical: 16 }}>
+        <Typography variant="h3" style={styles.timelineTitle}>
           {TEXT.BOOKING.TIMELINE_TITLE}
         </Typography>
 
         {booking.sessions.length === 0 ? (
-          <Typography variant="bodyMedium" color="secondary">{TEXT.BOOKING.EMPTY_SESSIONS}</Typography>
+          <Typography variant="bodyMedium" color="secondary">
+            {TEXT.BOOKING.EMPTY_SESSIONS}
+          </Typography>
         ) : (
           <View style={styles.timelineContainer}>
             {booking.sessions.map((session, index) => (
@@ -173,7 +148,7 @@ export default function BookingDetailScreen() {
                 index={index}
                 role={role}
                 isLast={index === booking.sessions.length - 1}
-                onUpdateStatus={(status) => updateSessionStatus(session.id, status)}
+                onUpdateStatus={(nextStatus) => updateSessionStatus(session.id, nextStatus)}
               />
             ))}
           </View>
@@ -213,32 +188,34 @@ function SessionCard({
   };
 
   const handleOpenMeet = () => {
-    if (session.meetingUrl) {
-      Linking.openURL(session.meetingUrl).catch(() => {
-        Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, TEXT.BOOKING.OPEN_MEETING_ERROR);
-      });
-    } else {
+    if (!session.meetingUrl) {
       Alert.alert(TEXT.BOOKING.NO_MEETING_LINK_TITLE, TEXT.BOOKING.NO_MEETING_LINK_MESSAGE);
+      return;
     }
+
+    Linking.openURL(session.meetingUrl).catch(() => {
+      Alert.alert(TEXT.BOOKING.LINK_ERROR_TITLE, TEXT.BOOKING.OPEN_MEETING_ERROR);
+    });
   };
 
   return (
     <View style={styles.timelineRow}>
       <View style={styles.timelineIndicator}>
         <View style={[styles.timelineDot, { backgroundColor: getStatusColor(session.status) }]} />
-        {!isLast && <View style={styles.timelineLine} />}
+        {!isLast ? <View style={styles.timelineLine} /> : null}
       </View>
 
       <View style={styles.sessionCard}>
         <View style={styles.sessionHeader}>
           <Typography variant="bodyMedium" style={styles.bold}>
-            {TEXT.BOOKING.SESSION_PREFIX}{index + 1}: {session.title}
+            {TEXT.BOOKING.SESSION_PREFIX}
+            {index + 1}: {session.title}
           </Typography>
         </View>
 
         <View style={styles.rowInfo}>
           <Ionicons name="time-outline" size={16} color={theme.colors.text.secondary} />
-          <Typography variant="caption" color="secondary" style={{ marginLeft: 6 }}>
+          <Typography variant="caption" color="secondary" style={styles.rowInfoText}>
             {session.scheduledAt
               ? new Date(session.scheduledAt).toLocaleString('vi-VN')
               : TEXT.BOOKING.UNSCHEDULED}
@@ -253,35 +230,39 @@ function SessionCard({
               activeOpacity={0.7}
             >
               <Ionicons name="videocam-outline" size={16} color="#FFF" />
-              <Typography variant="caption" style={styles.btnText}>{TEXT.BOOKING.BTN_JOIN}</Typography>
+              <Typography variant="caption" style={styles.btnText}>
+                {TEXT.BOOKING.BTN_JOIN}
+              </Typography>
             </TouchableOpacity>
-          ) : (
-            role !== 'mentor' && (
-              <TouchableOpacity
-                style={[styles.btn, { backgroundColor: theme.colors.warning }]}
-                onPress={() => setShowReview(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="star-outline" size={16} color="#FFF" />
-                <Typography variant="caption" style={styles.btnText}>{TEXT.BOOKING.BTN_REVIEW}</Typography>
-              </TouchableOpacity>
-            )
-          )}
+          ) : role !== 'mentor' ? (
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: theme.colors.warning }]}
+              onPress={() => setShowReview(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="star-outline" size={16} color="#FFF" />
+              <Typography variant="caption" style={styles.btnText}>
+                {TEXT.BOOKING.BTN_REVIEW}
+              </Typography>
+            </TouchableOpacity>
+          ) : null}
 
-          {role === 'mentor' && session.status !== 'completed' && (
+          {role === 'mentor' && session.status !== 'completed' ? (
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: '#10B981', marginLeft: 8 }]}
               onPress={() => onUpdateStatus('COMPLETED')}
             >
               <Ionicons name="checkmark-circle-outline" size={16} color="#FFF" />
-              <Typography variant="caption" style={styles.btnText}>{TEXT.BOOKING.BTN_COMPLETE}</Typography>
+              <Typography variant="caption" style={styles.btnText}>
+                {TEXT.BOOKING.BTN_COMPLETE}
+              </Typography>
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
 
-        {showReview && (
+        {showReview ? (
           <View style={styles.reviewBox}>
-            <Typography variant="label" style={{ marginBottom: 8, fontWeight: '700' }}>
+            <Typography variant="label" style={styles.reviewTitle}>
               {TEXT.BOOKING.REVIEW_MODAL_TITLE}
             </Typography>
             <TextInput
@@ -300,7 +281,7 @@ function SessionCard({
               style={{ marginTop: 8 }}
             />
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -318,6 +299,7 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border.default,
   },
   backBtn: { padding: 8, marginLeft: -8 },
+  headerTitle: { fontWeight: '700' },
   scroll: { padding: 20, paddingBottom: 60 },
   card: {
     backgroundColor: theme.colors.surface,
@@ -355,49 +337,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text.secondary,
   },
-  sessionCard: {
-    backgroundColor: theme.colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border.default,
-    marginBottom: 12,
-  },
-  sessionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  rowInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  actionRow: {
-    flexDirection: 'row',
-  },
-  btn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  btnDisabled: {
-    backgroundColor: theme.colors.text.disabled,
-  },
-  btnText: {
-    color: '#FFF',
-    fontWeight: '700',
-    marginLeft: 6,
+  timelineTitle: {
+    marginVertical: 16,
   },
   timelineContainer: {
     paddingLeft: 12,
@@ -426,10 +367,57 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border.default,
     zIndex: 1,
   },
+  sessionCard: {
+    backgroundColor: theme.colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+    marginBottom: 12,
+    flex: 1,
+  },
+  sessionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  rowInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  rowInfoText: {
+    marginLeft: 6,
+  },
+  actionRow: {
+    flexDirection: 'row',
+  },
+  btn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  btnDisabled: {
+    backgroundColor: theme.colors.text.disabled,
+  },
+  btnText: {
+    color: '#FFF',
+    fontWeight: '700',
+    marginLeft: 6,
+  },
   reviewBox: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.default,
+  },
+  reviewTitle: {
+    marginBottom: 8,
+    fontWeight: '700',
   },
 });

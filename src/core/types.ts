@@ -186,7 +186,7 @@ export interface OrderResponseDTO {
 }
 
 export interface CheckoutRequestDTO {
-  packageVersionId: number;
+  servicePackageVersionId: string;
 }
 
 // ── Booking ───────────────────────────────────────────────────

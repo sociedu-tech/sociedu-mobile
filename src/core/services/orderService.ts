@@ -6,11 +6,11 @@ import { api, unwrap } from '../api';
 import { OrderResponseDTO, Order } from '../types';
 
 export const orderService = {
-  checkout: async (packageVersionId: number): Promise<Order> => {
+  checkout: async (servicePackageVersionId: string): Promise<Order> => {
     const response = USE_MOCK
-      ? await mockOrderApi.checkout(packageVersionId)
+      ? await mockOrderApi.checkout(servicePackageVersionId)
       : await api.post<{ data: OrderResponseDTO }>(API_PATHS.orders.checkout, {
-          packageVersionId,
+          servicePackageVersionId,
         });
 
     return toOrder(unwrap(response));
@@ -33,7 +33,7 @@ export const orderService = {
     for (let attempt = 0; attempt < maxRetry; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       const order = await orderService.getById(orderId);
-      if (order.status === 'paid' || order.status === 'cancelled') {
+      if (order.status === 'paid' || order.status === 'cancelled' || order.status === 'refunded') {
         return order;
       }
     }
