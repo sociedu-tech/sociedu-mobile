@@ -14,6 +14,7 @@ export const API_ROOT = `${API_BASE_URL}${API_PREFIX}`;
 
 export const API_PATHS = {
   auth: {
+    me: `${API_PREFIX}/auth/me`,
     login: `${API_PREFIX}/auth/login`,
     register: `${API_PREFIX}/auth/register`,
     refresh: `${API_PREFIX}/auth/refresh`,
@@ -22,6 +23,10 @@ export const API_PATHS = {
     resetPassword: `${API_PREFIX}/auth/reset-password`,
     verifyEmail: `${API_PREFIX}/auth/verify-email`,
     resendVerification: `${API_PREFIX}/auth/resend-verification`,
+    otpSend: `${API_PREFIX}/auth/otp/send`,
+    otpLogin: `${API_PREFIX}/auth/otp/login`,
+    phoneSendOtp: `${API_PREFIX}/auth/phone/send-otp`,
+    phoneVerifyOtp: `${API_PREFIX}/auth/phone/verify-otp`,
   },
   users: {
     meProfile: `${API_PREFIX}/users/me/profile`,

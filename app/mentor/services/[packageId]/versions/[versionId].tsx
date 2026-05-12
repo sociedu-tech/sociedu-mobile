@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -19,12 +19,7 @@ import { CustomButton } from '../../../../../src/components/button/CustomButton'
 import { TextInput } from '../../../../../src/components/form/TextInput';
 import { TEXT } from '../../../../../src/core/constants/strings';
 import { mentorService } from '../../../../../src/core/services/mentorService';
-import {
-  CreateCurriculumRequest,
-  CreatePackageVersionRequest,
-  CurriculumItem,
-  MentorPackageVersion,
-} from '../../../../../src/core/types';
+import { CreatePackageVersionRequest, CurriculumItem, MentorPackageVersion } from '../../../../../src/core/types';
 import { theme } from '../../../../../src/theme/theme';
 
 type CurriculumDraft = {
@@ -52,11 +47,6 @@ export default function PackageVersionEditorScreen() {
   ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!isEditing) return;
-    void loadVersion();
-  }, [isEditing, packageId, versionId]);
-
   const hydrateForm = (version: MentorPackageVersion) => {
     setVersionMeta(version);
     setPrice(String(version.price));
@@ -76,7 +66,7 @@ export default function PackageVersionEditorScreen() {
     );
   };
 
-  const loadVersion = async () => {
+  const loadVersion = useCallback(async () => {
     setFetching(true);
     try {
       const version = await mentorService.getPackageVersionById(packageId, versionId);
@@ -86,7 +76,12 @@ export default function PackageVersionEditorScreen() {
     } finally {
       setFetching(false);
     }
-  };
+  }, [packageId, versionId]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    void loadVersion();
+  }, [isEditing, loadVersion]);
 
   const addCurriculum = () => {
     setCurriculums((prev) => [...prev, { title: '', description: '', duration: '' }]);
@@ -116,15 +111,23 @@ export default function PackageVersionEditorScreen() {
       next[index] = { ...next[index], [field]: value };
       return next;
     });
+    setErrors((prev) => ({
+      ...prev,
+      [`curriculum_${index}_title`]: '',
+      [`curriculum_${index}_duration`]: '',
+      curriculum_general: '',
+    }));
   };
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
-    if (!price.trim() || Number.isNaN(Number(price)) || Number(price) <= 0) {
-      nextErrors.price = TEXT.SERVICE_VERSION.VALIDATION_PRICE;
-    }
-    if (!duration.trim() || Number.isNaN(Number(duration)) || Number(duration) <= 0) {
-      nextErrors.duration = TEXT.SERVICE_VERSION.VALIDATION_DURATION;
+    if (!isEditing) {
+      if (!price.trim() || Number.isNaN(Number(price)) || Number(price) <= 0) {
+        nextErrors.price = TEXT.SERVICE_VERSION.VALIDATION_PRICE;
+      }
+      if (!duration.trim() || Number.isNaN(Number(duration)) || Number(duration) <= 0) {
+        nextErrors.duration = TEXT.SERVICE_VERSION.VALIDATION_DURATION;
+      }
     }
     if (curriculums.length === 0) {
       nextErrors.curriculum_general = TEXT.CURRICULUM.MIN_REQUIRED;
@@ -133,49 +136,73 @@ export default function PackageVersionEditorScreen() {
       if (!item.title.trim()) {
         nextErrors[`curriculum_${index}_title`] = TEXT.CURRICULUM.TITLE_REQUIRED;
       }
+      if (!item.duration.trim() || Number.isNaN(Number(item.duration)) || Number(item.duration) <= 0) {
+        nextErrors[`curriculum_${index}_duration`] = TEXT.SERVICE_VERSION.VALIDATION_DURATION;
+      }
     });
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const payload = useMemo<CreatePackageVersionRequest>(
-    () => ({
-      price: Number(price),
-      duration: Number(duration),
-      deliveryType,
-      isDefault,
-      isActive,
-      curriculums: curriculums.map(
-        (item, index): CreateCurriculumRequest => ({
-          title: item.title.trim(),
-          description: item.description.trim(),
-          orderIndex: index + 1,
-          duration: Number(item.duration || 0),
-        }),
-      ),
-    }),
-    [price, duration, deliveryType, isDefault, isActive, curriculums],
-  );
-
   const handleSave = async () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      let savedVersion: MentorPackageVersion;
       if (isEditing) {
-        savedVersion = await mentorService.updatePackageVersion(packageId, versionId, payload);
-        if (versionMeta?.hasOrders || !versionMeta?.isEditable) {
-          Alert.alert(
-            TEXT.COMMON.SUCCESS,
-            TEXT.SERVICE_VERSION.VERSION_CLONE_SUCCESS.replace('{id}', String(savedVersion.id)),
-          );
-        } else {
-          Alert.alert(TEXT.COMMON.SUCCESS, TEXT.SERVICE_VERSION.VERSION_SAVE_SUCCESS);
-        }
+        const existingById = new Map(
+          (versionMeta?.curriculums ?? [])
+            .filter((item) => item.id)
+            .map((item) => [String(item.id), item]),
+        );
+        const currentIds = new Set(curriculums.filter((item) => item.id).map((item) => String(item.id)));
+
+        await Promise.all(
+          curriculums.map((item, index) => {
+            const payload = {
+              title: item.title.trim(),
+              description: item.description.trim(),
+              orderIndex: index + 1,
+              duration: Number(item.duration),
+            };
+
+            if (item.id && existingById.has(String(item.id))) {
+              return mentorService.updateCurriculumItem(packageId, versionId, item.id, payload);
+            }
+
+            return mentorService.addCurriculumItem(packageId, versionId, payload);
+          }),
+        );
+
+        const removedCurriculums = (versionMeta?.curriculums ?? []).filter(
+          (item) => !currentIds.has(String(item.id)),
+        );
+        await Promise.all(
+          removedCurriculums.map((item) =>
+            mentorService.deleteCurriculumItem(packageId, versionId, item.id),
+          ),
+        );
+
+        Alert.alert(TEXT.COMMON.SUCCESS, TEXT.SERVICE_VERSION.VERSION_SAVE_SUCCESS);
       } else {
-        savedVersion = await mentorService.createPackageVersion(packageId, payload);
-        Alert.alert(TEXT.COMMON.SUCCESS, TEXT.SERVICE_VERSION.VERSION_CREATE_SUCCESS.replace('{id}', String(savedVersion.id)));
+        const payload: CreatePackageVersionRequest = {
+          price: Number(price),
+          duration: Number(duration),
+          deliveryType,
+          isDefault,
+          isActive,
+          curriculums: curriculums.map((item, index) => ({
+            title: item.title.trim(),
+            description: item.description.trim(),
+            orderIndex: index + 1,
+            duration: Number(item.duration),
+          })),
+        };
+        const savedVersion = await mentorService.createPackageVersion(packageId, payload);
+        Alert.alert(
+          TEXT.COMMON.SUCCESS,
+          TEXT.SERVICE_VERSION.VERSION_CREATE_SUCCESS.replace('{id}', String(savedVersion.id)),
+        );
       }
       router.replace(`/mentor/services/${packageId}/versions` as any);
     } catch (error: any) {
@@ -185,10 +212,10 @@ export default function PackageVersionEditorScreen() {
     }
   };
 
-  const editableStateText =
-    versionMeta?.hasOrders || !versionMeta?.isEditable
-      ? TEXT.SERVICE_VERSION.VERSION_STATUS_CLONE
-      : TEXT.SERVICE_VERSION.VERSION_STATUS_EDITABLE;
+  const canEditMetadata = !isEditing;
+  const helperText = isEditing
+    ? 'Backend hiện cho phép quản lý giáo trình của phiên bản hiện có. Giá, thời lượng, trạng thái mặc định và trạng thái hoạt động đang ở chế độ chỉ đọc.'
+    : TEXT.SERVICE_VERSION.VERSION_STATUS_EDITABLE;
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -215,16 +242,14 @@ export default function PackageVersionEditorScreen() {
                 </Typography>
               ) : (
                 <>
-                  {isEditing && versionMeta ? (
-                    <View style={styles.warningCard}>
-                      <Typography variant="bodyMedium" style={styles.warningTitle}>
-                        {TEXT.SERVICE_VERSION.VERSION_STATUS_TITLE}
-                      </Typography>
-                      <Typography variant="body" color="secondary">
-                        {editableStateText}
-                      </Typography>
-                    </View>
-                  ) : null}
+                  <View style={styles.warningCard}>
+                    <Typography variant="bodyMedium" style={styles.warningTitle}>
+                      {TEXT.SERVICE_VERSION.VERSION_STATUS_TITLE}
+                    </Typography>
+                    <Typography variant="body" color="secondary">
+                      {helperText}
+                    </Typography>
+                  </View>
 
                   <View style={styles.section}>
                     <Typography variant="bodyMedium" style={styles.sectionTitle}>
@@ -239,6 +264,7 @@ export default function PackageVersionEditorScreen() {
                           value={price}
                           onChangeText={(value: string) => setPrice(value)}
                           error={errors.price}
+                          editable={canEditMetadata}
                         />
                       </View>
                       <View style={styles.half}>
@@ -249,6 +275,7 @@ export default function PackageVersionEditorScreen() {
                           value={duration}
                           onChangeText={(value: string) => setDuration(value)}
                           error={errors.duration}
+                          editable={canEditMetadata}
                         />
                       </View>
                     </View>
@@ -259,10 +286,11 @@ export default function PackageVersionEditorScreen() {
                       value={deliveryType}
                       onChangeText={(value: string) => setDeliveryType(value)}
                       helperText={TEXT.SERVICE_VERSION.DELIVERY_TYPE_HELPER}
+                      editable={canEditMetadata}
                     />
 
                     <View style={styles.toggleRow}>
-                      <TouchableOpacity style={styles.toggleCard} onPress={() => setIsDefault((prev) => !prev)}>
+                      <View style={styles.toggleCard}>
                         <View>
                           <Typography variant="bodyMedium" style={styles.toggleTitle}>
                             {TEXT.SERVICE_VERSION.DEFAULT_TOGGLE_TITLE}
@@ -276,9 +304,9 @@ export default function PackageVersionEditorScreen() {
                           size={24}
                           color={isDefault ? theme.colors.primary : theme.colors.text.disabled}
                         />
-                      </TouchableOpacity>
+                      </View>
 
-                      <TouchableOpacity style={styles.toggleCard} onPress={() => setIsActive((prev) => !prev)}>
+                      <View style={styles.toggleCard}>
                         <View>
                           <Typography variant="bodyMedium" style={styles.toggleTitle}>
                             {TEXT.SERVICE_VERSION.ACTIVE_TOGGLE_TITLE}
@@ -292,7 +320,7 @@ export default function PackageVersionEditorScreen() {
                           size={24}
                           color={isActive ? theme.colors.success : theme.colors.text.disabled}
                         />
-                      </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
 
@@ -354,6 +382,7 @@ export default function PackageVersionEditorScreen() {
                           keyboardType="numeric"
                           value={item.duration}
                           onChangeText={(value) => updateCurriculum(index, 'duration', value)}
+                          error={errors[`curriculum_${index}_duration`]}
                         />
                       </View>
                     ))}
@@ -369,7 +398,7 @@ export default function PackageVersionEditorScreen() {
                 </Typography>
               ) : null}
               <CustomButton
-                label={isEditing ? TEXT.SERVICE_VERSION.SAVE_VERSION : TEXT.SERVICE_VERSION.CREATE_VERSION}
+                label={isEditing ? 'Lưu thay đổi giáo trình' : TEXT.SERVICE_VERSION.CREATE_VERSION}
                 onPress={handleSave}
                 loading={loading}
                 disabled={fetching}

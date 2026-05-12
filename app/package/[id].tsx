@@ -3,7 +3,6 @@ import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
 
 import { CustomButton } from '../../src/components/button/CustomButton';
 import { ErrorState } from '../../src/components/states/ErrorState';
@@ -12,7 +11,6 @@ import { Typography } from '../../src/components/typography/Typography';
 import { toPackage } from '../../src/core/adapters/mentorAdapter';
 import { TEXT } from '../../src/core/constants/strings';
 import { mentorService } from '../../src/core/services/mentorService';
-import { orderService } from '../../src/core/services/orderService';
 import { useAuthStore } from '../../src/core/store/authStore';
 import { MentorPackage, MentorPackageVersion } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
@@ -30,8 +28,6 @@ export default function PackageDetailScreen() {
   const [selectedVer, setSelectedVer] = useState<MentorPackageVersion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
   const fetchPackage = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -246,7 +242,6 @@ export default function PackageDetailScreen() {
         <CustomButton
           label={TEXT.PACKAGE_DETAIL.PAY_NOW}
           onPress={handleCheckout}
-          loading={checkoutLoading}
           style={styles.checkoutButton}
         />
       </View>

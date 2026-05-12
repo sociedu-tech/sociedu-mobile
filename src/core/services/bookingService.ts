@@ -14,7 +14,6 @@ import {
   BookingSessionResponseDTO,
   EvidenceResponseDTO,
   Booking,
-  BookingSession,
 } from '../types';
 import { toBooking, toBookingList } from '../adapters/bookingAdapter';
 import { USE_MOCK } from '../config';
@@ -53,6 +52,22 @@ export const bookingService = {
     return toBooking(unwrap(res));
   },
 
+  findByOrderId: async (orderId: string, maxRetry = 5, delayMs = 1500): Promise<Booking | null> => {
+    for (let attempt = 0; attempt < maxRetry; attempt += 1) {
+      const bookings = await bookingService.getMyBookingsAsBuyer();
+      const found = bookings.find((item) => item.orderId === orderId);
+      if (found) {
+        return found;
+      }
+
+      if (attempt < maxRetry - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+
+    return null;
+  },
+
   /**
    * Cập nhật status / meetingUrl của 1 session
    */
@@ -88,14 +103,4 @@ export const bookingService = {
     return unwrap(res);
   },
 
-  /**
-   * Hủy booking
-   */
-  cancel: async (id: string): Promise<void> => {
-    if (USE_MOCK) {
-      await mockBookingApi.cancel(id);
-      return;
-    }
-    await api.post(`${BASE}/${id}/cancel`);
-  },
 };

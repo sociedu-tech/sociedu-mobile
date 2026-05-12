@@ -28,7 +28,7 @@ function nextVersionId(pkgId: number) {
   return Math.max(pkgId * 100, ...ids, pkgId * 100) + 1;
 }
 
-function nextCurriculumId(versionId: number, version: { curriculums?: { id: number }[] }) {
+function nextCurriculumId(versionId: number, version: { curriculums?: { id: string | number }[] }) {
   const ids = (version.curriculums ?? []).map((item) => Number(item.id));
   return Math.max(versionId * 100, ...ids, versionId * 100) + 1;
 }
@@ -66,16 +66,58 @@ export const mockMentorApi = {
     return withApiResponse(pkg);
   },
 
-  createPackage: async (data: { name: string; description?: string; isActive: boolean }) => {
+  createPackage: async (data: {
+    name: string;
+    description?: string;
+    isActive?: boolean;
+    price: number;
+    duration: number;
+    deliveryType: string;
+    versions: {
+      price: number;
+      duration: number;
+      deliveryType: string;
+      isDefault: boolean;
+      curriculums: { title: string; description?: string; orderIndex: number; duration: number }[];
+    }[];
+  }) => {
     await delay(700);
     const mentor = getMyMentor();
+    const packageId = nextPackageId();
+    const defaultVersion = data.versions?.[0] ?? {
+      price: data.price,
+      duration: data.duration,
+      deliveryType: data.deliveryType,
+      isDefault: true,
+      curriculums: [],
+    };
+    const versionId = nextVersionId(packageId);
     const newPackage = {
-      id: nextPackageId(),
+      id: packageId,
       mentorId: mentor.userId,
       name: data.name,
       description: data.description ?? '',
-      isActive: data.isActive,
-      versions: [],
+      isActive: data.isActive ?? true,
+      versions: [
+        {
+          id: versionId,
+          price: defaultVersion.price,
+          duration: defaultVersion.duration,
+          deliveryType: defaultVersion.deliveryType,
+          isDefault: true,
+          isActive: true,
+          hasOrders: false,
+          isEditable: true,
+          curriculums: (defaultVersion.curriculums ?? []).map((item, index) => ({
+            id: nextCurriculumId(versionId, { curriculums: [] }) + index,
+            title: item.title,
+            description: item.description ?? '',
+            orderIndex: item.orderIndex,
+            duration: item.duration,
+            packageVersionId: versionId,
+          })),
+        },
+      ],
     };
     mentor.packages.push(newPackage);
     return withApiResponse(newPackage);
@@ -180,6 +222,66 @@ export const mockMentorApi = {
     return withApiResponse(currentVersion);
   },
 
+  addCurriculumItem: async (
+    pkgId: string | number,
+    versionId: string | number,
+    data: { title: string; description?: string; orderIndex: number; duration?: number },
+  ) => {
+    await delay(300);
+    const pkg = getMyMentor().packages.find((item) => String(item.id) === String(pkgId));
+    const version = pkg?.versions.find((item) => String(item.id) === String(versionId));
+    if (!pkg || !version) throw new Error('Khong tim thay version.');
+
+    const newCurriculum = {
+      id: nextCurriculumId(Number(version.id), version),
+      title: data.title,
+      description: data.description ?? '',
+      orderIndex: data.orderIndex,
+      duration: data.duration ?? 0,
+      packageVersionId: Number(version.id),
+    };
+    version.curriculums = [...(version.curriculums ?? []), newCurriculum].sort(
+      (a, b) => a.orderIndex - b.orderIndex,
+    );
+    return withApiResponse(newCurriculum);
+  },
+
+  updateCurriculumItem: async (
+    pkgId: string | number,
+    versionId: string | number,
+    curriculumId: string | number,
+    data: { title: string; description?: string; orderIndex: number; duration?: number },
+  ) => {
+    await delay(300);
+    const pkg = getMyMentor().packages.find((item) => String(item.id) === String(pkgId));
+    const version = pkg?.versions.find((item) => String(item.id) === String(versionId));
+    const curriculum = version?.curriculums?.find((item) => String(item.id) === String(curriculumId));
+    if (!pkg || !version || !curriculum) throw new Error('Khong tim thay hoc phan.');
+
+    curriculum.title = data.title;
+    curriculum.description = data.description ?? '';
+    curriculum.orderIndex = data.orderIndex;
+    curriculum.duration = data.duration ?? 0;
+    version.curriculums = [...(version.curriculums ?? [])].sort((a, b) => a.orderIndex - b.orderIndex);
+    return withApiResponse(curriculum);
+  },
+
+  deleteCurriculumItem: async (
+    pkgId: string | number,
+    versionId: string | number,
+    curriculumId: string | number,
+  ) => {
+    await delay(250);
+    const pkg = getMyMentor().packages.find((item) => String(item.id) === String(pkgId));
+    const version = pkg?.versions.find((item) => String(item.id) === String(versionId));
+    if (!pkg || !version) throw new Error('Khong tim thay version.');
+
+    version.curriculums = (version.curriculums ?? []).filter(
+      (item) => String(item.id) !== String(curriculumId),
+    );
+    return withApiResponse(null);
+  },
+
   deletePackageVersion: async (pkgId: string | number, versionId: string | number) => {
     await delay(400);
     const pkg = getMyMentor().packages.find((item) => String(item.id) === String(pkgId));
@@ -210,13 +312,13 @@ export const mockMentorApi = {
     return withApiResponse(version ?? null);
   },
 
-  toggleServiceStatus: async (pkgId: string, isActive: boolean) => {
+  toggleServiceStatus: async (pkgId: string) => {
     await delay(300);
     const pkg = getMyMentor().packages.find((item) => String(item.id) === pkgId);
     if (pkg) {
-      pkg.isActive = isActive;
+      pkg.isActive = !pkg.isActive;
     }
-    return withApiResponse(null);
+    return withApiResponse(pkg ?? null);
   },
 
   saveService: async (data: any) => {

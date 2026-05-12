@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View, Image } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 
 import { CustomButton } from '../../src/components/button/CustomButton';
@@ -15,6 +16,9 @@ import { mentorService } from '../../src/core/services/mentorService';
 import { orderService } from '../../src/core/services/orderService';
 import { MentorPackage, MentorPackageVersion, User } from '../../src/core/types';
 import { toPackage } from '../../src/core/adapters/mentorAdapter';
+import { BACKEND_CONFIG } from '../../src/core/config';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -27,7 +31,6 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
   const [mentor, setMentor] = useState<User | null>(null);
   const [pkg, setPkg] = useState<MentorPackage | null>(null);
   const [version, setVersion] = useState<MentorPackageVersion | null>(null);
@@ -40,18 +43,16 @@ export default function CheckoutScreen() {
         throw new Error(TEXT.PACKAGE_DETAIL.NOT_FOUND);
       }
 
-      // Fetch mentor and package info
       const [mentorData, packages] = await Promise.all([
         mentorService.getProfile(mentorId),
         mentorService.getPackages(mentorId),
       ]);
 
-      const foundPkgDto = packages.find((p) => String(p.id) === packageId);
+      const foundPkgDto = packages.find((item) => String(item.id) === packageId);
       if (!foundPkgDto) throw new Error(TEXT.PACKAGE_DETAIL.NOT_FOUND);
 
       const uiPkg = toPackage(foundPkgDto);
-      const foundVer = uiPkg.versions.find((v) => String(v.id) === versionId);
-      
+      const foundVer = uiPkg.versions.find((item) => String(item.id) === versionId);
       if (!foundVer) throw new Error(TEXT.PACKAGE_DETAIL.NOT_FOUND);
 
       setMentor(mentorData);
@@ -62,7 +63,7 @@ export default function CheckoutScreen() {
     } finally {
       setLoading(false);
     }
-  }, [packageId, versionId, mentorId]);
+  }, [mentorId, packageId, versionId]);
 
   useEffect(() => {
     void fetchData();
@@ -70,32 +71,53 @@ export default function CheckoutScreen() {
 
   const handlePay = async () => {
     if (!version) return;
+
     setCheckoutLoading(true);
     try {
-      const order = await orderService.checkout(Number(version.id));
+      const order = await orderService.checkout(version.id);
       if (!order.paymentUrl) {
         throw new Error(TEXT.PACKAGE_DETAIL.PAYMENT_URL_MISSING);
       }
 
-      // Mở trình duyệt để thanh toán
-      const result = await WebBrowser.openBrowserAsync(order.paymentUrl);
-      
-      // Sau khi quay lại app, kiểm tra trạng thái đơn hàng
-      // Lưu ý: Trong thực tế nên dùng Deep Link để quay lại app chính xác hơn
-      // Ở đây ta poll trạng thái đơn hàng
-      const finalOrder = await orderService.pollUntilPaid(order.id);
+      const returnUrl = BACKEND_CONFIG.vnpayReturnScheme;
+      const result = await WebBrowser.openAuthSessionAsync(order.paymentUrl, returnUrl);
 
-      if (finalOrder.status === 'paid') {
+      if (result.type !== 'success' || !result.url) {
         router.replace({
           pathname: '/payment/result',
-          params: { status: 'success', orderId: order.id }
+          params: {
+            status: 'failed',
+            orderId: order.id,
+            source: 'browser',
+          },
         });
-      } else {
-        router.push({
-          pathname: '/payment/result',
-          params: { status: 'failed', orderId: order.id }
-        });
+        return;
       }
+
+      const callback = Linking.parse(result.url);
+      const status = Array.isArray(callback.queryParams?.status)
+        ? callback.queryParams.status[0]
+        : callback.queryParams?.status;
+      const callbackOrderId = Array.isArray(callback.queryParams?.orderId)
+        ? callback.queryParams.orderId[0]
+        : callback.queryParams?.orderId;
+      const code = Array.isArray(callback.queryParams?.code)
+        ? callback.queryParams.code[0]
+        : callback.queryParams?.code;
+      const transactionRef = Array.isArray(callback.queryParams?.transactionRef)
+        ? callback.queryParams.transactionRef[0]
+        : callback.queryParams?.transactionRef;
+
+      router.replace({
+        pathname: '/payment/result',
+        params: {
+          status: status ?? 'pending',
+          orderId: callbackOrderId ?? order.id,
+          code: code ?? '',
+          transactionRef: transactionRef ?? '',
+          source: 'callback',
+        },
+      });
     } catch (err: any) {
       Alert.alert(TEXT.PACKAGE_DETAIL.ERROR_TITLE, err?.message || TEXT.COMMON.ERROR);
     } finally {
@@ -127,33 +149,52 @@ export default function CheckoutScreen() {
 
         <View style={styles.card}>
           <View style={styles.infoRow}>
-            <Typography variant="caption" color="secondary">{TEXT.CHECKOUT.PACKAGE_LABEL}</Typography>
-            <Typography variant="bodyMedium" style={styles.bold}>{pkg.title}</Typography>
+            <Typography variant="caption" color="secondary">
+              {TEXT.CHECKOUT.PACKAGE_LABEL}
+            </Typography>
+            <Typography variant="bodyMedium" style={styles.bold}>
+              {pkg.title}
+            </Typography>
           </View>
+
           <View style={styles.infoRow}>
-            <Typography variant="caption" color="secondary">{TEXT.CHECKOUT.MENTOR_LABEL}</Typography>
-            <View style={styles.mentorInfo}>
-              <Typography variant="bodyMedium" style={styles.bold}>{mentor.name}</Typography>
-            </View>
+            <Typography variant="caption" color="secondary">
+              {TEXT.CHECKOUT.MENTOR_LABEL}
+            </Typography>
+            <Typography variant="bodyMedium" style={styles.bold}>
+              {mentor.name}
+            </Typography>
           </View>
+
           <View style={styles.divider} />
+
           <View style={styles.infoRow}>
-            <Typography variant="bodyMedium" style={styles.bold}>Thời lượng</Typography>
-            <Typography variant="bodyMedium">{version.duration} phút ({version.deliveryType})</Typography>
+            <Typography variant="bodyMedium" style={styles.bold}>
+              Thời lượng
+            </Typography>
+            <Typography variant="bodyMedium">
+              {version.duration} phút ({version.deliveryType})
+            </Typography>
           </View>
+
           <View style={[styles.infoRow, { marginTop: 12 }]}>
             <Typography variant="h3">{TEXT.CHECKOUT.TOTAL_LABEL}</Typography>
-            <Typography variant="h2" color="primary">${version.price}</Typography>
+            <Typography variant="h2" color="primary">
+              ${version.price}
+            </Typography>
           </View>
         </View>
 
         <Typography variant="h3" style={styles.sectionTitle}>
           {TEXT.CHECKOUT.PAYMENT_METHOD_TITLE}
         </Typography>
+
         <View style={styles.card}>
           <View style={styles.methodRow}>
             <Ionicons name="card-outline" size={24} color={theme.colors.primary} />
-            <Typography variant="bodyMedium" style={styles.methodText}>Thanh toán Online (VNPay/MoMo)</Typography>
+            <Typography variant="bodyMedium" style={styles.methodText}>
+              Thanh toán trực tuyến qua VNPay
+            </Typography>
             <Ionicons name="checkmark-circle" size={24} color={theme.colors.primary} />
           </View>
         </View>
@@ -203,7 +244,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bold: { fontWeight: '700' },
-  mentorInfo: { flexDirection: 'row', alignItems: 'center' },
   divider: {
     height: 1,
     backgroundColor: theme.colors.border.default,

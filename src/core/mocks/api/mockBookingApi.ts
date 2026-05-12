@@ -3,18 +3,17 @@ import { mockBookingsDTO, mockOrdersDTO } from '../data/bookingData';
 import { mockMentorListDTO } from '../data/mentorData';
 
 export const mockOrderApi = {
-  checkout: async (packageVersionId: number) => {
+  checkout: async (servicePackageVersionId: string) => {
     await delay(1200);
-    // Trả ra một order PENDING_PAYMENT kèm Link VNPay mock.
     const newOrder = {
-       id: `order-mock-${Date.now()}`,
-       buyerId: "e34a621c-a90b-4bd2-bea4-23be5185ea93",
-       serviceId: String(packageVersionId),
-       status: "PENDING_PAYMENT",
-       totalAmount: 50,
-       createdAt: new Date().toISOString(),
-       paidAt: null,
-       paymentUrl: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?mock_vnpay..."
+      id: `order-mock-${Date.now()}`,
+      buyerId: 'e34a621c-a90b-4bd2-bea4-23be5185ea93',
+      serviceId: servicePackageVersionId,
+      status: 'PENDING_PAYMENT',
+      totalAmount: 50,
+      createdAt: new Date().toISOString(),
+      paidAt: null,
+      paymentUrl: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?mock_vnpay...',
     };
     mockOrdersDTO.push(newOrder);
     return withApiResponse(newOrder);
@@ -22,117 +21,96 @@ export const mockOrderApi = {
 
   getById: async (id: string) => {
     await delay(300);
-    const order = mockOrdersDTO.find(o => o.id === id);
-    if (!order) throw new Error("Order not found");
+    const order = mockOrdersDTO.find((item) => item.id === id);
+    if (!order) throw new Error('Order not found');
 
-    // Nếu đơn hàng đang PENDING_PAYMENT, giả lập quá trình VNPay thanh toán xong 
-    // và hệ thống tự động sinh ra Booking.
-    if (order.status === "PENDING_PAYMENT") {
-      order.status = "PAID";
+    if (order.status === 'PENDING_PAYMENT') {
+      order.status = 'PAID';
       order.paidAt = new Date().toISOString();
 
-      // Tìm thông tin Package & Curriculum từ Mentor mock data
-      let mentorId = "";
-      let packageId = "";
+      let mentorId = '';
+      let packageId = '';
       let curriculums: any[] = [];
-      
-      mockMentorListDTO.forEach(m => {
-        m.packages?.forEach(p => {
-          p.versions?.forEach(v => {
-            if (String(v.id) === order.serviceId) {
-              mentorId = String(m.userId);
-              packageId = String(p.id);
-              curriculums = v.curriculums || [];
+
+      mockMentorListDTO.forEach((mentor) => {
+        mentor.packages?.forEach((pkg) => {
+          pkg.versions?.forEach((version) => {
+            if (String(version.id) === order.serviceId) {
+              mentorId = String(mentor.userId);
+              packageId = String(pkg.id);
+              curriculums = version.curriculums || [];
             }
           });
         });
       });
 
-      // Tạo Booking tương ứng
       const newBooking = {
         id: `booking-mock-${Date.now()}`,
         orderId: order.id,
         buyerId: order.buyerId,
-        mentorId: mentorId || "1",
-        packageId: packageId || "101",
-        status: "ACTIVE",
+        mentorId: mentorId || '1',
+        packageId: packageId || '101',
+        status: 'ACTIVE',
         createdAt: new Date().toISOString(),
-        sessions: curriculums.map((c: any, index: number) => ({
+        sessions: curriculums.map((curriculum: any, index: number) => ({
           id: `session-mock-${Date.now()}-${index}`,
-          curriculumId: String(c.id),
-          title: c.title,
+          curriculumId: String(curriculum.id),
+          title: curriculum.title,
           scheduledAt: null,
           completedAt: null,
-          status: "PENDING",
+          status: 'PENDING',
           meetingUrl: null,
-          evidences: []
-        }))
+          evidences: [],
+        })),
       };
-      
+
       mockBookingsDTO.push(newBooking);
     }
 
     return withApiResponse(order);
-  }
+  },
 };
 
 export const mockBookingApi = {
   getMyBookingsAsBuyer: async () => {
     await delay(1000);
-    const buyerId = "e34a621c-a90b-4bd2-bea4-23be5185ea93";
-    const myBookings = mockBookingsDTO.filter(b => b.buyerId === buyerId);
-    return withApiResponse(myBookings.reverse()); // Hiển thị mới nhất trước
+    const buyerId = 'e34a621c-a90b-4bd2-bea4-23be5185ea93';
+    const myBookings = mockBookingsDTO.filter((booking) => booking.buyerId === buyerId);
+    return withApiResponse(myBookings.reverse());
   },
 
   getMyBookingsAsMentor: async () => {
     await delay(1000);
-    const mentorId = "1";
-    const myBookings = mockBookingsDTO.filter(b => String(b.mentorId) === mentorId);
+    const mentorId = '1';
+    const myBookings = mockBookingsDTO.filter((booking) => String(booking.mentorId) === mentorId);
     return withApiResponse(myBookings.reverse());
   },
 
   getById: async (id: string) => {
     await delay(600);
-    const b = mockBookingsDTO.find(x => x.id === id);
-    if (!b) throw new Error("Booking not found");
-    return withApiResponse(b);
+    const booking = mockBookingsDTO.find((item) => item.id === id);
+    if (!booking) throw new Error('Booking not found');
+    return withApiResponse(booking);
   },
 
   updateSession: async (bookingId: string, sessionId: string, data: any) => {
     await delay(800);
-    const booking = mockBookingsDTO.find(x => x.id === bookingId);
-    if (booking) {
-      const session = booking.sessions.find(s => s.id === sessionId);
-      if (session) {
-        Object.assign(session, data);
-        if (data.status === 'COMPLETED') {
-          session.completedAt = new Date().toISOString();
-        }
-        
-        // Kiểm tra xem tất cả các session đã complete chưa
-        const allCompleted = booking.sessions.every(s => s.status === 'COMPLETED');
-        if (allCompleted) {
-          booking.status = 'COMPLETED';
-        }
-        return withApiResponse(session);
-      }
-    }
-    throw new Error("Session not found");
-  },
+    const booking = mockBookingsDTO.find((item) => item.id === bookingId);
+    if (!booking) throw new Error('Session not found');
 
-  cancel: async (id: string) => {
-    await delay(800);
-    const booking = mockBookingsDTO.find(x => x.id === id);
-    if (booking) {
-      booking.status = 'CANCELLED';
-      // Cũng hủy luôn các session chưa hoàn thành
-      booking.sessions.forEach(s => {
-        if (s.status !== 'COMPLETED') {
-          s.status = 'CANCELLED';
-        }
-      });
-      return withApiResponse(booking);
+    const session = booking.sessions.find((item) => item.id === sessionId);
+    if (!session) throw new Error('Session not found');
+
+    Object.assign(session, data);
+    if (data.status === 'COMPLETED') {
+      session.completedAt = new Date().toISOString();
     }
-    throw new Error("Booking not found");
-  }
+
+    const allCompleted = booking.sessions.every((item) => item.status === 'COMPLETED');
+    if (allCompleted) {
+      booking.status = 'COMPLETED';
+    }
+
+    return withApiResponse(session);
+  },
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,11 +8,52 @@ import { CustomButton } from '../../src/components/button/CustomButton';
 import { Typography } from '../../src/components/typography/Typography';
 import { theme } from '../../src/theme/theme';
 import { TEXT } from '../../src/core/constants/strings';
+import { orderService } from '../../src/core/services/orderService';
+import { bookingService } from '../../src/core/services/bookingService';
 
 export default function PaymentResultScreen() {
   const router = useRouter();
-  const { status, orderId } = useLocalSearchParams<{ status: 'success' | 'failed'; orderId: string }>();
-  const isSuccess = status === 'success';
+  const { status, orderId, transactionRef, code } = useLocalSearchParams<{
+    status?: string;
+    orderId?: string;
+    transactionRef?: string;
+    code?: string;
+  }>();
+
+  const [resolving, setResolving] = useState(false);
+  const [resolvedStatus, setResolvedStatus] = useState<'success' | 'failed'>(
+    status === 'success' || status === 'paid' ? 'success' : 'failed',
+  );
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const isSuccess = resolvedStatus === 'success';
+
+  useEffect(() => {
+    const resolvePayment = async () => {
+      if (!orderId) {
+        setResolvedStatus('failed');
+        return;
+      }
+
+      setResolving(true);
+      try {
+        const order = await orderService.pollUntilPaid(orderId, 5);
+        if (order.status !== 'paid') {
+          setResolvedStatus('failed');
+          return;
+        }
+
+        setResolvedStatus('success');
+        const booking = await bookingService.findByOrderId(orderId, 5, 1200);
+        setBookingId(booking?.id ?? null);
+      } catch {
+        setResolvedStatus(status === 'success' || status === 'paid' ? 'success' : 'failed');
+      } finally {
+        setResolving(false);
+      }
+    };
+
+    void resolvePayment();
+  }, [orderId, status]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -33,21 +74,44 @@ export default function PaymentResultScreen() {
           {isSuccess ? TEXT.PAYMENT_RESULT.SUCCESS_MESSAGE : TEXT.PAYMENT_RESULT.FAILURE_MESSAGE}
         </Typography>
 
-        {orderId && (
+        {resolving ? (
+          <Typography variant="caption" color="secondary" style={styles.helperText}>
+            Đang xác nhận thanh toán và tìm booking vừa tạo...
+          </Typography>
+        ) : null}
+
+        {orderId ? (
           <View style={styles.orderBox}>
-            <Typography variant="caption" color="secondary">Mã đơn hàng: </Typography>
-            <Typography variant="caption" style={styles.orderId}>{orderId}</Typography>
+            <Typography variant="caption" color="secondary">
+              Mã đơn hàng:
+            </Typography>
+            <Typography variant="caption" style={styles.orderId}>
+              {orderId}
+            </Typography>
           </View>
-        )}
+        ) : null}
+
+        {transactionRef ? (
+          <Typography variant="caption" color="secondary" style={styles.metaText}>
+            Mã giao dịch: {transactionRef}
+          </Typography>
+        ) : null}
+
+        {code ? (
+          <Typography variant="caption" color="secondary" style={styles.metaText}>
+            Mã phản hồi: {code}
+          </Typography>
+        ) : null}
       </View>
 
       <View style={styles.footer}>
         {isSuccess ? (
           <>
             <CustomButton
-              label={TEXT.PAYMENT_RESULT.BTN_VIEW_BOOKINGS}
-              onPress={() => router.replace('/(tabs)/bookings')}
+              label={bookingId ? 'Xem booking vừa tạo' : TEXT.PAYMENT_RESULT.BTN_VIEW_BOOKINGS}
+              onPress={() => router.replace(bookingId ? `/booking/${bookingId}` as any : '/(tabs)/bookings')}
               style={styles.button}
+              disabled={resolving}
             />
             <CustomButton
               label={TEXT.PAYMENT_RESULT.BTN_HOME}
@@ -60,7 +124,7 @@ export default function PaymentResultScreen() {
           <>
             <CustomButton
               label={TEXT.PAYMENT_RESULT.BTN_RETRY}
-              onPress={() => router.back()}
+              onPress={() => router.replace('/(tabs)')}
               style={styles.button}
             />
             <CustomButton
@@ -106,8 +170,13 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 24,
   },
+  helperText: {
+    marginBottom: 12,
+    textAlign: 'center',
+  },
   orderBox: {
     flexDirection: 'row',
+    gap: 6,
     backgroundColor: theme.colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -116,6 +185,10 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border.default,
   },
   orderId: { fontWeight: '600' },
+  metaText: {
+    marginTop: 8,
+    textAlign: 'center',
+  },
   footer: {
     padding: 20,
     paddingBottom: 40,

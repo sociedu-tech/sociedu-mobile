@@ -17,6 +17,7 @@ import { mentorService } from '../../src/core/services/mentorService';
 import { User } from '../../src/core/types';
 import { theme } from '../../src/theme/theme';
 import { Card } from '../../src/components/ui/Card';
+import { toPackage } from '../../src/core/adapters/mentorAdapter';
 
 const { width } = Dimensions.get('window');
 
@@ -57,8 +58,20 @@ export default function MentorDetailScreen() {
     setError(null);
     try {
       if (!id) throw new Error('Missing Mentor ID');
-      const data = await mentorService.getProfile(id);
-      setMentor(data);
+      const [mentorProfile, packages] = await Promise.all([
+        mentorService.getProfile(id),
+        mentorService.getPackages(id),
+      ]);
+
+      setMentor({
+        ...mentorProfile,
+        mentorInfo: mentorProfile.mentorInfo
+          ? {
+              ...mentorProfile.mentorInfo,
+              packages: packages.map(toPackage),
+            }
+          : mentorProfile.mentorInfo,
+      });
     } catch (err: any) {
       setError(err?.message || TEXT.MENTOR_DETAIL.LOAD_ERROR);
     } finally {

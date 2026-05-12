@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -20,6 +20,13 @@ import { TextInput } from '../../../src/components/form/TextInput';
 import { theme } from '../../../src/theme/theme';
 import { TEXT } from '../../../src/core/constants/strings';
 import { mentorService } from '../../../src/core/services/mentorService';
+import { CreateServiceRequest } from '../../../src/core/types';
+
+type CurriculumDraft = {
+  title: string;
+  description: string;
+  duration: string;
+};
 
 export default function MentorServiceFormScreen() {
   const router = useRouter();
@@ -32,14 +39,15 @@ export default function MentorServiceFormScreen() {
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [versionsCount, setVersionsCount] = useState(0);
+  const [price, setPrice] = useState('');
+  const [duration, setDuration] = useState('');
+  const [deliveryType, setDeliveryType] = useState('ONLINE');
+  const [curriculums, setCurriculums] = useState<CurriculumDraft[]>([
+    { title: '', description: '', duration: '' },
+  ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!id) return;
-    void loadPackage();
-  }, [id]);
-
-  const loadPackage = async () => {
+  const loadPackage = useCallback(async () => {
     setFetching(true);
     try {
       const pkg = await mentorService.getPackageById(id!);
@@ -52,11 +60,35 @@ export default function MentorServiceFormScreen() {
     } finally {
       setFetching(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    void loadPackage();
+  }, [id, loadPackage]);
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
     if (!name.trim()) nextErrors.name = TEXT.SERVICE.VALIDATION.NAME_REQUIRED;
+    if (!isEditing) {
+      if (!price.trim() || Number.isNaN(Number(price)) || Number(price) < 0) {
+        nextErrors.price = TEXT.SERVICE.VALIDATION.PRICE_MIN;
+      }
+      if (!duration.trim() || Number.isNaN(Number(duration)) || Number(duration) < 1) {
+        nextErrors.duration = TEXT.SERVICE_VERSION.VALIDATION_DURATION;
+      }
+      if (curriculums.length === 0) {
+        nextErrors.curriculum_general = TEXT.SERVICE.VALIDATION.CURRICULUM_MIN;
+      }
+      curriculums.forEach((item, index) => {
+        if (!item.title.trim()) {
+          nextErrors[`curriculum_${index}_title`] = TEXT.CURRICULUM.TITLE_REQUIRED;
+        }
+        if (!item.duration.trim() || Number.isNaN(Number(item.duration)) || Number(item.duration) < 1) {
+          nextErrors[`curriculum_${index}_duration`] = TEXT.SERVICE_VERSION.VALIDATION_DURATION;
+        }
+      });
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -94,22 +126,59 @@ export default function MentorServiceFormScreen() {
         await mentorService.updateService(id!, {
           name: name.trim(),
           description: description.trim(),
-          isActive,
         });
         router.push(`/mentor/services/${id}/versions` as any);
       } else {
-        const pkg = await mentorService.createPackage({
+        const payload: CreateServiceRequest = {
           name: name.trim(),
           description: description.trim(),
-          isActive,
-        });
-        router.replace(`/mentor/services/${pkg.id}/versions` as any);
+          isActive: true,
+          price: Number(price),
+          duration: Number(duration),
+          deliveryType: deliveryType.trim() || 'ONLINE',
+          curriculums: curriculums.map((item, index) => ({
+            title: item.title.trim(),
+            description: item.description.trim(),
+            orderIndex: index + 1,
+            duration: Number(item.duration),
+          })),
+        };
+        const pkg = await mentorService.createPackage(payload);
+        const createdVersion = pkg.versions.find((item) => item.isDefault) ?? pkg.versions[0];
+
+        if (createdVersion?.id) {
+          router.replace(`/mentor/services/${pkg.id}/versions/${createdVersion.id}` as any);
+        } else {
+          router.replace(`/mentor/services/${pkg.id}/versions` as any);
+        }
       }
     } catch (error: any) {
       setErrors({ submit: error?.message || TEXT.COMMON.ERROR });
     } finally {
       setLoading(false);
     }
+  };
+
+  const addCurriculum = () => {
+    setCurriculums((prev) => [...prev, { title: '', description: '', duration: '' }]);
+  };
+
+  const removeCurriculum = (index: number) => {
+    setCurriculums((prev) => (prev.length === 1 ? prev : prev.filter((_, itemIndex) => itemIndex !== index)));
+  };
+
+  const updateCurriculum = (index: number, field: keyof CurriculumDraft, value: string) => {
+    setCurriculums((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+    setErrors((prev) => ({
+      ...prev,
+      [`curriculum_${index}_title`]: '',
+      [`curriculum_${index}_duration`]: '',
+      curriculum_general: '',
+    }));
   };
 
   return (
@@ -158,26 +227,28 @@ export default function MentorServiceFormScreen() {
                       numberOfLines={4}
                     />
 
-                    <TouchableOpacity
-                      style={styles.statusRow}
-                      onPress={() => setIsActive((prev) => !prev)}
-                    >
-                      <View>
-                        <Typography variant="bodyMedium" style={styles.statusTitle}>
-                          {TEXT.SERVICE_VERSION.PACKAGE_STATUS_LABEL}
-                        </Typography>
-                        <Typography variant="caption" color="secondary">
-                          {isActive
-                            ? TEXT.SERVICE_VERSION.PACKAGE_STATUS_ACTIVE
-                            : TEXT.SERVICE_VERSION.PACKAGE_STATUS_INACTIVE}
-                        </Typography>
-                      </View>
-                      <Ionicons
-                        name={isActive ? 'toggle' : 'toggle-outline'}
-                        size={32}
-                        color={isActive ? theme.colors.success : theme.colors.text.disabled}
-                      />
-                    </TouchableOpacity>
+                    {isEditing ? (
+                      <TouchableOpacity
+                        style={styles.statusRow}
+                        onPress={() => setIsActive((prev) => !prev)}
+                      >
+                        <View>
+                          <Typography variant="bodyMedium" style={styles.statusTitle}>
+                            {TEXT.SERVICE_VERSION.PACKAGE_STATUS_LABEL}
+                          </Typography>
+                          <Typography variant="caption" color="secondary">
+                            {isActive
+                              ? TEXT.SERVICE_VERSION.PACKAGE_STATUS_ACTIVE
+                              : TEXT.SERVICE_VERSION.PACKAGE_STATUS_INACTIVE}
+                          </Typography>
+                        </View>
+                        <Ionicons
+                          name={isActive ? 'toggle' : 'toggle-outline'}
+                          size={32}
+                          color={isActive ? theme.colors.success : theme.colors.text.disabled}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
 
                   {isEditing ? (
@@ -203,8 +274,96 @@ export default function MentorServiceFormScreen() {
                       <Typography variant="body" color="secondary" style={styles.summaryText}>
                         {TEXT.SERVICE_VERSION.PACKAGE_VERSIONS_CREATE_HINT}
                       </Typography>
+                      <View style={styles.createVersionSection}>
+                        <TextInput
+                          label={TEXT.SERVICE_VERSION.PRICE_LABEL}
+                          placeholder="300000"
+                          keyboardType="numeric"
+                          value={price}
+                          onChangeText={(value) => {
+                            setPrice(value);
+                            setErrors((prev) => ({ ...prev, price: '' }));
+                          }}
+                          error={errors.price}
+                        />
+                        <TextInput
+                          label={TEXT.SERVICE_VERSION.DURATION_LABEL}
+                          placeholder="60"
+                          keyboardType="numeric"
+                          value={duration}
+                          onChangeText={(value) => {
+                            setDuration(value);
+                            setErrors((prev) => ({ ...prev, duration: '' }));
+                          }}
+                          error={errors.duration}
+                        />
+                        <TextInput
+                          label={TEXT.SERVICE_VERSION.DELIVERY_TYPE_LABEL}
+                          placeholder={TEXT.SERVICE_VERSION.DELIVERY_TYPE_PLACEHOLDER}
+                          value={deliveryType}
+                          onChangeText={setDeliveryType}
+                          helperText={TEXT.SERVICE_VERSION.DELIVERY_TYPE_HELPER}
+                        />
+                      </View>
                     </View>
                   )}
+
+                  {!isEditing ? (
+                    <View style={styles.section}>
+                      <View style={styles.curriculumHeader}>
+                        <Typography variant="bodyMedium" style={styles.sectionTitle}>
+                          {TEXT.CURRICULUM.TITLE}
+                        </Typography>
+                        <TouchableOpacity onPress={addCurriculum}>
+                          <Typography variant="label" style={styles.addLink}>
+                            {TEXT.CURRICULUM.ADD_ITEM}
+                          </Typography>
+                        </TouchableOpacity>
+                      </View>
+                      {errors.curriculum_general ? (
+                        <Typography variant="caption" color="error" style={styles.submitError}>
+                          {errors.curriculum_general}
+                        </Typography>
+                      ) : null}
+                      {curriculums.map((item, index) => (
+                        <View key={`${index}-${item.title}`} style={styles.curriculumCard}>
+                          <View style={styles.curriculumCardHeader}>
+                            <Typography variant="label" style={styles.statusTitle}>
+                              {TEXT.CURRICULUM.ITEM_LABEL.replace('{index}', String(index + 1))}
+                            </Typography>
+                            {curriculums.length > 1 ? (
+                              <TouchableOpacity onPress={() => removeCurriculum(index)}>
+                                <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
+                              </TouchableOpacity>
+                            ) : null}
+                          </View>
+                          <TextInput
+                            label={TEXT.CURRICULUM.TITLE_LABEL}
+                            placeholder={TEXT.CURRICULUM.TITLE_PLACEHOLDER}
+                            value={item.title}
+                            onChangeText={(value) => updateCurriculum(index, 'title', value)}
+                            error={errors[`curriculum_${index}_title`]}
+                          />
+                          <TextInput
+                            label={TEXT.CURRICULUM.DESCRIPTION_LABEL}
+                            placeholder={TEXT.CURRICULUM.DESCRIPTION_PLACEHOLDER}
+                            value={item.description}
+                            onChangeText={(value) => updateCurriculum(index, 'description', value)}
+                            multiline
+                            numberOfLines={3}
+                          />
+                          <TextInput
+                            label={TEXT.CURRICULUM.DURATION_LABEL}
+                            placeholder={TEXT.CURRICULUM.DURATION_PLACEHOLDER}
+                            keyboardType="numeric"
+                            value={item.duration}
+                            onChangeText={(value) => updateCurriculum(index, 'duration', value)}
+                            error={errors[`curriculum_${index}_duration`]}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
                 </>
               )}
             </ScrollView>
@@ -270,6 +429,33 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     lineHeight: 22,
+  },
+  createVersionSection: {
+    marginTop: 16,
+  },
+  curriculumHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addLink: {
+    color: theme.colors.primary,
+    fontWeight: '700',
+  },
+  curriculumCard: {
+    borderWidth: 1,
+    borderColor: theme.colors.border.default,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 14,
+    backgroundColor: theme.colors.background,
+  },
+  curriculumCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   inlineButton: {
     marginTop: 16,

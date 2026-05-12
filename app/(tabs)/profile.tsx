@@ -190,6 +190,12 @@ export default function ProfileScreen() {
               onPress={() => router.push('/profile/credentials')}
             />
             <ListItem
+              title="Xác thực số điện thoại"
+              subtitle="Gửi OTP qua email và nhập lại mã 6 số"
+              iconName="call"
+              onPress={() => router.push('/profile/phone-verification')}
+            />
+            <ListItem
               title="Cài đặt thông báo"
               iconName="notifications"
               onPress={() => router.push('/profile/notifications')}

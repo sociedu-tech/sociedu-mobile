@@ -5,7 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  TextInput,
+  TextInput as RNTextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,22 +15,28 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { CustomButton } from '../../src/components/button/CustomButton';
 import { Typography } from '../../src/components/typography/Typography';
-import { TEXT } from '../../src/core/constants/strings';
 import { authService } from '../../src/core/services/authService';
+import { useAuthStore } from '../../src/core/store/authStore';
 import { theme } from '../../src/theme/theme';
 
 const OTP_LENGTH = 6;
 
-export default function OTPScreen() {
+type OtpMode = 'login-otp' | 'phone-verify';
+
+export default function OtpScreen() {
   const router = useRouter();
-  const { email } = useLocalSearchParams<{ email?: string }>();
-  const normalizedEmail = typeof email === 'string' ? email.trim() : '';
+  const storeLogin = useAuthStore((s) => s.login);
+  const params = useLocalSearchParams<{ mode?: OtpMode; email?: string; phoneNumber?: string }>();
+  const mode: OtpMode = params.mode === 'phone-verify' ? 'phone-verify' : 'login-otp';
+  const email = typeof params.email === 'string' ? params.email.trim() : '';
+  const phoneNumber = typeof params.phoneNumber === 'string' ? params.phoneNumber.trim() : '';
+
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [timer, setTimer] = useState(59);
 
-  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const inputRefs = useRef<(RNTextInput | null)[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,9 +57,7 @@ export default function OTPScreen() {
 
   const handlePasteOrChange = (text: string, index: number) => {
     const sanitized = text.replace(/\D/g, '');
-    if (!sanitized && text.length > 0) {
-      return;
-    }
+    if (!sanitized && text.length > 0) return;
 
     if (sanitized.length > 1) {
       const nextOtp = Array(OTP_LENGTH).fill('');
@@ -77,8 +81,8 @@ export default function OTPScreen() {
     }
   };
 
-  const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
+  const handleKeyPress = (event: { nativeEvent: { key: string } }, index: number) => {
+    if (event.nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
@@ -87,64 +91,75 @@ export default function OTPScreen() {
     Keyboard.dismiss();
     const code = otp.join('');
     if (code.length < OTP_LENGTH) {
-      Alert.alert(
-        TEXT.AUTH_OTP.VERIFY_ERROR_TITLE,
-        TEXT.AUTH_OTP.INVALID_CODE_MESSAGE,
-      );
+      Alert.alert('OTP chưa đủ', 'Vui lòng nhập đầy đủ 6 chữ số.');
       return;
     }
 
     setLoading(true);
     try {
-      await authService.verifyEmail(code);
-      Alert.alert(
-        TEXT.AUTH_OTP.VERIFY_SUCCESS_TITLE,
-        TEXT.AUTH_OTP.VERIFY_SUCCESS_MESSAGE,
-      );
-      router.replace('/(auth)/login');
-    } catch (error: any) {
-      Alert.alert(
-        TEXT.AUTH_OTP.VERIFY_ERROR_TITLE,
-        error?.message || TEXT.AUTH_OTP.VERIFY_ERROR_MESSAGE,
-      );
+      if (mode === 'phone-verify') {
+        if (!phoneNumber) {
+          throw new Error('Không tìm thấy số điện thoại cho luồng xác thực.');
+        }
+
+        await authService.verifyPhoneOtp({ phoneNumber, otpCode: code });
+
+        try {
+          const sessionUser = await authService.getSessionMe();
+          storeLogin(sessionUser);
+        } catch {
+          // Keep current session if auth/me does not expose new phone state yet.
+        }
+
+        Alert.alert('Xác thực thành công', 'Số điện thoại đã được xác thực.');
+        router.replace('/profile/phone-verification');
+        return;
+      }
+
+      if (!email) {
+        throw new Error('Không tìm thấy email cho luồng đăng nhập bằng OTP.');
+      }
+
+      const user = await authService.loginWithOtp({ email, otpCode: code });
+      storeLogin(user);
+      Alert.alert('Đăng nhập thành công', 'Bạn đã đăng nhập bằng OTP.');
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      Alert.alert('Không thể xác thực', err.message || 'Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    if (!normalizedEmail) {
-      Alert.alert(
-        TEXT.AUTH_OTP.RESEND_ERROR_TITLE,
-        TEXT.AUTH_OTP.EMAIL_REQUIRED_MESSAGE,
-      );
-      return;
-    }
-
     setResending(true);
     try {
-      await authService.resendVerification(normalizedEmail);
+      if (mode === 'phone-verify') {
+        if (!phoneNumber) throw new Error('Không tìm thấy số điện thoại để gửi lại OTP.');
+        await authService.sendPhoneVerificationOtp({ phoneNumber });
+      } else {
+        if (!email) throw new Error('Không tìm thấy email để gửi lại OTP.');
+        await authService.sendLoginOtp(email);
+      }
+
       setTimer(59);
-      Alert.alert(
-        TEXT.AUTH_OTP.RESEND_SUCCESS_TITLE,
-        TEXT.AUTH_OTP.RESEND_SUCCESS_MESSAGE,
-      );
-    } catch (error: any) {
-      Alert.alert(
-        TEXT.AUTH_OTP.RESEND_ERROR_TITLE,
-        error?.message || TEXT.AUTH_OTP.RESEND_ERROR_MESSAGE,
-      );
+      setOtp(['', '', '', '', '', '']);
+      Alert.alert('Đã gửi lại', 'Mã OTP mới đã được gửi.');
+    } catch (err: any) {
+      Alert.alert('Không thể gửi lại', err.message || 'Vui lòng thử lại sau.');
     } finally {
       setResending(false);
     }
   };
 
+  const subtitle =
+    mode === 'phone-verify'
+      ? `Nhập mã OTP đã được gửi tới email tài khoản để xác thực số ${phoneNumber || 'điện thoại'}.`
+      : `Nhập mã OTP 6 số đã được gửi tới email ${email || 'của bạn'} để đăng nhập.`;
+
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <View style={styles.content}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text.primary} />
@@ -152,16 +167,16 @@ export default function OTPScreen() {
 
           <View style={styles.header}>
             <Typography variant="h1" style={styles.title}>
-              {TEXT.AUTH_OTP.TITLE}
+              {mode === 'phone-verify' ? 'Xác thực số điện thoại' : 'Đăng nhập bằng OTP'}
             </Typography>
             <Typography variant="body" color="secondary" style={styles.subtitle}>
-              {TEXT.AUTH_OTP.SUBTITLE}
+              {subtitle}
             </Typography>
           </View>
 
           <View style={styles.otpContainer}>
             {otp.map((digit, index) => (
-              <TextInput
+              <RNTextInput
                 key={index}
                 ref={(element) => {
                   inputRefs.current[index] = element;
@@ -171,31 +186,25 @@ export default function OTPScreen() {
                 maxLength={index === 0 ? OTP_LENGTH : 1}
                 value={digit}
                 onChangeText={(text) => handlePasteOrChange(text, index)}
-                onKeyPress={(e) => handleKeyPress(e, index)}
+                onKeyPress={(event) => handleKeyPress(event, index)}
                 textAlign="center"
               />
             ))}
           </View>
 
           <View style={styles.timerRow}>
-            <Typography variant="body" color="secondary">
-              {TEXT.AUTH_OTP.RESEND_PROMPT}
-            </Typography>
+            <Typography variant="body" color="secondary">Không nhận được mã?</Typography>
             {timer > 0 ? (
-              <Typography variant="body" style={styles.timerText}>
-                {TEXT.AUTH_OTP.RESEND_COUNTDOWN.replace('{seconds}', String(timer))}
-              </Typography>
+              <Typography variant="body" style={styles.timerText}>Gửi lại sau {timer}s</Typography>
             ) : (
               <TouchableOpacity onPress={handleResend} disabled={resending}>
-                <Typography variant="body" style={styles.timerText}>
-                  {TEXT.AUTH_OTP.RESEND_NOW}
-                </Typography>
+                <Typography variant="body" style={styles.timerText}>Gửi lại ngay</Typography>
               </TouchableOpacity>
             )}
           </View>
 
           <CustomButton
-            label={TEXT.AUTH_OTP.VERIFY_BUTTON}
+            label={mode === 'phone-verify' ? 'Xác thực số điện thoại' : 'Đăng nhập bằng OTP'}
             onPress={handleVerify}
             loading={loading || resending}
             disabled={otp.join('').length < OTP_LENGTH || loading || resending}
@@ -261,15 +270,15 @@ const styles = StyleSheet.create({
   },
   timerRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 40,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   timerText: {
     color: theme.colors.primary,
     fontWeight: '700',
   },
   verifyBtn: {
-    marginTop: 'auto',
-    marginBottom: 40,
+    borderRadius: 16,
   },
 });

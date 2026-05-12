@@ -137,7 +137,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   updateUser: (partial) => {
     set((state) => {
       if (!state.user) return state;
-      return { user: { ...state.user, ...partial } };
+      const user = { ...state.user, ...partial };
+      void AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      return { user };
     });
   },
 

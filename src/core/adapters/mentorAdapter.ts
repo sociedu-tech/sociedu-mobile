@@ -14,7 +14,7 @@ import {
   VerificationStatus,
 } from '../types';
 
-function toCurriculumItem(dto: CurriculumItemResponseDTO): CurriculumItem {
+export function toCurriculumItem(dto: CurriculumItemResponseDTO): CurriculumItem {
   return {
     id: String(dto.id),
     title: dto.title ?? '',
@@ -24,7 +24,7 @@ function toCurriculumItem(dto: CurriculumItemResponseDTO): CurriculumItem {
   };
 }
 
-function toPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageVersion {
+export function toPackageVersion(dto: ServicePackageVersionResponseDTO): MentorPackageVersion {
   return {
     id: String(dto.id),
     price: Number(dto.price),
@@ -71,7 +71,7 @@ export function toMentorUser(dto: MentorProfileResponseDTO): User {
 
   return {
     id: String(dto.userId),
-    name: '',
+    name: dto.displayName?.trim() || 'Chuyên gia',
     email: '',
     avatar: null,
     role: 'mentor',
