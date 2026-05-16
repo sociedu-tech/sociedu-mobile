@@ -53,10 +53,9 @@ export default function RootLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" />
-      <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Ho so' }} />
+      <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: 'Hồ sơ' }} />
       <Stack.Screen name="profile/edit" options={{ headerShown: false }} />
       <Stack.Screen name="profile/phone-verification" options={{ headerShown: false }} />
-      <Stack.Screen name="admin/index" options={{ headerShown: true, title: 'Quan tri' }} />
       <Stack.Screen name="mentor/dashboard" options={{ headerShown: true, title: 'Mentor Dashboard' }} />
     </Stack>
   );

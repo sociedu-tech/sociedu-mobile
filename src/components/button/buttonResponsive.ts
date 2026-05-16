@@ -6,14 +6,14 @@ export const buttonResponsive = {
   xs: {
     paddingVertical: 8,
     paddingHorizontal: theme.spacing.md,
-    minHeight: 36,
+    minHeight: 44,
     borderRadius: theme.borderRadius.sm,
     fontSize: 13,
   },
   sm: {
     paddingVertical: 10,
     paddingHorizontal: theme.spacing.lg,
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: theme.borderRadius.md,
     fontSize: 14,
   },

@@ -234,8 +234,12 @@ function SectionHeader({ title, icon, onAdd }: { title: string; icon: any; onAdd
         <Ionicons name={icon} size={20} color={theme.colors.primary} />
         <Typography variant="label" style={styles.sectionLabel}>{title}</Typography>
       </View>
-      <TouchableOpacity onPress={onAdd} style={styles.addBtn}>
-        <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
+      <TouchableOpacity 
+        onPress={onAdd} 
+        style={styles.addBtn}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Ionicons name="add-circle" size={28} color={theme.colors.primary} />
       </TouchableOpacity>
     </View>
   );
