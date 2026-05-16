@@ -1,13 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -187,7 +185,6 @@ export default function MentorServiceFormScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={{ flex: 1 }}>
             <View style={styles.headerBar}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -199,7 +196,7 @@ export default function MentorServiceFormScreen() {
               <View style={{ width: 40 }} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.scroll}>
+            <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
               {fetching ? (
                 <Typography variant="body" color="secondary">
                   {TEXT.COMMON.LOADING}
@@ -314,7 +311,11 @@ export default function MentorServiceFormScreen() {
                         <Typography variant="bodyMedium" style={styles.sectionTitle}>
                           {TEXT.CURRICULUM.TITLE}
                         </Typography>
-                        <TouchableOpacity onPress={addCurriculum}>
+                        <TouchableOpacity 
+                          onPress={addCurriculum}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          style={{ padding: 4 }}
+                        >
                           <Typography variant="label" style={styles.addLink}>
                             {TEXT.CURRICULUM.ADD_ITEM}
                           </Typography>
@@ -326,13 +327,17 @@ export default function MentorServiceFormScreen() {
                         </Typography>
                       ) : null}
                       {curriculums.map((item, index) => (
-                        <View key={`${index}-${item.title}`} style={styles.curriculumCard}>
+                        <View key={index} style={styles.curriculumCard}>
                           <View style={styles.curriculumCardHeader}>
                             <Typography variant="label" style={styles.statusTitle}>
                               {TEXT.CURRICULUM.ITEM_LABEL.replace('{index}', String(index + 1))}
                             </Typography>
                             {curriculums.length > 1 ? (
-                              <TouchableOpacity onPress={() => removeCurriculum(index)}>
+                              <TouchableOpacity 
+                                onPress={() => removeCurriculum(index)}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                style={{ padding: 4 }}
+                              >
                                 <Ionicons name="trash-outline" size={18} color={theme.colors.error} />
                               </TouchableOpacity>
                             ) : null}
@@ -382,7 +387,6 @@ export default function MentorServiceFormScreen() {
               />
             </View>
           </View>
-        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

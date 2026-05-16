@@ -1,31 +1,20 @@
-import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import { theme } from '../../src/theme/theme';
+import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
+
 import { useAuthStore } from '../../src/core/store/authStore';
+import { theme } from '../../src/theme/theme';
 
 /**
- * Tabs Layout
- * ─────────────────────────────────────────────
- * Web equivalent mapping:
- *   "/"        → index    (Home)
- *   "/mentors" → mentor   (MentorMarketplace)
- *   "/messages"→ messages (Tin nhắn)
- *   "/bookings"→ bookings (Lịch hẹn)
- *   n/a        → profile  (Hồ sơ cá nhân – mobile only)
- *
- * Các tab cũ (marketplace) bị ẩn bằng href: null
- * để tránh crash nếu file vẫn tồn tại trong thư mục.
+ * Tabs layout.
+ * Một số tab sẽ được ẩn theo role để tránh điều hướng tới các màn không phù hợp.
  */
 export default function TabsLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const roles = useAuthStore((s) => s.roles);
   const activeMode = useAuthStore((s) => s.activeMode);
 
-  // ── Quy tắc hiển thị tab theo role ─────────────────────────
-  // - Mentor: không cần tìm Mentor khác → ẩn tab "Chuyên gia"
-  // - Guest : chưa đăng nhập → ẩn "Tin nhắn" và "Lịch hẹn"
   const isGuest = !isAuthenticated;
   const isMentor = roles.includes('mentor');
   const hideMentorDiscoveryTab = isMentor && activeMode === 'mentor';
@@ -37,10 +26,10 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: theme.colors.secondary,
         headerShown: false,
         tabBarStyle: {
-          position: 'absolute', // Bắt buộc cho Glassmorphism
+          position: 'absolute',
           bottom: 0,
-          borderTopWidth: 0, // Xoá viền cực cứng
-          elevation: 0,      // Bỏ shadow mặc định của Android
+          borderTopWidth: 0,
+          elevation: 0,
           backgroundColor: 'transparent',
         },
         tabBarBackground: () => (
@@ -99,4 +88,3 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
-
